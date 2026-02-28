@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="plugin-moonwave plugin-id-moonwave" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.7.0">
+<title data-rh="true">HybridCast | HybridSolver</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://Vel136.github.io/HybridSolver/api/HybridCast"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="HybridCast | HybridSolver"><meta data-rh="true" name="description" content="The internal representation of one in-flight projectile. Returned by
+[HybridSolver:Fire] for callers that need to introspect initial state.
+
+:::warning
+Weapon scripts should interact with [BulletContext] rather than `HybridCast`
+directly. `HybridCast` exposes internal solver state — mutating it directly
+can produce physics errors that are difficult to debug.
+
+The methods below (`GetPosition`, `SetVelocity`, etc.) are safe to call and are
+the intended way to read or modify a bullet mid-flight from within signal handlers.
+:::"><meta data-rh="true" property="og:description" content="The internal representation of one in-flight projectile. Returned by
+[HybridSolver:Fire] for callers that need to introspect initial state.
+
+:::warning
+Weapon scripts should interact with [BulletContext] rather than `HybridCast`
+directly. `HybridCast` exposes internal solver state — mutating it directly
+can produce physics errors that are difficult to debug.
+
+The methods below (`GetPosition`, `SetVelocity`, etc.) are safe to call and are
+the intended way to read or modify a bullet mid-flight from within signal handlers.
+:::"><link data-rh="true" rel="canonical" href="https://Vel136.github.io/HybridSolver/api/HybridCast"><link data-rh="true" rel="alternate" href="https://Vel136.github.io/HybridSolver/api/HybridCast" hreflang="en"><link data-rh="true" rel="alternate" href="https://Vel136.github.io/HybridSolver/api/HybridCast" hreflang="x-default"><link rel="stylesheet" href="/HybridSolver/assets/css/styles.3f4864db.css">
+<script src="/HybridSolver/assets/js/runtime~main.8ae9011f.js" defer="defer"></script>
+<script src="/HybridSolver/assets/js/main.d3247600.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,t("light"))}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/HybridSolver/"><b class="navbar__title text--truncate">HybridSolver</b></a><a class="navbar__item navbar__link" href="/HybridSolver/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/HybridSolver/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Vel136/HybridSolver" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/HybridSolver/api/HybridSolver">Core</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/HybridSolver/api/HybridSolver">​Hybrid​Solver</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/HybridSolver/api/BulletContext">​Bullet​Context</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/HybridSolver/api/HybridCast">​Hybrid​Cast</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/HybridSolver/api/BehaviorBuilder">Configuration</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/HybridSolver/api/TypeDefinitions">Types</a></div></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Hybrid</span><span style="display:inline-block">Cast</span></h1><div class="luaClassTags_EipM"></div><div>
+<p>
+  The internal representation of one in-flight projectile. Returned by
+  <a href="/HybridSolver/api/HybridSolver#Fire">HybridSolver:Fire</a> for callers that need to introspect initial state.
+</p>
+
+  
+    
+    
+      <div class="admonition admonition-warning alert alert--warning">
+        <div class="admonition-heading">
+          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                <path d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path>
+              </svg></span><span class="admonition-title">WARNING</span></h5>
+        </div>
+        <div class="admonition-content">
+          <p>
+            Weapon scripts should interact with <a href="/HybridSolver/api/BulletContext">BulletContext</a> rather than <code>HybridCast</code>
+            directly. <code>HybridCast</code> exposes internal solver state — mutating it directly
+            can produce physics errors that are difficult to debug.
+          </p>
+          <p>
+            The methods below (<code>GetPosition</code>, <code>SetVelocity</code>, etc.) are safe to call and are
+            the intended way to read or modify a bullet mid-flight from within signal handlers.
+          </p>
+        </div>
+      </div>
+    
+  
+
+</div></header><h2 class="anchor anchorWithStickyNavbar_LWe7" id="properties">Properties<a href="#properties" class="hash-link" aria-label="Direct link to Properties" title="Direct link to Properties">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Alive"><code style="text-decoration:none">Alive</code><a href="#Alive" class="hash-link" aria-label="Direct link to Alive" title="Direct link to Alive">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridCast.lua#L28"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridCast<!-- -->.<!-- -->Alive<!-- -->:<!-- --> </code> <code class="blue_P4bS">boolean</code></div><div>
+<p>
+  <code>true</code> while the cast is being simulated. Set to <code>false</code> as the very first
+  action in termination so re-entrant calls are no-ops.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Paused"><code style="text-decoration:none">Paused</code><a href="#Paused" class="hash-link" aria-label="Direct link to Paused" title="Direct link to Paused">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridCast.lua#L37"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridCast<!-- -->.<!-- -->Paused<!-- -->:<!-- --> </code> <code class="blue_P4bS">boolean</code></div><div>
+<p>
+  When <code>true</code>, <code>_StepProjectile</code> skips this cast entirely. <code>TotalRuntime</code> does
+  not advance, producing seamless resumption from the paused position when set
+  back to <code>false</code>.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="UserData"><code style="text-decoration:none">UserData</code><a href="#UserData" class="hash-link" aria-label="Direct link to UserData" title="Direct link to UserData">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridCast.lua#L45"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridCast<!-- -->.<!-- -->UserData<!-- -->:<!-- --> </code> <code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">any</code><code>]</code></span><code>: </code><code class="blue_P4bS">any</code><code class="purple_ieR2">}</code></div><div>
+<p>
+  Free-form table for weapon-specific metadata. Shared with the linked
+  <a href="/HybridSolver/api/BulletContext">BulletContext</a> and passed unchanged on every signal emission.
+</p>
+</div><h2 class="anchor anchorWithStickyNavbar_LWe7" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="GetPosition"><code style="text-decoration:none">GetPosition</code><a href="#GetPosition" class="hash-link" aria-label="Direct link to GetPosition" title="Direct link to GetPosition">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridCast.lua#L55"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridCast<!-- -->:</code><code class="green_DgR4">GetPosition</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
+<p>
+  Returns the bullet's current world-space position using the analytic
+  kinematic formula. Always accurate to the current simulation time
+  regardless of when in the frame it is called.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="GetVelocity"><code style="text-decoration:none">GetVelocity</code><a href="#GetVelocity" class="hash-link" aria-label="Direct link to GetVelocity" title="Direct link to GetVelocity">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridCast.lua#L63"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridCast<!-- -->:</code><code class="green_DgR4">GetVelocity</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
+<p>
+  Returns the bullet's current velocity vector. The magnitude of this vector
+  is the current speed in studs per second.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="GetAcceleration"><code style="text-decoration:none">GetAcceleration</code><a href="#GetAcceleration" class="hash-link" aria-label="Direct link to GetAcceleration" title="Direct link to GetAcceleration">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridCast.lua#L72"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridCast<!-- -->:</code><code class="green_DgR4">GetAcceleration</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
+<p>
+  Returns the constant acceleration vector for the active trajectory segment.
+  This is the pre-computed sum of gravity and any extra acceleration — not
+  <code>workspace.Gravity</code> alone.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="SetPosition"><code style="text-decoration:none">SetPosition</code><a href="#SetPosition" class="hash-link" aria-label="Direct link to SetPosition" title="Direct link to SetPosition">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridCast.lua#L83"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridCast<!-- -->:</code><code class="green_DgR4">SetPosition</code><code>(</code><code>position<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Teleports the bullet to a new world-space position without changing its
+  velocity or acceleration. Opens a new trajectory segment if simulation
+  time has already elapsed on the current one.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="SetVelocity"><code style="text-decoration:none">SetVelocity</code><a href="#SetVelocity" class="hash-link" aria-label="Direct link to SetVelocity" title="Direct link to SetVelocity">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridCast.lua#L96"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridCast<!-- -->:</code><code class="green_DgR4">SetVelocity</code><code>(</code><code>velocity<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Changes the bullet's velocity to the given vector. Opens a new trajectory
+  segment if needed.
+</p>
+
+  
+    
+    
+      <div class="admonition admonition-success alert alert--success">
+        <div class="admonition-heading">
+          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="16" viewBox="0 0 12 16">
+                <path d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path>
+              </svg></span><span class="admonition-title">TIP</span></h5>
+        </div>
+        <div class="admonition-content">
+          <p>
+            Call <a href="/HybridSolver/api/HybridCast#ResetBounceState">HybridCast:ResetBounceState</a> after a sharp velocity change to prevent
+            the corner-trap detector from triggering on the new trajectory.
+          </p>
+        </div>
+      </div>
+    
+  
+
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="SetAcceleration"><code style="text-decoration:none">SetAcceleration</code><a href="#SetAcceleration" class="hash-link" aria-label="Direct link to SetAcceleration" title="Direct link to SetAcceleration">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridCast.lua#L105"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridCast<!-- -->:</code><code class="green_DgR4">SetAcceleration</code><code>(</code><code>acceleration<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Replaces the bullet's constant acceleration for future simulation. Because
+  acceleration is constant within a segment, this always opens a new segment
+  unless the current one has zero elapsed time.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="AddPosition"><code style="text-decoration:none">AddPosition</code><a href="#AddPosition" class="hash-link" aria-label="Direct link to AddPosition" title="Direct link to AddPosition">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridCast.lua#L113"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridCast<!-- -->:</code><code class="green_DgR4">AddPosition</code><code>(</code><code>offset<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Translates the bullet by an offset in world space. Equivalent to
+  <code>SetPosition(GetPosition() + offset)</code>.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="AddVelocity"><code style="text-decoration:none">AddVelocity</code><a href="#AddVelocity" class="hash-link" aria-label="Direct link to AddVelocity" title="Direct link to AddVelocity">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridCast.lua#L121"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridCast<!-- -->:</code><code class="green_DgR4">AddVelocity</code><code>(</code><code>delta<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Adds a delta to the bullet's current velocity. Useful for impulse effects
+  such as explosion knockback applied mid-flight.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="AddAcceleration"><code style="text-decoration:none">AddAcceleration</code><a href="#AddAcceleration" class="hash-link" aria-label="Direct link to AddAcceleration" title="Direct link to AddAcceleration">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridCast.lua#L129"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridCast<!-- -->:</code><code class="green_DgR4">AddAcceleration</code><code>(</code><code>delta<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Adds a delta to the bullet's constant acceleration. Useful for variable wind
+  or thrust that builds up over time via repeated calls.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="ResetBounceState"><code style="text-decoration:none">ResetBounceState</code><a href="#ResetBounceState" class="hash-link" aria-label="Direct link to ResetBounceState" title="Direct link to ResetBounceState">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridCast.lua#L142"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridCast<!-- -->:</code><code class="green_DgR4">ResetBounceState</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Resets the corner-trap sentinel fields (<code>LastBounceTime</code>, <code>LastBounceNormal</code>,
+  <code>LastBouncePosition</code>) back to their initial values.
+</p>
+<p>
+  Call this after any programmatic mid-flight velocity change (e.g. <code>SetVelocity</code>,
+  <code>AddVelocity</code>) that deliberately reverses or sharply redirects the bullet,
+  otherwise the corner-trap detector may falsely terminate the cast on the
+  next bounce.
+</p>
+</div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
+    &quot;functions&quot;: [
+        {
+            &quot;name&quot;: &quot;GetPosition&quot;,
+            &quot;desc&quot;: &quot;Returns the bullet&#x27;s current world-space position using the analytic\nkinematic formula. Always accurate to the current simulation time\nregardless of when in the frame it is called.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Vector3&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 55,
+                &quot;path&quot;: &quot;docs/HybridCast.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;GetVelocity&quot;,
+            &quot;desc&quot;: &quot;Returns the bullet&#x27;s current velocity vector. The magnitude of this vector\nis the current speed in studs per second.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Vector3&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 63,
+                &quot;path&quot;: &quot;docs/HybridCast.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;GetAcceleration&quot;,
+            &quot;desc&quot;: &quot;Returns the constant acceleration vector for the active trajectory segment.\nThis is the pre-computed sum of gravity and any extra acceleration — not\n`workspace.Gravity` alone.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Vector3&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 72,
+                &quot;path&quot;: &quot;docs/HybridCast.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SetPosition&quot;,
+            &quot;desc&quot;: &quot;Teleports the bullet to a new world-space position without changing its\nvelocity or acceleration. Opens a new trajectory segment if simulation\ntime has already elapsed on the current one.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;position&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Vector3&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 83,
+                &quot;path&quot;: &quot;docs/HybridCast.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SetVelocity&quot;,
+            &quot;desc&quot;: &quot;Changes the bullet&#x27;s velocity to the given vector. Opens a new trajectory\nsegment if needed.\n\n:::tip\nCall [HybridCast:ResetBounceState] after a sharp velocity change to prevent\nthe corner-trap detector from triggering on the new trajectory.\n:::&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;velocity&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Vector3&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 96,
+                &quot;path&quot;: &quot;docs/HybridCast.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SetAcceleration&quot;,
+            &quot;desc&quot;: &quot;Replaces the bullet&#x27;s constant acceleration for future simulation. Because\nacceleration is constant within a segment, this always opens a new segment\nunless the current one has zero elapsed time.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;acceleration&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Vector3&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 105,
+                &quot;path&quot;: &quot;docs/HybridCast.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;AddPosition&quot;,
+            &quot;desc&quot;: &quot;Translates the bullet by an offset in world space. Equivalent to\n`SetPosition(GetPosition() + offset)`.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;offset&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Vector3&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 113,
+                &quot;path&quot;: &quot;docs/HybridCast.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;AddVelocity&quot;,
+            &quot;desc&quot;: &quot;Adds a delta to the bullet&#x27;s current velocity. Useful for impulse effects\nsuch as explosion knockback applied mid-flight.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;delta&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Vector3&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 121,
+                &quot;path&quot;: &quot;docs/HybridCast.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;AddAcceleration&quot;,
+            &quot;desc&quot;: &quot;Adds a delta to the bullet&#x27;s constant acceleration. Useful for variable wind\nor thrust that builds up over time via repeated calls.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;delta&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Vector3&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 129,
+                &quot;path&quot;: &quot;docs/HybridCast.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;ResetBounceState&quot;,
+            &quot;desc&quot;: &quot;Resets the corner-trap sentinel fields (`LastBounceTime`, `LastBounceNormal`,\n`LastBouncePosition`) back to their initial values.\n\nCall this after any programmatic mid-flight velocity change (e.g. `SetVelocity`,\n`AddVelocity`) that deliberately reverses or sharply redirects the bullet,\notherwise the corner-trap detector may falsely terminate the cast on the\nnext bounce.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 142,
+                &quot;path&quot;: &quot;docs/HybridCast.lua&quot;
+            }
+        }
+    ],
+    &quot;properties&quot;: [
+        {
+            &quot;name&quot;: &quot;Alive&quot;,
+            &quot;desc&quot;: &quot;`true` while the cast is being simulated. Set to `false` as the very first\naction in termination so re-entrant calls are no-ops.&quot;,
+            &quot;lua_type&quot;: &quot;boolean&quot;,
+            &quot;readonly&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 28,
+                &quot;path&quot;: &quot;docs/HybridCast.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Paused&quot;,
+            &quot;desc&quot;: &quot;When `true`, `_StepProjectile` skips this cast entirely. `TotalRuntime` does\nnot advance, producing seamless resumption from the paused position when set\nback to `false`.&quot;,
+            &quot;lua_type&quot;: &quot;boolean&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 37,
+                &quot;path&quot;: &quot;docs/HybridCast.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;UserData&quot;,
+            &quot;desc&quot;: &quot;Free-form table for weapon-specific metadata. Shared with the linked\n[BulletContext] and passed unchanged on every signal emission.&quot;,
+            &quot;lua_type&quot;: &quot;{[any]: any}&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 45,
+                &quot;path&quot;: &quot;docs/HybridCast.lua&quot;
+            }
+        }
+    ],
+    &quot;types&quot;: [],
+    &quot;name&quot;: &quot;HybridCast&quot;,
+    &quot;desc&quot;: &quot;The internal representation of one in-flight projectile. Returned by\n[HybridSolver:Fire] for callers that need to introspect initial state.\n\n:::warning\nWeapon scripts should interact with [BulletContext] rather than `HybridCast`\ndirectly. `HybridCast` exposes internal solver state — mutating it directly\ncan produce physics errors that are difficult to debug.\n\nThe methods below (`GetPosition`, `SetVelocity`, etc.) are safe to call and are\nthe intended way to read or modify a bullet mid-flight from within signal handlers.\n:::&quot;,
+    &quot;source&quot;: {
+        &quot;line&quot;: 16,
+        &quot;path&quot;: &quot;docs/HybridCast.lua&quot;
+    }
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#properties" class="table-of-contents__link toc-highlight">Properties</a><ul><li><a href="#Alive" class="table-of-contents__link toc-highlight">Alive</a></li><li><a href="#Paused" class="table-of-contents__link toc-highlight">Paused</a></li><li><a href="#UserData" class="table-of-contents__link toc-highlight">UserData</a></li></ul></li><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#AddAcceleration" class="table-of-contents__link toc-highlight">:AddAcceleration</a></li><li><a href="#AddPosition" class="table-of-contents__link toc-highlight">:AddPosition</a></li><li><a href="#AddVelocity" class="table-of-contents__link toc-highlight">:AddVelocity</a></li><li><a href="#GetAcceleration" class="table-of-contents__link toc-highlight">:GetAcceleration</a></li><li><a href="#GetPosition" class="table-of-contents__link toc-highlight">:GetPosition</a></li><li><a href="#GetVelocity" class="table-of-contents__link toc-highlight">:GetVelocity</a></li><li><a href="#ResetBounceState" class="table-of-contents__link toc-highlight">:ResetBounceState</a></li><li><a href="#SetAcceleration" class="table-of-contents__link toc-highlight">:SetAcceleration</a></li><li><a href="#SetPosition" class="table-of-contents__link toc-highlight">:SetPosition</a></li><li><a href="#SetVelocity" class="table-of-contents__link toc-highlight">:SetVelocity</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://discord.gg/XMYMRKcd3g" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord Server<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://discord.com/users/897026279243669504" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord (Direct)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div><div class="col footer__col"><div class="footer__title">Social</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://www.instagram.com/vedevelopment/" target="_blank" rel="noopener noreferrer" class="footer__link-item">Instagram<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://x.com/vedevelopment_" target="_blank" rel="noopener noreferrer" class="footer__link-item">X (Twitter)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://www.tiktok.com/@vedevelopment" target="_blank" rel="noopener noreferrer" class="footer__link-item">TikTok<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 VeDevelopment</div></div></div></footer></div>
+</body>
+</html>

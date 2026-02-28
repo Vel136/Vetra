@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="plugin-moonwave plugin-id-moonwave" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.7.0">
+<title data-rh="true">HybridSolver | HybridSolver</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://Vel136.github.io/HybridSolver/api/HybridSolver"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="HybridSolver | HybridSolver"><meta data-rh="true" name="description" content="Analytic-trajectory projectile simulation engine for Roblox.
+
+HybridSolver manages all active in-flight projectiles. Every frame it advances
+each cast using the exact kinematic formula `P(t) = Origin + V₀t + ½At²`,
+raycasts between the previous and current position, and resolves hits as
+pierce, bounce, or terminal impact.
+
+Signals are module-level — connect once at initialisation and receive events
+from every cast. The [BulletContext] argument on every signal lets you identify
+which bullet fired the event and dispatch accordingly.
+
+```lua
+local HybridSolver = require(path.to.HybridSolver)
+
+local Solver  = HybridSolver.new()
+local Signals = Solver:GetSignals()
+
+Signals.OnHit:Connect(function(context, result, velocity)
+    -- handle impact
+end)
+
+local Behavior = HybridSolver.BehaviorBuilder.Sniper():Build()
+
+local context = BulletContext.new({
+    Origin    = muzzlePosition,
+    Direction = direction,
+    Speed     = 300,
+})
+
+Solver:Fire(context, Behavior)
+```"><meta data-rh="true" property="og:description" content="Analytic-trajectory projectile simulation engine for Roblox.
+
+HybridSolver manages all active in-flight projectiles. Every frame it advances
+each cast using the exact kinematic formula `P(t) = Origin + V₀t + ½At²`,
+raycasts between the previous and current position, and resolves hits as
+pierce, bounce, or terminal impact.
+
+Signals are module-level — connect once at initialisation and receive events
+from every cast. The [BulletContext] argument on every signal lets you identify
+which bullet fired the event and dispatch accordingly.
+
+```lua
+local HybridSolver = require(path.to.HybridSolver)
+
+local Solver  = HybridSolver.new()
+local Signals = Solver:GetSignals()
+
+Signals.OnHit:Connect(function(context, result, velocity)
+    -- handle impact
+end)
+
+local Behavior = HybridSolver.BehaviorBuilder.Sniper():Build()
+
+local context = BulletContext.new({
+    Origin    = muzzlePosition,
+    Direction = direction,
+    Speed     = 300,
+})
+
+Solver:Fire(context, Behavior)
+```"><link data-rh="true" rel="canonical" href="https://Vel136.github.io/HybridSolver/api/HybridSolver"><link data-rh="true" rel="alternate" href="https://Vel136.github.io/HybridSolver/api/HybridSolver" hreflang="en"><link data-rh="true" rel="alternate" href="https://Vel136.github.io/HybridSolver/api/HybridSolver" hreflang="x-default"><link rel="stylesheet" href="/HybridSolver/assets/css/styles.3f4864db.css">
+<script src="/HybridSolver/assets/js/runtime~main.8ae9011f.js" defer="defer"></script>
+<script src="/HybridSolver/assets/js/main.d3247600.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,t("light"))}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/HybridSolver/"><b class="navbar__title text--truncate">HybridSolver</b></a><a class="navbar__item navbar__link" href="/HybridSolver/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/HybridSolver/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Vel136/HybridSolver" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/HybridSolver/api/HybridSolver">Core</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/HybridSolver/api/HybridSolver">​Hybrid​Solver</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/HybridSolver/api/BulletContext">​Bullet​Context</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/HybridSolver/api/HybridCast">​Hybrid​Cast</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/HybridSolver/api/BehaviorBuilder">Configuration</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/HybridSolver/api/TypeDefinitions">Types</a></div></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Hybrid</span><span style="display:inline-block">Solver</span></h1><div class="luaClassTags_EipM"></div><div>
+<p>Analytic-trajectory projectile simulation engine for Roblox.</p>
+<p>
+  HybridSolver manages all active in-flight projectiles. Every frame it advances
+  each cast using the exact kinematic formula <code>P(t) = Origin + V₀t + ½At²</code>,
+  raycasts between the previous and current position, and resolves hits as
+  pierce, bounce, or terminal impact.
+</p>
+<p>
+  Signals are module-level — connect once at initialisation and receive events
+  from every cast. The <a href="/HybridSolver/api/BulletContext">BulletContext</a> argument on every signal lets you identify
+  which bullet fired the event and dispatch accordingly.
+</p>
+<pre class="language-lua"><code class="language-lua"><span class="token keyword">local</span> HybridSolver <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span>path<span class="token punctuation">.</span>to<span class="token punctuation">.</span>HybridSolver<span class="token punctuation">)</span>
+
+<span class="token keyword">local</span> Solver  <span class="token operator">=</span> HybridSolver<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">local</span> Signals <span class="token operator">=</span> Solver<span class="token punctuation">:</span><span class="token function">GetSignals</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+Signals<span class="token punctuation">.</span>OnHit<span class="token punctuation">:</span><span class="token function">Connect</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>context<span class="token punctuation">,</span> result<span class="token punctuation">,</span> velocity<span class="token punctuation">)</span>
+    <span class="token comment">-- handle impact</span>
+<span class="token keyword">end</span><span class="token punctuation">)</span>
+
+<span class="token keyword">local</span> Behavior <span class="token operator">=</span> HybridSolver<span class="token punctuation">.</span>BehaviorBuilder<span class="token punctuation">.</span><span class="token function">Sniper</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span><span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">local</span> context <span class="token operator">=</span> BulletContext<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+    Origin    <span class="token operator">=</span> muzzlePosition<span class="token punctuation">,</span>
+    Direction <span class="token operator">=</span> direction<span class="token punctuation">,</span>
+    Speed     <span class="token operator">=</span> <span class="token number">300</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+Solver<span class="token punctuation">:</span><span class="token function">Fire</span><span class="token punctuation">(</span>context<span class="token punctuation">,</span> Behavior<span class="token punctuation">)</span>
+</code></pre>
+</div></header><h2 class="anchor anchorWithStickyNavbar_LWe7" id="properties">Properties<a href="#properties" class="hash-link" aria-label="Direct link to Properties" title="Direct link to Properties">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="BehaviorBuilder"><code style="text-decoration:none">BehaviorBuilder</code><a href="#BehaviorBuilder" class="hash-link" aria-label="Direct link to BehaviorBuilder" title="Direct link to BehaviorBuilder">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridSolver.lua#L45"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridSolver<!-- -->.<!-- -->BehaviorBuilder<!-- -->:<!-- --> </code> <code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
+<p>
+  Re-export of the <a href="/HybridSolver/api/BehaviorBuilder">BehaviorBuilder</a> module so consumers only need to require
+  HybridSolver and can access the builder via <code>HybridSolver.BehaviorBuilder</code>.
+</p>
+</div><h2 class="anchor anchorWithStickyNavbar_LWe7" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="new"><code style="text-decoration:none">new</code><a href="#new" class="hash-link" aria-label="Direct link to new" title="Direct link to new">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridSolver.lua#L59"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridSolver<!-- -->.</code><code class="green_DgR4">new</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/HybridSolver">HybridSolver</a></code></div><div>
+<p>
+  Creates a new HybridSolver instance and connects the per-frame simulation
+  loop to the appropriate RunService event (Heartbeat on server, RenderStepped
+  on client).
+</p>
+
+  
+    
+    
+      <div class="admonition admonition-caution alert alert--warning">
+        <div class="admonition-heading">
+          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                <path d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path>
+              </svg></span><span class="admonition-title">CAUTION</span></h5>
+        </div>
+        <div class="admonition-content">
+          <p>
+            Call this only once. Calling <code>new()</code> more than once will log a warning
+            and return an additional instance sharing the same underlying state —
+            the frame loop is not connected a second time.
+          </p>
+        </div>
+      </div>
+    
+  
+
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Fire"><code style="text-decoration:none">Fire</code><a href="#Fire" class="hash-link" aria-label="Direct link to Fire" title="Direct link to Fire">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridSolver.lua#L76"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridSolver<!-- -->:</code><code class="green_DgR4">Fire</code><code>(</code><div class="inset_uKQm"><div><code>context<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/BulletContext">BulletContext</a></code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+<p>The public bullet object weapon code interacts with.</p>
+</span></span></div><div><code>behavior<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/TypeDefinitions#HybridBehavior">HybridBehavior?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Optional behavior overrides. Omitted fields use defaults.</p>
+</span></span></div></div><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/HybridCast">HybridCast</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>The internal cast object, or nil if validation failed.</p>
+</span></span></div><div>
+<p>Creates and registers a new in-flight projectile cast.</p>
+<p>
+  <code>context</code> must have non-nil, finite <code>Origin</code> (Vector3), <code>Direction</code> (Vector3),
+  and <code>Speed</code> (number) fields. Any field omitted from <code>behavior</code> falls back to
+  the built-in defaults.
+</p>
+<p>
+  After <code>Fire</code> returns the cast is live and will be advanced every frame until
+  it hits something, expires by distance or speed, or is stopped via
+  <code>context:Terminate()</code>.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="GetSignals"><code style="text-decoration:none">GetSignals</code><a href="#GetSignals" class="hash-link" aria-label="Direct link to GetSignals" title="Direct link to GetSignals">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/HybridSolver.lua#L119"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>HybridSolver<!-- -->:</code><code class="green_DgR4">GetSignals</code><code>(</code><code>) → </code><code class="purple_ieR2">{</code><div class="inset_uKQm"><code>OnHit<!-- -->: </code><code class="blue_P4bS">Signal</code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>OnTravel<!-- -->: </code><code class="blue_P4bS">Signal</code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>OnPierce<!-- -->: </code><code class="blue_P4bS">Signal</code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>OnBounce<!-- -->: </code><code class="blue_P4bS">Signal</code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>OnTerminated<!-- -->: </code><code class="blue_P4bS">Signal</code></div><code class="purple_ieR2">}</code></div><div>
+<p>Returns the module-level Signals table.</p>
+<p>
+  Connect to these once during weapon initialisation. Every signal passes the
+  <a href="/HybridSolver/api/BulletContext">BulletContext</a> as its first argument so you can identify the bullet and
+  access its <code>UserData</code>.
+</p>
+<pre class="language-lua"><code class="language-lua"><span class="token keyword">local</span> Signals <span class="token operator">=</span> Solver<span class="token punctuation">:</span><span class="token function">GetSignals</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+Signals<span class="token punctuation">.</span>OnHit<span class="token punctuation">:</span><span class="token function">Connect</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>context<span class="token punctuation">,</span> result<span class="token punctuation">,</span> velocity<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> result <span class="token keyword">then</span>
+        <span class="token comment">-- physical surface impact</span>
+    <span class="token keyword">else</span>
+        <span class="token comment">-- distance or speed expiry</span>
+    <span class="token keyword">end</span>
+<span class="token keyword">end</span><span class="token punctuation">)</span>
+
+Signals<span class="token punctuation">.</span>OnBounce<span class="token punctuation">:</span><span class="token function">Connect</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>context<span class="token punctuation">,</span> result<span class="token punctuation">,</span> velocity<span class="token punctuation">,</span> bounceCount<span class="token punctuation">)</span>
+    <span class="token function">print</span><span class="token punctuation">(</span><span class="token string">"Bounce #"</span> <span class="token operator">..</span> bounceCount<span class="token punctuation">)</span>
+<span class="token keyword">end</span><span class="token punctuation">)</span>
+</code></pre>
+<p><strong>Signal contracts:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Signal</th>
+      <th>Arguments</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>OnHit</code></td>
+      <td><code>context</code>, <code>result: RaycastResult?</code>, <code>velocity: Vector3</code></td>
+    </tr>
+    <tr>
+      <td><code>OnTravel</code></td>
+      <td><code>context</code>, <code>position: Vector3</code>, <code>velocity: Vector3</code></td>
+    </tr>
+    <tr>
+      <td><code>OnPierce</code></td>
+      <td><code>context</code>, <code>result: RaycastResult</code>, <code>velocity: Vector3</code>, <code>pierceCount: number</code></td>
+    </tr>
+    <tr>
+      <td><code>OnBounce</code></td>
+      <td><code>context</code>, <code>result: RaycastResult</code>, <code>velocity: Vector3</code>, <code>bounceCount: number</code></td>
+    </tr>
+    <tr>
+      <td><code>OnTerminated</code></td>
+      <td><code>context</code></td>
+    </tr>
+  </tbody>
+</table>
+<p>
+  <code>OnHit</code> fires with a nil <code>result</code> when the bullet expires by distance or minimum
+  speed rather than a physical surface impact. Check <code>result ~= nil</code> to distinguish
+  the two cases.
+</p>
+<p><code>OnTravel</code> fires every frame using <code>Fire</code> (not <code>FireSafe</code>) — handlers must not throw.</p>
+</div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
+    &quot;functions&quot;: [
+        {
+            &quot;name&quot;: &quot;new&quot;,
+            &quot;desc&quot;: &quot;Creates a new HybridSolver instance and connects the per-frame simulation\nloop to the appropriate RunService event (Heartbeat on server, RenderStepped\non client).\n\n:::caution\nCall this only once. Calling `new()` more than once will log a warning\nand return an additional instance sharing the same underlying state —\nthe frame loop is not connected a second time.\n:::&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;HybridSolver&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 59,
+                &quot;path&quot;: &quot;docs/HybridSolver.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Fire&quot;,
+            &quot;desc&quot;: &quot;Creates and registers a new in-flight projectile cast.\n\n`context` must have non-nil, finite `Origin` (Vector3), `Direction` (Vector3),\nand `Speed` (number) fields. Any field omitted from `behavior` falls back to\nthe built-in defaults.\n\nAfter `Fire` returns the cast is live and will be advanced every frame until\nit hits something, expires by distance or speed, or is stopped via\n`context:Terminate()`.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;context&quot;,
+                    &quot;desc&quot;: &quot;The public bullet object weapon code interacts with.&quot;,
+                    &quot;lua_type&quot;: &quot;BulletContext&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;behavior&quot;,
+                    &quot;desc&quot;: &quot;Optional behavior overrides. Omitted fields use defaults.&quot;,
+                    &quot;lua_type&quot;: &quot;HybridBehavior?&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;The internal cast object, or nil if validation failed.&quot;,
+                    &quot;lua_type&quot;: &quot;HybridCast&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 76,
+                &quot;path&quot;: &quot;docs/HybridSolver.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;GetSignals&quot;,
+            &quot;desc&quot;: &quot;Returns the module-level Signals table.\n\nConnect to these once during weapon initialisation. Every signal passes the\n[BulletContext] as its first argument so you can identify the bullet and\naccess its `UserData`.\n\n```lua\nlocal Signals = Solver:GetSignals()\n\nSignals.OnHit:Connect(function(context, result, velocity)\n    if result then\n        -- physical surface impact\n    else\n        -- distance or speed expiry\n    end\nend)\n\nSignals.OnBounce:Connect(function(context, result, velocity, bounceCount)\n    print(\&quot;Bounce #\&quot; .. bounceCount)\nend)\n```\n\n**Signal contracts:**\n\n| Signal | Arguments |\n|--------|-----------|\n| `OnHit` | `context`, `result: RaycastResult?`, `velocity: Vector3` |\n| `OnTravel` | `context`, `position: Vector3`, `velocity: Vector3` |\n| `OnPierce` | `context`, `result: RaycastResult`, `velocity: Vector3`, `pierceCount: number` |\n| `OnBounce` | `context`, `result: RaycastResult`, `velocity: Vector3`, `bounceCount: number` |\n| `OnTerminated` | `context` |\n\n`OnHit` fires with a nil `result` when the bullet expires by distance or minimum\nspeed rather than a physical surface impact. Check `result ~= nil` to distinguish\nthe two cases.\n\n`OnTravel` fires every frame using `Fire` (not `FireSafe`) — handlers must not throw.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;{ OnHit: Signal, OnTravel: Signal, OnPierce: Signal, OnBounce: Signal, OnTerminated: Signal }&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 119,
+                &quot;path&quot;: &quot;docs/HybridSolver.lua&quot;
+            }
+        }
+    ],
+    &quot;properties&quot;: [
+        {
+            &quot;name&quot;: &quot;BehaviorBuilder&quot;,
+            &quot;desc&quot;: &quot;Re-export of the [BehaviorBuilder] module so consumers only need to require\nHybridSolver and can access the builder via `HybridSolver.BehaviorBuilder`.&quot;,
+            &quot;lua_type&quot;: &quot;BehaviorBuilder&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 45,
+                &quot;path&quot;: &quot;docs/HybridSolver.lua&quot;
+            }
+        }
+    ],
+    &quot;types&quot;: [],
+    &quot;name&quot;: &quot;HybridSolver&quot;,
+    &quot;desc&quot;: &quot;Analytic-trajectory projectile simulation engine for Roblox.\n\nHybridSolver manages all active in-flight projectiles. Every frame it advances\neach cast using the exact kinematic formula `P(t) = Origin + V₀t + ½At²`,\nraycasts between the previous and current position, and resolves hits as\npierce, bounce, or terminal impact.\n\nSignals are module-level — connect once at initialisation and receive events\nfrom every cast. The [BulletContext] argument on every signal lets you identify\nwhich bullet fired the event and dispatch accordingly.\n\n```lua\nlocal HybridSolver = require(path.to.HybridSolver)\n\nlocal Solver  = HybridSolver.new()\nlocal Signals = Solver:GetSignals()\n\nSignals.OnHit:Connect(function(context, result, velocity)\n    -- handle impact\nend)\n\nlocal Behavior = HybridSolver.BehaviorBuilder.Sniper():Build()\n\nlocal context = BulletContext.new({\n    Origin    = muzzlePosition,\n    Direction = direction,\n    Speed     = 300,\n})\n\nSolver:Fire(context, Behavior)\n```&quot;,
+    &quot;source&quot;: {
+        &quot;line&quot;: 36,
+        &quot;path&quot;: &quot;docs/HybridSolver.lua&quot;
+    }
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#properties" class="table-of-contents__link toc-highlight">Properties</a><ul><li><a href="#BehaviorBuilder" class="table-of-contents__link toc-highlight">BehaviorBuilder</a></li></ul></li><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#Fire" class="table-of-contents__link toc-highlight">:Fire</a></li><li><a href="#GetSignals" class="table-of-contents__link toc-highlight">:GetSignals</a></li><li><a href="#new" class="table-of-contents__link toc-highlight">.new</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://discord.gg/XMYMRKcd3g" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord Server<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://discord.com/users/897026279243669504" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord (Direct)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div><div class="col footer__col"><div class="footer__title">Social</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://www.instagram.com/vedevelopment/" target="_blank" rel="noopener noreferrer" class="footer__link-item">Instagram<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://x.com/vedevelopment_" target="_blank" rel="noopener noreferrer" class="footer__link-item">X (Twitter)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://www.tiktok.com/@vedevelopment" target="_blank" rel="noopener noreferrer" class="footer__link-item">TikTok<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 VeDevelopment</div></div></div></footer></div>
+</body>
+</html>

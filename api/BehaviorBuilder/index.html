@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="plugin-moonwave plugin-id-moonwave" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.7.0">
+<title data-rh="true">BehaviorBuilder | HybridSolver</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://Vel136.github.io/HybridSolver/api/BehaviorBuilder"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="BehaviorBuilder | HybridSolver"><meta data-rh="true" name="description" content="Fluent typed configuration builder for [HybridSolver].
+
+Instead of constructing raw behavior tables by hand, chain namespace methods
+and call `:Build()` to produce a validated, frozen `HybridBehavior`.
+
+```lua
+local Behavior = BehaviorBuilder.new()
+    :Physics()
+        :MaxDistance(500)
+        :MinSpeed(5)
+    :Done()
+    :Bounce()
+        :Max(3)
+        :Restitution(0.7)
+        :Filter(function(ctx, result, vel)
+            return result.Instance:HasTag(&quot;Bouncy&quot;)
+        end)
+    :Done()
+    :Build()
+```
+
+**Namespace overview:**
+
+| Method | Configures |
+|--------|-----------|
+| `:Physics()` | MaxDistance, MinSpeed, Gravity, Acceleration, RaycastParams |
+| `:Pierce()` | Filter, Max, SpeedThreshold, SpeedRetention, NormalBias |
+| `:Bounce()` | Filter, Max, SpeedThreshold, Restitution, MaterialRestitution, NormalPerturbation |
+| `:HighFidelity()` | SegmentSize, FrameBudget, AdaptiveScale, MinSegmentSize, MaxBouncesPerFrame |
+| `:CornerTrap()` | TimeThreshold, NormalDotThreshold, DisplacementThreshold |
+| `:Cosmetic()` | Template, Container, Provider |
+| `:Debug()` | Visualize |
+
+Builders are **reusable** — call `:Build()` multiple times to produce independent
+frozen tables. This is useful for weapon archetypes where many bullets share
+the same base configuration.
+
+:::tip Presets
+Use [BehaviorBuilder.Sniper], [BehaviorBuilder.Grenade], or [BehaviorBuilder.Pistol]
+as a starting point, then chain additional overrides before calling `:Build()`.
+:::"><meta data-rh="true" property="og:description" content="Fluent typed configuration builder for [HybridSolver].
+
+Instead of constructing raw behavior tables by hand, chain namespace methods
+and call `:Build()` to produce a validated, frozen `HybridBehavior`.
+
+```lua
+local Behavior = BehaviorBuilder.new()
+    :Physics()
+        :MaxDistance(500)
+        :MinSpeed(5)
+    :Done()
+    :Bounce()
+        :Max(3)
+        :Restitution(0.7)
+        :Filter(function(ctx, result, vel)
+            return result.Instance:HasTag(&quot;Bouncy&quot;)
+        end)
+    :Done()
+    :Build()
+```
+
+**Namespace overview:**
+
+| Method | Configures |
+|--------|-----------|
+| `:Physics()` | MaxDistance, MinSpeed, Gravity, Acceleration, RaycastParams |
+| `:Pierce()` | Filter, Max, SpeedThreshold, SpeedRetention, NormalBias |
+| `:Bounce()` | Filter, Max, SpeedThreshold, Restitution, MaterialRestitution, NormalPerturbation |
+| `:HighFidelity()` | SegmentSize, FrameBudget, AdaptiveScale, MinSegmentSize, MaxBouncesPerFrame |
+| `:CornerTrap()` | TimeThreshold, NormalDotThreshold, DisplacementThreshold |
+| `:Cosmetic()` | Template, Container, Provider |
+| `:Debug()` | Visualize |
+
+Builders are **reusable** — call `:Build()` multiple times to produce independent
+frozen tables. This is useful for weapon archetypes where many bullets share
+the same base configuration.
+
+:::tip Presets
+Use [BehaviorBuilder.Sniper], [BehaviorBuilder.Grenade], or [BehaviorBuilder.Pistol]
+as a starting point, then chain additional overrides before calling `:Build()`.
+:::"><link data-rh="true" rel="canonical" href="https://Vel136.github.io/HybridSolver/api/BehaviorBuilder"><link data-rh="true" rel="alternate" href="https://Vel136.github.io/HybridSolver/api/BehaviorBuilder" hreflang="en"><link data-rh="true" rel="alternate" href="https://Vel136.github.io/HybridSolver/api/BehaviorBuilder" hreflang="x-default"><link rel="stylesheet" href="/HybridSolver/assets/css/styles.3f4864db.css">
+<script src="/HybridSolver/assets/js/runtime~main.8ae9011f.js" defer="defer"></script>
+<script src="/HybridSolver/assets/js/main.d3247600.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,t("light"))}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/HybridSolver/"><b class="navbar__title text--truncate">HybridSolver</b></a><a class="navbar__item navbar__link" href="/HybridSolver/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/HybridSolver/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Vel136/HybridSolver" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/HybridSolver/api/HybridSolver">Core</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/HybridSolver/api/BehaviorBuilder">Configuration</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/HybridSolver/api/BehaviorBuilder">​Behavior​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/HybridSolver/api/PhysicsBuilder">​Physics​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/HybridSolver/api/PierceBuilder">​Pierce​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/HybridSolver/api/BounceBuilder">​Bounce​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/HybridSolver/api/HighFidelityBuilder">​High​Fidelity​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/HybridSolver/api/CornerTrapBuilder">​Corner​Trap​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/HybridSolver/api/CosmeticBuilder">​Cosmetic​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/HybridSolver/api/DebugBuilder">​Debug​Builder</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/HybridSolver/api/TypeDefinitions">Types</a></div></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Behavior</span><span style="display:inline-block">Builder</span></h1><div class="luaClassTags_EipM"></div><div>
+<p>Fluent typed configuration builder for <a href="/HybridSolver/api/HybridSolver">HybridSolver</a>.</p>
+<p>
+  Instead of constructing raw behavior tables by hand, chain namespace methods
+  and call <code>:Build()</code> to produce a validated, frozen <code>HybridBehavior</code>.
+</p>
+<pre class="language-lua"><code class="language-lua"><span class="token keyword">local</span> Behavior <span class="token operator">=</span> BehaviorBuilder<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">:</span><span class="token function">Physics</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">:</span><span class="token function">MaxDistance</span><span class="token punctuation">(</span><span class="token number">500</span><span class="token punctuation">)</span>
+        <span class="token punctuation">:</span><span class="token function">MinSpeed</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span>
+    <span class="token punctuation">:</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">:</span><span class="token function">Bounce</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">:</span><span class="token function">Max</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+        <span class="token punctuation">:</span><span class="token function">Restitution</span><span class="token punctuation">(</span><span class="token number">0.7</span><span class="token punctuation">)</span>
+        <span class="token punctuation">:</span><span class="token function">Filter</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> result<span class="token punctuation">,</span> vel<span class="token punctuation">)</span>
+            <span class="token keyword">return</span> result<span class="token punctuation">.</span>Instance<span class="token punctuation">:</span><span class="token function">HasTag</span><span class="token punctuation">(</span><span class="token string">"Bouncy"</span><span class="token punctuation">)</span>
+        <span class="token keyword">end</span><span class="token punctuation">)</span>
+    <span class="token punctuation">:</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">:</span><span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<p><strong>Namespace overview:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>Configures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>:Physics()</code></td>
+      <td>MaxDistance, MinSpeed, Gravity, Acceleration, RaycastParams</td>
+    </tr>
+    <tr>
+      <td><code>:Pierce()</code></td>
+      <td>Filter, Max, SpeedThreshold, SpeedRetention, NormalBias</td>
+    </tr>
+    <tr>
+      <td><code>:Bounce()</code></td>
+      <td>Filter, Max, SpeedThreshold, Restitution, MaterialRestitution, NormalPerturbation</td>
+    </tr>
+    <tr>
+      <td><code>:HighFidelity()</code></td>
+      <td>SegmentSize, FrameBudget, AdaptiveScale, MinSegmentSize, MaxBouncesPerFrame</td>
+    </tr>
+    <tr>
+      <td><code>:CornerTrap()</code></td>
+      <td>TimeThreshold, NormalDotThreshold, DisplacementThreshold</td>
+    </tr>
+    <tr>
+      <td><code>:Cosmetic()</code></td>
+      <td>Template, Container, Provider</td>
+    </tr>
+    <tr>
+      <td><code>:Debug()</code></td>
+      <td>Visualize</td>
+    </tr>
+  </tbody>
+</table>
+<p>
+  Builders are <strong>reusable</strong> — call <code>:Build()</code> multiple times to produce independent
+  frozen tables. This is useful for weapon archetypes where many bullets share
+  the same base configuration.
+</p>
+
+  
+    
+    
+      <div class="admonition admonition-success alert alert--success">
+        <div class="admonition-heading">
+          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="16" viewBox="0 0 12 16">
+                <path d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path>
+              </svg></span><span class="admonition-title">Presets</span></h5>
+        </div>
+        <div class="admonition-content">
+          <p>
+            Use <a href="/HybridSolver/api/BehaviorBuilder#Sniper">BehaviorBuilder.Sniper</a>, <a href="/HybridSolver/api/BehaviorBuilder#Grenade">BehaviorBuilder.Grenade</a>, or <a href="/HybridSolver/api/BehaviorBuilder#Pistol">BehaviorBuilder.Pistol</a>
+            as a starting point, then chain additional overrides before calling <code>:Build()</code>.
+          </p>
+        </div>
+      </div>
+    
+  
+
+</div></header><h2 class="anchor anchorWithStickyNavbar_LWe7" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="new"><code style="text-decoration:none">new</code><a href="#new" class="hash-link" aria-label="Direct link to new" title="Direct link to new">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BehaviorBuilder.lua#L55"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->.</code><code class="green_DgR4">new</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
+<p>Creates a new builder pre-populated with all default values.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Sniper"><code style="text-decoration:none">Sniper</code><a href="#Sniper" class="hash-link" aria-label="Direct link to Sniper" title="Direct link to Sniper">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BehaviorBuilder.lua#L155"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->.</code><code class="green_DgR4">Sniper</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
+<p>
+  Returns a pre-configured builder for a high-velocity, long-range,
+  pierce-capable projectile. No bouncing.
+</p>
+<p>
+  Suitable for rifles and anti-materiel weapons. Further chain methods
+  before calling <code>:Build()</code> to customise.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Grenade"><code style="text-decoration:none">Grenade</code><a href="#Grenade" class="hash-link" aria-label="Direct link to Grenade" title="Direct link to Grenade">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BehaviorBuilder.lua#L165"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->.</code><code class="green_DgR4">Grenade</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
+<p>
+  Returns a pre-configured builder for a low-speed, gravity-affected,
+  bouncy projectile. No piercing.
+</p>
+<p>Suitable for thrown grenades or bouncing explosives.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Pistol"><code style="text-decoration:none">Pistol</code><a href="#Pistol" class="hash-link" aria-label="Direct link to Pistol" title="Direct link to Pistol">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BehaviorBuilder.lua#L175"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->.</code><code class="green_DgR4">Pistol</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
+<p>
+  Returns a pre-configured builder for a standard short-to-mid range
+  projectile with single pierce and no bounce.
+</p>
+<p>Suitable for handguns and SMGs.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Physics"><code style="text-decoration:none">Physics</code><a href="#Physics" class="hash-link" aria-label="Direct link to Physics" title="Direct link to Physics">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BehaviorBuilder.lua#L68"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Physics</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/PhysicsBuilder">PhysicsBuilder</a></code></div><div>
+<p>Opens the Physics configuration group.</p>
+<p>
+  Available setters: <code>:MaxDistance()</code>, <code>:MinSpeed()</code>, <code>:Gravity()</code>,
+  <code>:Acceleration()</code>, <code>:RaycastParams()</code>. Call <code>:Done()</code> to return to the
+  root builder.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Pierce"><code style="text-decoration:none">Pierce</code><a href="#Pierce" class="hash-link" aria-label="Direct link to Pierce" title="Direct link to Pierce">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BehaviorBuilder.lua#L78"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Pierce</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/PierceBuilder">PierceBuilder</a></code></div><div>
+<p>Opens the Pierce configuration group.</p>
+<p>
+  Available setters: <code>:Filter()</code>, <code>:Max()</code>, <code>:SpeedThreshold()</code>,
+  <code>:SpeedRetention()</code>, <code>:NormalBias()</code>. Call <code>:Done()</code> to return.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Bounce"><code style="text-decoration:none">Bounce</code><a href="#Bounce" class="hash-link" aria-label="Direct link to Bounce" title="Direct link to Bounce">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BehaviorBuilder.lua#L89"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Bounce</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/BounceBuilder">BounceBuilder</a></code></div><div>
+<p>Opens the Bounce configuration group.</p>
+<p>
+  Available setters: <code>:Filter()</code>, <code>:Max()</code>, <code>:SpeedThreshold()</code>,
+  <code>:Restitution()</code>, <code>:MaterialRestitution()</code>, <code>:NormalPerturbation()</code>.
+  Call <code>:Done()</code> to return.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="HighFidelity"><code style="text-decoration:none">HighFidelity</code><a href="#HighFidelity" class="hash-link" aria-label="Direct link to HighFidelity" title="Direct link to HighFidelity">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BehaviorBuilder.lua#L99"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">HighFidelity</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/HighFidelityBuilder">HighFidelityBuilder</a></code></div><div>
+<p>Opens the HighFidelity configuration group.</p>
+<p>
+  Available setters: <code>:SegmentSize()</code>, <code>:FrameBudget()</code>, <code>:AdaptiveScale()</code>,
+  <code>:MinSegmentSize()</code>, <code>:MaxBouncesPerFrame()</code>. Call <code>:Done()</code> to return.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="CornerTrap"><code style="text-decoration:none">CornerTrap</code><a href="#CornerTrap" class="hash-link" aria-label="Direct link to CornerTrap" title="Direct link to CornerTrap">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BehaviorBuilder.lua#L109"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">CornerTrap</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/CornerTrapBuilder">CornerTrapBuilder</a></code></div><div>
+<p>Opens the CornerTrap configuration group.</p>
+<p>
+  Available setters: <code>:TimeThreshold()</code>, <code>:NormalDotThreshold()</code>,
+  <code>:DisplacementThreshold()</code>. Call <code>:Done()</code> to return.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Cosmetic"><code style="text-decoration:none">Cosmetic</code><a href="#Cosmetic" class="hash-link" aria-label="Direct link to Cosmetic" title="Direct link to Cosmetic">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BehaviorBuilder.lua#L119"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Cosmetic</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/CosmeticBuilder">CosmeticBuilder</a></code></div><div>
+<p>Opens the Cosmetic configuration group.</p>
+<p>
+  Available setters: <code>:Template()</code>, <code>:Container()</code>, <code>:Provider()</code>.
+  Call <code>:Done()</code> to return.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Debug"><code style="text-decoration:none">Debug</code><a href="#Debug" class="hash-link" aria-label="Direct link to Debug" title="Direct link to Debug">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BehaviorBuilder.lua#L128"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Debug</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/DebugBuilder">DebugBuilder</a></code></div><div>
+<p>Opens the Debug configuration group.</p>
+<p>Available setters: <code>:Visualize()</code>. Call <code>:Done()</code> to return.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Build"><code style="text-decoration:none">Build</code><a href="#Build" class="hash-link" aria-label="Direct link to Build" title="Direct link to Build">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BehaviorBuilder.lua#L142"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Build</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/HybridSolver/api/TypeDefinitions#HybridBehavior">HybridBehavior?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Frozen behavior table, or nil if validation failed.</p>
+</span></span></div><div>
+<p>
+  Validates the current configuration and returns a frozen <code>HybridBehavior</code>
+  table ready to pass to <a href="/HybridSolver/api/HybridSolver#Fire">HybridSolver:Fire</a>.
+</p>
+<p>
+  All validation errors are collected and logged together so every problem is
+  reported at once. Returns <code>nil</code> if any validation error is found.
+</p>
+<p>
+  Does <strong>not</strong> consume the builder — call <code>:Build()</code> multiple times to produce
+  independent frozen tables from the same configuration.
+</p>
+</div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
+    &quot;functions&quot;: [
+        {
+            &quot;name&quot;: &quot;new&quot;,
+            &quot;desc&quot;: &quot;Creates a new builder pre-populated with all default values.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;BehaviorBuilder&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 55,
+                &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Physics&quot;,
+            &quot;desc&quot;: &quot;Opens the Physics configuration group.\n\nAvailable setters: `:MaxDistance()`, `:MinSpeed()`, `:Gravity()`,\n`:Acceleration()`, `:RaycastParams()`. Call `:Done()` to return to the\nroot builder.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;PhysicsBuilder&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 68,
+                &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Pierce&quot;,
+            &quot;desc&quot;: &quot;Opens the Pierce configuration group.\n\nAvailable setters: `:Filter()`, `:Max()`, `:SpeedThreshold()`,\n`:SpeedRetention()`, `:NormalBias()`. Call `:Done()` to return.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;PierceBuilder&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 78,
+                &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Bounce&quot;,
+            &quot;desc&quot;: &quot;Opens the Bounce configuration group.\n\nAvailable setters: `:Filter()`, `:Max()`, `:SpeedThreshold()`,\n`:Restitution()`, `:MaterialRestitution()`, `:NormalPerturbation()`.\nCall `:Done()` to return.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;BounceBuilder&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 89,
+                &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;HighFidelity&quot;,
+            &quot;desc&quot;: &quot;Opens the HighFidelity configuration group.\n\nAvailable setters: `:SegmentSize()`, `:FrameBudget()`, `:AdaptiveScale()`,\n`:MinSegmentSize()`, `:MaxBouncesPerFrame()`. Call `:Done()` to return.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;HighFidelityBuilder&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 99,
+                &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;CornerTrap&quot;,
+            &quot;desc&quot;: &quot;Opens the CornerTrap configuration group.\n\nAvailable setters: `:TimeThreshold()`, `:NormalDotThreshold()`,\n`:DisplacementThreshold()`. Call `:Done()` to return.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;CornerTrapBuilder&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 109,
+                &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Cosmetic&quot;,
+            &quot;desc&quot;: &quot;Opens the Cosmetic configuration group.\n\nAvailable setters: `:Template()`, `:Container()`, `:Provider()`.\nCall `:Done()` to return.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;CosmeticBuilder&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 119,
+                &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Debug&quot;,
+            &quot;desc&quot;: &quot;Opens the Debug configuration group.\n\nAvailable setters: `:Visualize()`. Call `:Done()` to return.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;DebugBuilder&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 128,
+                &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Build&quot;,
+            &quot;desc&quot;: &quot;Validates the current configuration and returns a frozen `HybridBehavior`\ntable ready to pass to [HybridSolver:Fire].\n\nAll validation errors are collected and logged together so every problem is\nreported at once. Returns `nil` if any validation error is found.\n\nDoes **not** consume the builder — call `:Build()` multiple times to produce\nindependent frozen tables from the same configuration.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;Frozen behavior table, or nil if validation failed.&quot;,
+                    &quot;lua_type&quot;: &quot;HybridBehavior?&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 142,
+                &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Sniper&quot;,
+            &quot;desc&quot;: &quot;Returns a pre-configured builder for a high-velocity, long-range,\npierce-capable projectile. No bouncing.\n\nSuitable for rifles and anti-materiel weapons. Further chain methods\nbefore calling `:Build()` to customise.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;BehaviorBuilder&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 155,
+                &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Grenade&quot;,
+            &quot;desc&quot;: &quot;Returns a pre-configured builder for a low-speed, gravity-affected,\nbouncy projectile. No piercing.\n\nSuitable for thrown grenades or bouncing explosives.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;BehaviorBuilder&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 165,
+                &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Pistol&quot;,
+            &quot;desc&quot;: &quot;Returns a pre-configured builder for a standard short-to-mid range\nprojectile with single pierce and no bounce.\n\nSuitable for handguns and SMGs.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;BehaviorBuilder&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 175,
+                &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
+            }
+        }
+    ],
+    &quot;properties&quot;: [],
+    &quot;types&quot;: [],
+    &quot;name&quot;: &quot;BehaviorBuilder&quot;,
+    &quot;desc&quot;: &quot;Fluent typed configuration builder for [HybridSolver].\n\nInstead of constructing raw behavior tables by hand, chain namespace methods\nand call `:Build()` to produce a validated, frozen `HybridBehavior`.\n\n```lua\nlocal Behavior = BehaviorBuilder.new()\n    :Physics()\n        :MaxDistance(500)\n        :MinSpeed(5)\n    :Done()\n    :Bounce()\n        :Max(3)\n        :Restitution(0.7)\n        :Filter(function(ctx, result, vel)\n            return result.Instance:HasTag(\&quot;Bouncy\&quot;)\n        end)\n    :Done()\n    :Build()\n```\n\n**Namespace overview:**\n\n| Method | Configures |\n|--------|-----------|\n| `:Physics()` | MaxDistance, MinSpeed, Gravity, Acceleration, RaycastParams |\n| `:Pierce()` | Filter, Max, SpeedThreshold, SpeedRetention, NormalBias |\n| `:Bounce()` | Filter, Max, SpeedThreshold, Restitution, MaterialRestitution, NormalPerturbation |\n| `:HighFidelity()` | SegmentSize, FrameBudget, AdaptiveScale, MinSegmentSize, MaxBouncesPerFrame |\n| `:CornerTrap()` | TimeThreshold, NormalDotThreshold, DisplacementThreshold |\n| `:Cosmetic()` | Template, Container, Provider |\n| `:Debug()` | Visualize |\n\nBuilders are **reusable** — call `:Build()` multiple times to produce independent\nfrozen tables. This is useful for weapon archetypes where many bullets share\nthe same base configuration.\n\n:::tip Presets\nUse [BehaviorBuilder.Sniper], [BehaviorBuilder.Grenade], or [BehaviorBuilder.Pistol]\nas a starting point, then chain additional overrides before calling `:Build()`.\n:::&quot;,
+    &quot;source&quot;: {
+        &quot;line&quot;: 46,
+        &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
+    }
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#Bounce" class="table-of-contents__link toc-highlight">:Bounce</a></li><li><a href="#Build" class="table-of-contents__link toc-highlight">:Build</a></li><li><a href="#CornerTrap" class="table-of-contents__link toc-highlight">:CornerTrap</a></li><li><a href="#Cosmetic" class="table-of-contents__link toc-highlight">:Cosmetic</a></li><li><a href="#Debug" class="table-of-contents__link toc-highlight">:Debug</a></li><li><a href="#HighFidelity" class="table-of-contents__link toc-highlight">:HighFidelity</a></li><li><a href="#Physics" class="table-of-contents__link toc-highlight">:Physics</a></li><li><a href="#Pierce" class="table-of-contents__link toc-highlight">:Pierce</a></li><li><a href="#Grenade" class="table-of-contents__link toc-highlight">.Grenade</a></li><li><a href="#new" class="table-of-contents__link toc-highlight">.new</a></li><li><a href="#Pistol" class="table-of-contents__link toc-highlight">.Pistol</a></li><li><a href="#Sniper" class="table-of-contents__link toc-highlight">.Sniper</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://discord.gg/XMYMRKcd3g" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord Server<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://discord.com/users/897026279243669504" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord (Direct)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div><div class="col footer__col"><div class="footer__title">Social</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://www.instagram.com/vedevelopment/" target="_blank" rel="noopener noreferrer" class="footer__link-item">Instagram<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://x.com/vedevelopment_" target="_blank" rel="noopener noreferrer" class="footer__link-item">X (Twitter)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://www.tiktok.com/@vedevelopment" target="_blank" rel="noopener noreferrer" class="footer__link-item">TikTok<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 VeDevelopment</div></div></div></footer></div>
+</body>
+</html>
