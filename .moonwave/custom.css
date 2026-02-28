@@ -1,0 +1,153 @@
+/**
+ * HybridSolver — Custom Moonwave Theme
+ * A sharp, technical dark theme fitting a high-performance physics module.
+ */
+
+:root {
+  /* Primary accent — a clean electric blue */
+  --ifm-color-primary: #4d9ef7;
+  --ifm-color-primary-dark: #2d8ef6;
+  --ifm-color-primary-darker: #1d84f5;
+  --ifm-color-primary-darkest: #076de3;
+  --ifm-color-primary-light: #6daef8;
+  --ifm-color-primary-lighter: #7db8f9;
+  --ifm-color-primary-lightest: #aed2fb;
+
+  --ifm-code-font-size: 93%;
+  --ifm-font-family-base: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --ifm-font-family-monospace: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  --ifm-heading-font-weight: 600;
+  --ifm-navbar-height: 56px;
+}
+
+/* ── Dark mode overrides ─────────────────────────────────────────────────── */
+
+[data-theme='dark'] {
+  --ifm-background-color: #0f1117;
+  --ifm-background-surface-color: #161b22;
+  --ifm-navbar-background-color: #0d1117;
+  --ifm-footer-background-color: #0d1117;
+  --ifm-card-background-color: #161b22;
+  --ifm-toc-border-color: #30363d;
+  --ifm-color-emphasis-300: #30363d;
+  --ifm-hr-border-color: #21262d;
+
+  --ifm-color-content: #e6edf3;
+  --ifm-color-content-secondary: #8b949e;
+
+  --docusaurus-highlighted-code-line-bg: rgba(77, 158, 247, 0.08);
+}
+
+/* ── Navbar ──────────────────────────────────────────────────────────────── */
+
+[data-theme='dark'] .navbar {
+  border-bottom: 1px solid #21262d;
+  box-shadow: none;
+}
+
+.navbar__title {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+
+[data-theme='dark'] .menu {
+  background-color: #0d1117;
+}
+
+[data-theme='dark'] .menu__link--active {
+  background-color: rgba(77, 158, 247, 0.12);
+  color: var(--ifm-color-primary-light);
+  font-weight: 600;
+}
+
+[data-theme='dark'] .menu__link:hover {
+  background-color: rgba(77, 158, 247, 0.07);
+}
+
+/* ── Code blocks ─────────────────────────────────────────────────────────── */
+
+[data-theme='dark'] .prism-code {
+  background-color: #161b22 !important;
+  border: 1px solid #21262d;
+  border-radius: 6px;
+}
+
+[data-theme='dark'] code {
+  background-color: #1c2128;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  color: #e6edf3;
+}
+
+/* ── API doc cards ───────────────────────────────────────────────────────── */
+
+[data-theme='dark'] .api-docs .card {
+  background-color: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 8px;
+}
+
+[data-theme='dark'] .api-docs .card:hover {
+  border-color: var(--ifm-color-primary-dark);
+}
+
+/* ── Admonitions ─────────────────────────────────────────────────────────── */
+
+[data-theme='dark'] .alert--tip {
+  background-color: rgba(77, 158, 247, 0.08);
+  border-left-color: var(--ifm-color-primary);
+}
+
+[data-theme='dark'] .alert--warning {
+  background-color: rgba(210, 153, 34, 0.08);
+}
+
+[data-theme='dark'] .alert--danger {
+  background-color: rgba(248, 81, 73, 0.08);
+}
+
+/* ── Table of contents ───────────────────────────────────────────────────── */
+
+[data-theme='dark'] .table-of-contents__link--active {
+  color: var(--ifm-color-primary-light);
+  font-weight: 600;
+}
+
+/* ── Markdown ────────────────────────────────────────────────────────────── */
+
+[data-theme='dark'] h1,
+[data-theme='dark'] h2,
+[data-theme='dark'] h3 {
+  color: #e6edf3;
+}
+
+[data-theme='dark'] h2 {
+  border-bottom: 1px solid #21262d;
+  padding-bottom: 0.4rem;
+}
+
+[data-theme='dark'] table {
+  border-color: #21262d;
+}
+
+[data-theme='dark'] table th {
+  background-color: #161b22;
+  border-color: #30363d;
+}
+
+[data-theme='dark'] table td {
+  border-color: #21262d;
+}
+
+[data-theme='dark'] table tr:nth-child(even) {
+  background-color: #0f1117;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+
+[data-theme='dark'] .footer {
+  border-top: 1px solid #21262d;
+}

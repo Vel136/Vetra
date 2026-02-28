@@ -1,0 +1,44 @@
+[moonwave]
+sourceDir = ["src"]
+
+[docusaurus]
+title = "HybridSolver"
+tagline = "Analytic-trajectory projectile simulation for Roblox"
+url = "https://Vel136.github.io"
+baseUrl = "/HybridSolver/"
+
+[home]
+enabled = true
+bannerImage = "/banner.svg"
+includeReadme = true
+
+[[classOrder]]
+section = "Core"
+classes = ["HybridSolver", "BulletContext", "HybridCast"]
+
+[[classOrder]]
+section = "Configuration"
+classes = ["BehaviorBuilder", "PhysicsBuilder", "PierceBuilder", "BounceBuilder", "HighFidelityBuilder", "CornerTrapBuilder", "CosmeticBuilder", "DebugBuilder"]
+
+[[classOrder]]
+section = "Types"
+classes = ["TypeDefinitions"]
+
+[navbar]
+title = "HybridSolver"
+
+[[navbar.items]]
+label = "Docs"
+docId = "intro"
+type = "doc"
+position = "left"
+
+[[navbar.items]]
+label = "API"
+to = "api"
+position = "left"
+
+[[navbar.items]]
+label = "GitHub"
+href = "https://github.com/Vel136/HybridSolver"
+position = "right"
