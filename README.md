@@ -46,3 +46,7 @@ Solver:Fire(context, Behavior)
 - **HybridSolver** — core simulation engine
 - **BehaviorBuilder** — fluent typed configuration builder
 - **BulletContext** — public-facing projectile state API
+
+## Documentation
+Documentation can be found here:
+https://hybridsolver-docs.netlify.app
