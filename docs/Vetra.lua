@@ -118,4 +118,25 @@ function Vetra:Fire(context: BulletContext, behavior: VetraBehavior?): VetraCast
 ]=]
 function Vetra:GetSignals() end
 
+--[=[
+	Tears down this solver instance completely. After this call the instance
+	is inert — its frame loop is disconnected, all live casts are terminated,
+	all signals are destroyed, and all internal state is cleared.
+
+	`OnTerminated` fires for every live cast during shutdown, giving consumers
+	a final cleanup callback consistent with normal cast expiry.
+
+	:::danger
+	Calling any method on the instance after `Destroy()` returns is undefined
+	behaviour. The metatable is stripped and the table is frozen — all reads
+	and writes will error immediately at the call site.
+	:::
+
+	:::caution
+	`Destroy()` is not safe to call twice. Guard against this with a flag on
+	your own code if double-destruction is possible at your call sites.
+	:::
+]=]
+function Vetra:Destroy() end
+
 return Vetra
