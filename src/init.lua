@@ -3521,7 +3521,10 @@ return setmetatable(Factory, {
 	__index = function(_, Key)
 		Logger:Warn(string.format("Vetra: attempt to index nil key '%s'", tostring(Key)))
 	end,
-	__newindex = function(_, Key)
-		Logger:Error(string.format("Vetra: attempt to write to protected key '%s'", tostring(Key)))
-	end,
+	__newindex = function(_, Key, Value)
+		Logger:Error(string.format(
+			"Vetra: attempt to write '%s' to protected key '%s'",
+			tostring(Value), tostring(Key)
+		))
+	end
 })
