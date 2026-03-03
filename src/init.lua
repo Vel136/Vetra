@@ -439,7 +439,7 @@ local DEFAULT_BEHAVIOR: VetraBehavior = {
 	CornerDisplacementThreshold  = 0.5,
 	CosmeticBulletTemplate       = nil,
 	CosmeticBulletContainer      = nil,
-	VisualizeCasts               = true,
+	VisualizeCasts               = false,
 }
 
 -- ─── Physics Helpers ─────────────────────────────────────────────────────────
@@ -2893,19 +2893,19 @@ Vetra.__type  = IDENTITY
             threshold logs a warning because providers must not yield.
 
         6. Registration and context linking:
-            The cast is inserted into Self._ActiveCasts via Register(). The
+            The cast is inserted into self._ActiveCasts via Register(). The
             bidirectional cast↔context map is established on the solver instance's
             weak maps.
 
         7. Terminate closure injection:
             A Terminate closure is injected into Context.__solverData. This closure
-            captures Self by upvalue so context:Terminate() always reaches the correct
+            captures self by upvalue so context:Terminate() always reaches the correct
             solver instance regardless of how many instances exist at call time.
 
     Parameters:
-        Self: Vetra
+        self: Vetra
             The solver instance receiving this cast. All registry, map, and signal
-            operations use Self rather than any module-level state.
+            operations use self rather than any module-level state.
 
         Context: BulletContext
             The public-facing bullet object that weapon code interacts with. Must
@@ -2937,7 +2937,7 @@ Vetra.__type  = IDENTITY
         rather than an error — it avoids breaking callers who set a default template on
         a shared Behavior table and then pass a provider for specific bullet types.
 ]=]
-function Vetra.Fire(Self: Vetra, Context: any, FireBehavior: VetraBehavior): VetraCast
+function Vetra.Fire(self: Vetra, Context: any, FireBehavior: VetraBehavior): VetraCast
 	-- Validate the three required fields on the incoming context. All three are
 	-- consumed directly to construct the initial trajectory segment:
 	--     Origin → segment.Origin
@@ -3178,25 +3178,25 @@ function Vetra.Fire(Self: Vetra, Context: any, FireBehavior: VetraBehavior): Vet
 
 	-- ─── Registration & Context Linking ──────────────────────────────────────
 
-	-- Register the cast in this solver's _ActiveCasts array. Using Self ensures
+	-- Register the cast in this solver's _ActiveCasts array. Using self ensures
 	-- the cast is placed in this instance's registry, not any other solver's.
-	Register(Self, VetraCast)
+	Register(self, VetraCast)
 
 	-- Establish the bidirectional cast↔context weak map entries on this instance.
 	-- Both directions are needed: the solver looks up Context from Cast when firing
 	-- signals (CastToBulletContext), and Terminate() looks up Cast from Context
 	-- when context:Terminate() is called (BulletContextToCast).
-	Self._CastToBulletContext[VetraCast] = Context
-	Self._BulletContextToCast[Context]    = VetraCast
+	self._CastToBulletContext[VetraCast] = Context
+	self._BulletContextToCast[Context]    = VetraCast
 
 	-- Inject the Terminate closure into the BulletContext's __solverData. This
 	-- gives context:Terminate() a direct path back to this solver's Terminate()
 	-- function without exposing the internal VetraCast table or the solver
-	-- instance to weapon code. The closure captures Self and VetraCast by
+	-- instance to weapon code. The closure captures self and VetraCast by
 	-- upvalue — they are bound correctly even if multiple solver instances exist.
 	if Context.__solverData and type(Context.__solverData) == "table" then
 		Context.__solverData.Terminate = function()
-			Terminate(Self, VetraCast)
+			Terminate(self, VetraCast)
 		end
 	end
 
@@ -3207,14 +3207,140 @@ end
 
 --[[
     Returns this solver instance's Signals table. Because signals are per-instance,
-    a handler connected to Self.Signals.OnHit will only receive events from casts
+    a handler connected to self.Signals.OnHit will only receive events from casts
     registered on this specific solver — never from casts on a different solver
     instance. Consumers should call GetSignals() once at setup time and cache the
     returned table rather than calling it on every signal connection.
 ]]
 
-function Vetra.GetSignals(Self: Vetra)
-	return Self.Signals
+function Vetra.GetSignals(self: Vetra)
+	return self.Signals
+end
+
+-- ─── Destroy ───────────────────────────────────────────────────────────────
+
+--[=[
+    Vetra:Destroy
+
+    Description:
+        Tears down this solver instance completely. After this call the instance
+        is inert — its frame loop is disconnected, all live casts are terminated,
+        all signals are destroyed, and all internal state tables are cleared to
+        release their references for garbage collection.
+
+        The shutdown sequence is ordered deliberately. Each step creates a
+        precondition for the steps that follow:
+
+        Step 1 — Disconnect the frame loop:
+            _StepProjectile must stop firing before any casts are terminated.
+            If the frame event were left connected, a Heartbeat or RenderStepped
+            that fires concurrently with the termination pass (possible in deferred
+            signal contexts) could attempt to step a cast whose registry entry is
+            mid-removal, producing a use-after-free on the _ActiveCasts array.
+            Disconnecting first closes that window entirely.
+
+        Step 2 — Terminate all live casts in reverse index order:
+            Each Terminate() call delegates to Remove(), which performs a swap-
+            remove on _ActiveCasts. Iterating forwards over the array while
+            swap-remove is reshuffling it would cause the cursor to skip the
+            element moved into a just-vacated slot. Iterating backwards avoids
+            this: the swap always moves an element from a higher index into a
+            lower one, so every element at or below the current cursor has already
+            been visited and will not be revisited. Every live cast is therefore
+            terminated exactly once regardless of how the array reshuffles beneath
+            the loop.
+
+            Terminating casts here also fires FireOnTerminated for each one,
+            giving consumers a final cleanup callback consistent with normal
+            cast expiry. Consumers should not assume that Destroy() will be called
+            before the instance goes out of scope — they should handle OnTerminated
+            for all cleanup work.
+
+        Step 3 — Destroy all signals:
+            Signal destruction disconnects every handler connected to OnHit,
+            OnTravel, OnPierce, OnBounce, and OnTerminated. Without this step,
+            handlers that close over game objects (e.g. a particle emitter
+            referenced inside an OnTravel closure) would remain reachable via
+            the signal's connection list and prevent GC collection of those objects.
+
+        Step 4 — Nil all state tables:
+            Clearing _ActiveCasts, _CastToBulletContext, _BulletContextToCast,
+            Signals, and _FrameBudget releases the solver's strong references to
+            all remaining objects. After this step, the solver instance itself
+            holds no root references that could prevent the GC from reclaiming
+            the full object graph.
+
+    Parameters:
+        self: Vetra
+            The solver instance to destroy. Calling any method on self after
+            Destroy() returns is undefined behaviour — the internal tables have
+            been nilled and method calls will error.
+
+    Returns:
+        nil
+
+    Notes:
+        Destroy() is idempotent with respect to the frame event disconnect: if
+        _FrameEvent is already nil (e.g. the connection was never established due
+        to an error in Factory.new), the disconnect step is safely skipped.
+
+        Destroy() does NOT protect against being called twice. The second call
+        will attempt to iterate a nil _ActiveCasts table and error. If double-
+        destruction is possible in your call sites, guard with a tombstone flag
+        on the instance before calling Destroy().
+]=]
+function Vetra.Destroy(self: Vetra)
+	if self._Destroyed then Logger:Error("Destroy : Vetra already destroyed") return end
+	self._Destroyed = true
+	
+	-- Disconnect the frame loop so _StepProjectile stops firing
+	if self._FrameEvent and typeof(self._FrameEvent) == "RBXScriptConnection" then
+		self._FrameEvent:Disconnect()
+		self._FrameEvent = nil
+	end
+	
+	
+	-- Terminate all live casts. Iterate backwards because Terminate calls
+	-- Remove() which does a swap-remove — iterating forwards would cause
+	-- the loop to skip elements as indices shift under it.
+	local ActiveCasts = self._ActiveCasts
+	for i = #ActiveCasts, 1, -1 do
+		local Cast = ActiveCasts[i]
+		if Cast and Cast.Alive then
+			Terminate(self, Cast)
+		end
+	end
+
+	-- Destroy all signals so any lingering connections are cleaned up
+	for _, Signal in self.Signals do
+		Signal:Destroy()
+	end
+
+	-- Clear state to release references for GC
+	self._ActiveCasts        = nil
+	self._CastToBulletContext = nil
+	self._BulletContextToCast = nil
+	self.Signals             = nil
+	self._FrameBudget        = nil
+	
+		
+	-- Strip the metatable before freezing. Removing it severs the __index chain
+	-- to Vetra's method table, so any post-destruction method call (e.g. a stale
+	-- reference calling self:Fire() after Destroy()) errors immediately at the
+	-- index site rather than reaching a method body that operates on nilled fields
+	-- and producing a cryptic nil-index panic several call frames deeper.
+	--
+	-- table.freeze() is applied after the metatable is removed because Luau does
+	-- not permit setmetatable() on a frozen table — attempting it would throw.
+	-- Freezing the shell that remains makes all further writes to self an
+	-- immediate error, preventing any code path from partially re-animating the
+	-- instance by writing new fields onto the cleared table. Together the two
+	-- calls convert the dead instance into a loud, fail-fast tombstone: reads
+	-- error (no metatable), writes error (frozen), and both fail at the exact
+	-- call site rather than propagating silent corruption into live simulation state.
+	setmetatable(self, nil)
+	table.freeze(self)
+	return 
 end
 
 -- ─── Factory ─────────────────────────────────────────────────────────────────
@@ -3295,6 +3421,7 @@ function Factory.new(): Vetra
 			OnBounce     = VeSignal.new(),
 			OnTerminated = VeSignal.new(),
 		},
+		_FrameEvent = nil,
 	}, { __index = Vetra })
 
 	-- Determine the correct RunService event for this environment and connect
@@ -3303,10 +3430,11 @@ function Factory.new(): Vetra
 	-- Server uses Heartbeat (post-physics, authoritative positions).
 	-- Client uses RenderStepped (pre-render, correct cosmetic timing).
 	local FrameEvent = IS_SERVER and RunService.Heartbeat or RunService.RenderStepped
-	FrameEvent:Connect(function(FrameDelta: number)
+	local Connection = FrameEvent:Connect(function(FrameDelta: number)
 		_StepProjectile(SolverInstance, FrameDelta)
 	end)
 
+	SolverInstance._FrameEvent = Connection 
 	return SolverInstance
 end
 

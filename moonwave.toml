@@ -4,7 +4,7 @@ sourceDir = ["docs"]
 [docusaurus]
 title = "Vetra"
 tagline = "Analytic-trajectory projectile simulation for Roblox"
-url = "https://hybridsolver-docs.netlify.app"
+url = "https://vetra-docs.netlify.app"
 baseUrl = "/"
 
 [home]
