@@ -1336,7 +1336,50 @@ local function FireOnHit(Solver: Vetra, Cast: VetraCast, HitResult: RaycastResul
 	end
 	Solver.Signals.OnHit:FireSafe(Context, HitResult, HitVelocity)
 end
+local function FireOnPreBounce(Solver, Cast, HitResult, Velocity)
+    local Context = Solver._CastToBulletContext[Cast]
+    if not Context then return {} end
+    local MutableData = {
+        Normal           = HitResult.Normal,
+        IncomingVelocity = Velocity,
+    }
+    Solver.Signals.OnPreBounce:FireSafe(Context, HitResult, Velocity, MutableData)
+    return MutableData
+end
 
+local function FireOnMidBounce(Solver, Cast, HitResult, PostBounceVelocity)
+    local Context = Solver._CastToBulletContext[Cast]
+    if not Context then return {} end
+    local MutableData = {
+        PostBounceVelocity = PostBounceVelocity,
+        Restitution        = Cast.Behavior.Restitution,
+        NormalPerturbation = Cast.Behavior.NormalPerturbation,
+    }
+    Solver.Signals.OnMidBounce:FireSafe(Context, HitResult, PostBounceVelocity, MutableData)
+    return MutableData
+end
+
+local function FireOnPrePenetration(Solver, Cast, HitResult, Velocity)
+    local Context = Solver._CastToBulletContext[Cast]
+    if not Context then return {} end
+    local MutableData = {
+        EntryVelocity     = nil, -- nil means use current velocity unchanged
+        MaxPierceOverride = nil, -- nil means use Behavior.MaxPierceCount
+    }
+    Solver.Signals.OnPrePenetration:FireSafe(Context, HitResult, Velocity, MutableData)
+    return MutableData
+end
+
+local function FireOnMidPenetration(Solver, Cast, HitResult, Velocity)
+    local Context = Solver._CastToBulletContext[Cast]
+    if not Context then return {} end
+    local MutableData = {
+        SpeedRetention = Cast.Behavior.PenetrationSpeedRetention,
+        ExitVelocity   = nil, -- nil means let Vetra compute it
+    }
+    Solver.Signals.OnMidPenetration:FireSafe(Context, HitResult, Velocity, MutableData)
+    return MutableData
+end
 local function FireOnTravel(Solver: Vetra, Cast: VetraCast, TravelPosition: Vector3, TravelVelocity: Vector3)
 	local Context = Solver._CastToBulletContext[Cast]
 	if not Context then return end
@@ -1606,66 +1649,35 @@ end
         a sentinel, both of which are worse than letting the normal termination path
         handle it one frame later.
 ]=]
-local function ResolveBounce(Cast: VetraCast, HitResult: RaycastResult, IncomingVelocity: Vector3): Vector3
+local function ResolveBounce(Cast: VetraCast, HitResult: RaycastResult, IncomingVelocity: Vector3, OverrideNormal: Vector3?): Vector3
 	local Behavior      = Cast.Behavior
-	local SurfaceNormal = HitResult.Normal
+	local SurfaceNormal = OverrideNormal or HitResult.Normal
 
-	-- Standard geometric mirror reflection about the surface plane.
-	-- (IncomingVelocity · SurfaceNormal) is the signed magnitude of the velocity
-	-- component directed along the normal (positive means moving into the surface).
-	-- Subtracting twice this component from IncomingVelocity reverses the normal-
-	-- direction component while leaving the surface-tangent component unchanged,
-	-- producing a clean elastic reflection. This formula is exact for a flat surface
-	-- and a point-mass projectile.
-	local ReflectedVelocity = IncomingVelocity - 2 * IncomingVelocity:Dot(SurfaceNormal) * SurfaceNormal
-
-	-- Look up a per-material restitution multiplier. If the material is not present
-	-- in the MaterialRestitution table, default to 1.0 (the base Restitution value
-	-- applies unchanged). This allows surfaces with different physical properties
-	-- (e.g. rubber vs concrete vs ice) to coexist in the scene without requiring
-	-- separate Behavior configurations per material.
-	local MaterialRestitutionMultiplier = 1.0
-	if Behavior.MaterialRestitution then
-		MaterialRestitutionMultiplier = Behavior.MaterialRestitution[HitResult.Material] or 1.0
-	end
-
-	-- Apply energy dissipation. The combined coefficient (Restitution × material
-	-- multiplier) scales the reflected velocity uniformly across all three axes.
-	-- A coefficient of 1.0 is perfectly elastic (no energy loss). Values below
-	-- 1.0 simulate the mechanical energy converted to heat, sound, and deformation
-	-- on each bounce, ensuring the bullet cannot bounce indefinitely.
-	local ScaledVelocity = ReflectedVelocity * Behavior.Restitution * MaterialRestitutionMultiplier
-
-	-- Normal perturbation path: re-compute the reflection against a randomly
-	-- deviated surface normal to simulate micro-roughness on the contact surface.
-	-- A small random vector (scaled by NormalPerturbation) is added to the
-	-- geometric normal and the result is re-normalised. This gives a perturbed
-	-- normal that stays close to the original for small perturbation values but
-	-- introduces angular scatter for larger ones. The perturbed reflection entirely
-	-- replaces the clean ScaledVelocity computed above — combining both would
-	-- produce a physically meaningless double-reflection.
-	local ShouldPerturb = Behavior.NormalPerturbation > 0
-	if ShouldPerturb then
-		-- Sample a uniformly random direction in [-0.5, 0.5]³ and take its unit
-		-- vector. Scaling by NormalPerturbation controls how far the perturbed
-		-- normal can deviate from the geometric surface normal. Small values produce
-		-- a subtle scatter; values approaching 1.0 produce near-random reflections.
-		local NoiseVector = Vector3.new(
-			math.random() - 0.5,
-			math.random() - 0.5,
-			math.random() - 0.5
-		).Unit * Behavior.NormalPerturbation
-
-		local PerturbedNormal = (SurfaceNormal + NoiseVector).Unit
-		-- Recompute the full reflection and restitution against the perturbed normal.
-		-- This result overwrites ScaledVelocity so only the perturbed outcome is
-		-- returned. Applying both the clean and perturbed reflections sequentially
-		-- would double-reflect the bullet, which has no physical meaning.
-		ScaledVelocity = IncomingVelocity - 2 * IncomingVelocity:Dot(PerturbedNormal) * PerturbedNormal
-		ScaledVelocity = ScaledVelocity * Behavior.Restitution * MaterialRestitutionMultiplier
-	end
-
-	return ScaledVelocity
+	-- ── Mirror Reflection ─────────────────────────────────────────────────────
+	-- Standard geometric reflection about the surface plane:
+	--
+	--     V_reflected = V - 2 * (V · N) * N
+	--
+	-- (V · N) is the scalar projection of the incoming velocity onto the normal —
+	-- the signed magnitude of the velocity component directed into the surface.
+	-- Multiplying by N converts it back into a vector along the normal direction.
+	-- Subtracting twice this component from V cancels the inward velocity and
+	-- replaces it with an equal outward velocity, while leaving the tangential
+	-- (surface-parallel) component completely unchanged. The result is a perfect
+	-- elastic reflection for a flat surface and a point-mass projectile.
+	--
+	-- Note: this function returns the PURE reflection with no energy scaling.
+	-- Restitution is intentionally NOT applied here. It is applied in SimulateCast
+	-- after OnMidBounce fires, so consumers can override the restitution coefficient
+	-- per-bounce via MidBounceData.Restitution without needing to reconstruct the
+	-- reflection themselves. Applying restitution here and again in SimulateCast
+	-- would double-scale the velocity, causing every bounce to lose far more energy
+	-- than intended and making the Restitution value non-intuitive to configure.
+	--
+	-- MaterialRestitution is also NOT applied here for the same reason — all energy
+	-- scaling is owned by SimulateCast in a single location so the math is auditable
+	-- in one place and cannot diverge between the two functions.
+	return IncomingVelocity - 2 * IncomingVelocity:Dot(EffectiveNormal) * EffectiveNormal
 end
 
 -- ─── Pierce Resolution ───────────────────────────────────────────────────────
@@ -1787,6 +1799,58 @@ local function ResolvePierce(
 	local RayParams         = Behavior.RaycastParams
 	local CanPierceCallback = Behavior.CanPierceFunction
 
+
+	--[[
+		OnPrePenetration fires once before the chain begins. The consumer receives
+		a mutable table with two fields:
+
+			EntryVelocity: Vector3?
+				If provided and valid, replaces CurrentVelocity at the start of the
+				chain. Every pierce in the chain — including the first
+				OnMidPenetration call — inherits this velocity as its starting speed.
+				Nil means the chain runs on the velocity that reached this surface
+				unchanged.
+
+			MaxPierceOverride: number?
+				If provided, caps the pierce budget for this chain to a value in
+				[1, Behavior.MaxPierceCount]. Values outside that range are rejected
+				with a warning and Behavior.MaxPierceCount is used instead. Nil means
+				the chain uses Behavior.MaxPierceCount as normal.
+
+		The signal fires before any filter mutation or instance recording occurs,
+		so a chain that does nothing in OnPrePenetration leaves all state unmodified.
+	]]
+	local PrePierceData = FireOnPrePenetration(Solver, Cast, InitialPierceResult, CurrentVelocity)
+
+	-- Apply EntryVelocity override. Pre owns the inputs to the chain, so this
+	-- velocity is what every subsequent pierce in the chain inherits as its
+	-- starting speed — including the first OnMidPenetration call. An invalid
+	-- (NaN/inf) value is silently ignored so the chain still runs on the
+	-- original velocity rather than producing corrupted kinematic state.
+	if PrePierceData.EntryVelocity and t.Vector3(PrePierceData.EntryVelocity) then
+		CurrentVelocity = PrePierceData.EntryVelocity
+	end
+
+	-- Resolve the effective pierce budget for this chain. A numeric override
+	-- in [1, Behavior.MaxPierceCount] is accepted; anything outside that range
+	-- is rejected with a warning and the Behavior default is used instead.
+	-- Allowing a value above MaxPierceCount would silently exceed the configured
+	-- budget; allowing zero or negative would make the loop condition
+	-- (PierceCount >= EffectiveMaxPierceCount) true before the first iteration
+	-- and produce a degenerate empty chain.
+	local EffectiveMaxPierceCount = Behavior.MaxPierceCount
+	if PrePierceData.MaxPierceOverride ~= nil then
+		local Override = PrePierceData.MaxPierceOverride
+		if type(Override) == "number" and Override >= 1 and Override <= Behavior.MaxPierceCount then
+			EffectiveMaxPierceCount = math.floor(Override)
+		else
+			Logger:Warn(string.format(
+				"ResolvePierce: MaxPierceOverride must be an integer in [1, %d] — using Behavior.MaxPierceCount",
+				Behavior.MaxPierceCount
+			))
+		end
+	end
+
 	--[[
 	    The filter mutations performed inside this loop are permanent side effects
 	    on the cast's pooled RaycastParams for the duration of the cast's lifetime.
@@ -1840,13 +1904,65 @@ local function ResolvePierce(
 		end
 		RayParams.FilterDescendantsInstances = CurrentFilterList
 
-		-- Attenuate the bullet's speed by PenetrationSpeedRetention. The direction
-		-- (unit vector) is preserved because we model penetration as linear deceleration
-		-- with no deflection. The attenuated velocity is both passed to the next
-		-- CanPierceFunction call and carried through to the OnPierce signal so
-		-- consumers see the already-reduced speed at each pierce event.
-		local PostPierceSpeed = CurrentVelocity.Magnitude * Behavior.PenetrationSpeedRetention
-		CurrentVelocity = CurrentVelocity.Unit * PostPierceSpeed
+		--[[
+		    OnMidPenetration fires after filter mutation but before speed retention
+		    is applied for this specific pierce. The consumer receives a mutable
+		    table with two fields:
+
+		        SpeedRetention: number?
+		            Overrides Behavior.PenetrationSpeedRetention for this pierce only.
+		            Must be in the range [0, 1]. Values outside this range are rejected
+		            and Behavior.PenetrationSpeedRetention is used as a fallback with a
+		            warning. This allows per-surface energy absorption without requiring
+		            separate Behavior tables — a concrete wall and a wooden door can
+		            drain different amounts of kinetic energy within the same cast.
+
+		        ExitVelocity: Vector3?
+		            If provided and valid, entirely replaces the computed post-pierce
+		            velocity. The direction and magnitude are both taken from this value
+		            verbatim — no retention scaling is applied. This is the escape hatch
+		            for advanced cases like deflecting penetration, explosive fragmentation
+		            direction overrides, or scripted velocity manipulation that retention
+		            scaling alone cannot express.
+
+		    Priority: ExitVelocity takes precedence over SpeedRetention. If both are
+		    provided, ExitVelocity is used and SpeedRetention is ignored. If neither
+		    is provided (both nil), Behavior.PenetrationSpeedRetention is applied as
+		    normal — existing casts that do not connect OnMidPenetration are completely
+		    unaffected.
+		]]
+		local MidPierceData = FireOnMidPenetration(Solver, Cast, CurrentPierceResult, CurrentVelocity)
+
+		if MidPierceData.ExitVelocity and t.Vector3(MidPierceData.ExitVelocity) then
+			-- Consumer supplied a full velocity override. Use it verbatim — direction
+			-- and magnitude are both taken as-is. No retention scaling is applied.
+			CurrentVelocity = MidPierceData.ExitVelocity
+		else
+			local Retention = MidPierceData.SpeedRetention
+			if type(Retention) == "number" and Retention >= 0 and Retention <= 1 then
+				-- Valid consumer override. Scale speed by the provided retention
+				-- coefficient while preserving the direction unit vector unchanged.
+				CurrentVelocity = CurrentVelocity.Unit * (CurrentVelocity.Magnitude * Retention)
+			elseif Retention ~= nil then
+				-- Consumer supplied a retention value but it is outside [0, 1].
+				-- A negative retention would reverse the bullet's direction, and a
+				-- value above 1 would accelerate it — both are physically incoherent.
+				-- Warn and fall back to the Behavior default rather than silently
+				-- applying a degenerate value that would corrupt subsequent physics.
+				Logger:Warn("OnMidPenetration: SpeedRetention must be in [0, 1] — using Behavior.PenetrationSpeedRetention as fallback")
+				local FallbackSpeed = CurrentVelocity.Magnitude * Behavior.PenetrationSpeedRetention
+				CurrentVelocity = CurrentVelocity.Unit * FallbackSpeed
+			else
+				-- Consumer did not touch SpeedRetention. Apply Behavior default normally.
+				-- The direction (unit vector) is preserved because we model penetration
+				-- as linear deceleration with no deflection. The attenuated velocity is
+				-- both passed to the next CanPierceFunction call and carried through to
+				-- the OnPierce signal so consumers see the already-reduced speed at
+				-- each pierce event.
+				local PostPierceSpeed = CurrentVelocity.Magnitude * Behavior.PenetrationSpeedRetention
+				CurrentVelocity = CurrentVelocity.Unit * PostPierceSpeed
+			end
+		end
 
 		-- Fire OnPierce. This also increments PierceCount (inside FireOnPierce),
 		-- so the count check on the next line sees the up-to-date value.
@@ -1857,7 +1973,7 @@ local function ResolvePierce(
 			Visualizer.Normal(CurrentPierceResult.Position, CurrentPierceResult.Normal)
 		end
 
-		if Runtime.PierceCount >= Behavior.MaxPierceCount then
+		if Runtime.PierceCount >= EffectiveMaxPierceCount then
 			-- Pierce budget exhausted. Stop the chain here — the next surface, if
 			-- any, becomes a candidate for terminal impact processing in SimulateCast.
 			break
@@ -2268,25 +2384,82 @@ local function SimulateCast(Solver: Vetra, Cast: VetraCast, Delta: number, IsSub
 			local BounceWasResolved = false
 
 			if BounceConditionsMet then
-				local IsTrapped = IsCornerTrap(Cast, RaycastResult.Normal, RaycastResult.Position)
+				-- OnPreBounce fires before reflection is computed. Consumers can override
+				-- two fields:
+				--   Normal:           replaces the geometric surface normal fed into
+				--                     ResolveBounce and IsCornerTrap.
+				--   IncomingVelocity: replaces the velocity fed into ResolveBounce.
+				--                     Useful for capping entry speed or zeroing spin
+				--                     before the reflection formula runs.
+				-- An invalid (NaN/inf) IncomingVelocity override is silently ignored
+				-- and CurrentVelocity is used as a fallback.
+				local PreBounceData = FireOnPreBounce(Solver, Cast, RaycastResult, CurrentVelocity)
+				local PreBounceData = FireOnPreBounce(Solver, Cast, RaycastResult, CurrentVelocity)
+
+				-- Use consumer-overridden normal if provided, otherwise fall back to geometric normal.
+				-- EffectiveNormal flows through ALL subsequent operations — corner trap, reflection,
+				-- origin nudge, visualisation, and bounce metadata storage — so the override is
+				-- respected consistently rather than partially.
+
+				local EffectiveNormal = PreBounceData.Normal or RaycastResult.Normal
+				
+				local IsTrapped = IsCornerTrap(Cast, EffectiveNormal, RaycastResult.Position)
 
 				if not IsTrapped then
+
+					local EffectiveIncoming  = (PreBounceData.IncomingVelocity and t.Vector3(PreBounceData.IncomingVelocity))
+						and PreBounceData.IncomingVelocity
+						or  CurrentVelocity
+
 					-- Compute the reflected and energy-attenuated velocity for the
 					-- post-bounce arc. ResolveBounce applies the reflection formula and
-					-- the base + material restitution coefficients in a single call.
-					local PostBounceVelocity = ResolveBounce(Cast, RaycastResult, CurrentVelocity)
+					-- the base + material restitution coefficients in a single call	
+					local PostBounceVelocity = ResolveBounce(Cast, RaycastResult, EffectiveIncoming, EffectiveNormal)
+
+					-- OnMidBounce fires after reflection is computed but before restitution
+					-- scaling and perturbation are applied. Consumers can override three fields:
+					--   PostBounceVelocity: replaces the reflected vector before scaling.
+					--   Restitution:        overrides the energy loss scalar for this bounce.
+					--   NormalPerturbation: overrides the scatter amount applied to FinalVelocity's
+					--                       direction after restitution. Nil falls back to
+					--                       Behavior.NormalPerturbation.
+					local MidBounceData = FireOnMidBounce(Solver, Cast, RaycastResult, PostBounceVelocity)
+					
+					local FinalVelocity = MidBounceData.PostBounceVelocity or PostBounceVelocity
+					if not t.Vector3(FinalVelocity) then
+						Logger:Warn("OnMidBounce: PostBounceVelocity mutation invalid — ignoring")
+						FinalVelocity = PostBounceVelocity
+					end
+					
+					local MaterialMultiplier = (Behavior.MaterialRestitution and Behavior.MaterialRestitution[RaycastResult.Material]) or 1.0
+					local BaseRestitution = (type(MidBounceData.Restitution) == "number")
+					and MidBounceData.Restitution
+					or Behavior.Restitution
+					FinalVelocity = FinalVelocity * (BaseRestitution * MaterialMultiplier)
+
+					local Perturbation = type(MidBounceData.NormalPerturbation) == "number"
+						and MidBounceData.NormalPerturbation
+						or Behavior.NormalPerturbation
+					if Perturbation > 0 and FinalVelocity:Dot(FinalVelocity) > 1e-6 then
+						local Noise = Vector3.new(
+							math.random() - 0.5,
+							math.random() - 0.5,
+							math.random() - 0.5
+						).Unit * Perturbation
+						FinalVelocity = (FinalVelocity.Unit + Noise).Unit * FinalVelocity.Magnitude
+					end
 
 					-- Offset the new trajectory origin along the surface normal by NUDGE.
 					-- This ensures the first raycast on the new arc (whether sub-segment
 					-- or next frame) does not originate exactly on the surface plane and
 					-- re-detect it at distance ~0, which would produce a spurious
 					-- immediate re-bounce at the same point.
-					local PostBounceOrigin = RaycastResult.Position + RaycastResult.Normal * NUDGE
+					local PostBounceOrigin = RaycastResult.Position + EffectiveNormal * NUDGE
 
 					if Behavior.VisualizeCasts then
 						Visualizer.Hit(CFrameNew(RaycastResult.Position), "bounce")
-						Visualizer.Normal(RaycastResult.Position, RaycastResult.Normal)
-						Visualizer.Velocity(RaycastResult.Position, PostBounceVelocity)
+						Visualizer.Normal(RaycastResult.Position, EffectiveNormal)
+						Visualizer.Velocity(RaycastResult.Position, FinalVelocity)
 					end
 
 					-- Open a new trajectory segment for the post-bounce path. The segment
@@ -2298,11 +2471,12 @@ local function SimulateCast(Solver: Vetra, Cast: VetraCast, Delta: number, IsSub
 						StartTime       = Runtime.TotalRuntime,
 						EndTime         = -1,
 						Origin          = PostBounceOrigin,
-						InitialVelocity = PostBounceVelocity,
+						InitialVelocity = FinalVelocity,
 						Acceleration    = ActiveTrajectory.Acceleration,
 					}
 					table.insert(Runtime.Trajectories, NewTrajectory)
 					Runtime.ActiveTrajectory   = NewTrajectory
+
 
 					-- Signal ResimulateHighFidelity to abandon the sub-segment loop for
 					-- the current frame. Any remaining sub-segments would be stepping
@@ -2317,8 +2491,8 @@ local function SimulateCast(Solver: Vetra, Cast: VetraCast, Delta: number, IsSub
 					-- before storing because a zero-length LastBounceNormal would make
 					-- Guard 2's dot product always equal 0.0, permanently disabling that
 					-- guard for the remainder of the cast's lifetime.
-					if RaycastResult.Normal:Dot(RaycastResult.Normal) > 1e-6 then
-						Runtime.LastBounceNormal   = RaycastResult.Normal
+					 if EffectiveNormal:Dot(EffectiveNormal) > 1e-6 then
+						Runtime.LastBounceNormal   = EffectiveNormal
 						Runtime.LastBouncePosition = RaycastResult.Position
 						Runtime.LastBounceTime     = OsClock()
 					else
@@ -2338,8 +2512,8 @@ local function SimulateCast(Solver: Vetra, Cast: VetraCast, Delta: number, IsSub
 							table.clone(Behavior.OriginalFilter)
 					end
 
-					FireOnBounce(Solver, Cast, RaycastResult, PostBounceVelocity)
-					BounceWasResolved = true
+					FireOnBounce(Solver, Cast, RaycastResult, FinalVelocity)
+        			BounceWasResolved = true
 					return
 				else
 					-- Corner trap confirmed. Log and fall through to terminal hit
@@ -3337,10 +3511,14 @@ function Vetra.Destroy(self: Vetra)
 	for i = #ActiveCasts, 1, -1 do
 		local Cast = ActiveCasts[i]
 		if Cast and Cast.Alive then
-			Terminate(self, Cast)
+			local ok, err = pcall(Terminate, self, Cast)
+			if not ok then
+				Logger:Warn("Destroy: Terminate failed — " .. tostring(err))
+			end
 		end
 	end
 
+	
 	-- Destroy all signals so any lingering connections are cleaned up
 	for _, Signal in self.Signals do
 		Signal:Destroy()
@@ -3450,6 +3628,10 @@ function Factory.new(): Vetra
 			OnPierce     = VeSignal.new(),
 			OnBounce     = VeSignal.new(),
 			OnTerminated = VeSignal.new(),
+			OnPreBounce       = VeSignal.new(),
+			OnMidBounce       = VeSignal.new(),
+			OnPrePenetration  = VeSignal.new(),
+			OnMidPenetration  = VeSignal.new(),
 		},
 		_FrameEvent = nil,
 	}, { __index = Vetra })
