@@ -3003,7 +3003,9 @@ function Vetra.Fire(self: Vetra, Context: any, FireBehavior: VetraBehavior): Vet
 	local ResolvedPierceSpeedThreshold        = FireBehavior.PierceSpeedThreshold or DEFAULT_BEHAVIOR.PierceSpeedThreshold
 	local ResolvedPenetrationSpeedRetention   = FireBehavior.PenetrationSpeedRetention or DEFAULT_BEHAVIOR.PenetrationSpeedRetention
 	local ResolvedPierceNormalBias            = FireBehavior.PierceNormalBias or DEFAULT_BEHAVIOR.PierceNormalBias
-	local ResolvedResetPierceOnBounce		  = FireBehavior.ResetPierceOnBounce or DEFAULT_BEHAVIOR.ResetPierceOnBounce
+	local ResolvedResetPierceOnBounce         = if FireBehavior.ResetPierceOnBounce ~= nil
+		then FireBehavior.ResetPierceOnBounce
+		else DEFAULT_BEHAVIOR.ResetPierceOnBounce
 	local ResolvedCanBounceFunction           = FireBehavior.CanBounceFunction
 	local ResolvedMaxBounces                  = FireBehavior.MaxBounces or DEFAULT_BEHAVIOR.MaxBounces
 	local ResolvedBounceSpeedThreshold        = FireBehavior.BounceSpeedThreshold or DEFAULT_BEHAVIOR.BounceSpeedThreshold
@@ -3021,7 +3023,9 @@ function Vetra.Fire(self: Vetra, Context: any, FireBehavior: VetraBehavior): Vet
 	local ResolvedCosmeticBulletTemplate      = FireBehavior.CosmeticBulletTemplate
 	local ResolvedCosmeticBulletContainer     = FireBehavior.CosmeticBulletContainer
 	local ResolvedCosmeticBulletProvider      = FireBehavior.CosmeticBulletProvider
-	local ResolvedVisualizeCasts              = FireBehavior.VisualizeCasts or DEFAULT_BEHAVIOR.VisualizeCasts
+	local ResolvedVisualizeCasts              = if FireBehavior.VisualizeCasts ~= nil
+		then FireBehavior.VisualizeCasts
+		else DEFAULT_BEHAVIOR.VisualizeCasts
 
 	-- Gravity is handled with a special fallback: if the caller's gravity vector
 	-- has zero magnitude, we fall back to DEFAULT_GRAVITY (workspace gravity) and
