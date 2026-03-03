@@ -112,6 +112,7 @@ type BuiltBehavior = {
 	-- Bounce
 	CanBounceFunction            : BounceFilter?,
 	MaxBounces                   : number,
+	ResetPierceOnBounce          : boolean,
 	BounceSpeedThreshold         : number,
 	Restitution                  : number,
 	MaterialRestitution          : { [Enum.Material]: number },
@@ -174,6 +175,7 @@ local DEFAULTS: BuiltBehavior = {
 	CosmeticBulletContainer      = nil,
 	CosmeticBulletProvider       = nil,
 
+	ResetPierceOnBounce 		 = false,
 	VisualizeCasts               = false,
 }
 
@@ -406,6 +408,21 @@ export type BounceBuilder = typeof(setmetatable({} :: {
 	_Root   : any,
 	_Config : BuiltBehavior,
 }, BounceBuilder))
+
+--[=[
+    :ResetPierceOnBounce(enabled)
+    When true, pierce state (filter, PiercedInstances, PierceCount) is
+    automatically reset after each confirmed bounce, restoring the full
+    pierce budget for the new arc. Required for bounce + pierce combinations
+    where the post-bounce trajectory should be able to re-detect previously
+    pierced surfaces.
+    Default: false
+]=]
+function BounceBuilder.ResetPierceOnBounce(self: BounceBuilder, Value: boolean): BounceBuilder
+    assert(type(Value) == "boolean", "BounceBuilder:ResetPierceOnBounce — expected boolean")
+    self._Config.ResetPierceOnBounce = Value
+    return self
+end
 
 --[=[
     :Filter(callback)
@@ -768,7 +785,7 @@ function BehaviorBuilder.new(): BehaviorBuilder
 		AdaptiveScaleFactor          = DEFAULTS.AdaptiveScaleFactor,
 		MinSegmentSize               = DEFAULTS.MinSegmentSize,
 		MaxBouncesPerFrame           = DEFAULTS.MaxBouncesPerFrame,
-
+		ResetPierceOnBounce 		 = DEFAULTS.ResetPierceOnBounce,
 		CornerTimeThreshold          = DEFAULTS.CornerTimeThreshold,
 		CornerNormalDotThreshold     = DEFAULTS.CornerNormalDotThreshold,
 		CornerDisplacementThreshold  = DEFAULTS.CornerDisplacementThreshold,
@@ -812,7 +829,8 @@ end
     :Bounce()
     Opens the Bounce configuration group.
     Available methods: Filter, Max, SpeedThreshold, Restitution,
-                       MaterialRestitution, NormalPerturbation
+                       MaterialRestitution, NormalPerturbation,
+                       ResetPierceOnBounce
 ]=]
 function BehaviorBuilder.Bounce(self: BehaviorBuilder): BounceBuilder
 	return setmetatable({ _Root = self, _Config = self._Config }, BounceBuilder)

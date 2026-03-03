@@ -154,6 +154,11 @@ export type CastBehavior = {
 	-- Acceleration field into the single Acceleration value stored above.
 	Gravity                    : Vector3,
 
+	-- When true, ResetPierceState() is called automatically on the cast immediately
+	-- after each confirmed bounce opens a new trajectory segment. This restores the
+	-- RaycastParams filter, PiercedInstances list, and PierceCount to their Fire()-time
+	-- values so the post-bounce arc begins with a clean pierce slate.
+	ResetPierceOnBounce		   : boolean,
 	-- Pooled (possibly cloned) RaycastParams used for every raycast this cast
 	-- performs. The pierce system mutates FilterDescendantsInstances on this object
 	-- over the cast's lifetime. Reset to OriginalFilter in Terminate() before the

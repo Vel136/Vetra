@@ -422,6 +422,7 @@ local DEFAULT_BEHAVIOR: VetraBehavior = {
 	PierceSpeedThreshold         = 50,
 	Gravity                      = Vector3.new(0, -workspace.Gravity, 0),
 	PenetrationSpeedRetention    = 0.8,
+	ResetPierceOnBounce			 = false,
 	PierceNormalBias             = 1.0,
 	CanBounceFunction            = nil,
 	MaxBounces                   = 5,
@@ -840,7 +841,18 @@ local CAST_STATE_METHODS = {
 		self.Runtime.LastBouncePosition = Vector3.zero
 		self.Runtime.LastBounceTime     = -math.huge
 	end,
-
+	-- Resets the pierce tracking state on Runtime to its Fire()-time initial values.
+	-- This is the pierce-side counterpart to ResetBounceState and exists for the same
+	-- reason: a programmatic mid-flight event (most commonly a bounce that redirects
+	-- the trajectory) can leave stale pierce data that produces incorrect behaviour on
+	-- the new arc.
+	ResetPierceState = function(self: VetraCast)
+		local Behavior = self.Behavior
+		self.Runtime.PiercedInstances = {}
+		self.Runtime.PierceCount = 0
+		Behavior.RaycastParams.FilterDescendantsInstances =
+			table.clone(Behavior.OriginalFilter)
+	end,
 	-- Returns the bullet's current velocity vector by evaluating the analytic
 	-- derivative formula at the elapsed time within the active trajectory segment.
 	-- The magnitude of the returned vector is the current speed in studs/second.
@@ -2313,6 +2325,18 @@ local function SimulateCast(Solver: Vetra, Cast: VetraCast, Delta: number, IsSub
 						Logger:Warn("SimulateCast: degenerate surface normal detected — corner trap state not updated")
 					end
 					Runtime.BouncesThisFrame += 1
+					
+					-- If configured, reset pierce state so the post-bounce arc starts with a
+					-- clean filter and a fresh pierce budget. This runs after the new trajectory
+					-- segment is open and before FireOnBounce fires, so any OnBounce handler
+					-- that reads PierceCount or immediately calls Fire() for a fragment sees the
+					-- already-reset values rather than the previous arc's accumulated state.
+					if Behavior.ResetPierceOnBounce then
+						Runtime.PiercedInstances = {}
+						Runtime.PierceCount = 0
+						Behavior.RaycastParams.FilterDescendantsInstances =
+							table.clone(Behavior.OriginalFilter)
+					end
 
 					FireOnBounce(Solver, Cast, RaycastResult, PostBounceVelocity)
 					BounceWasResolved = true
@@ -2979,6 +3003,7 @@ function Vetra.Fire(self: Vetra, Context: any, FireBehavior: VetraBehavior): Vet
 	local ResolvedPierceSpeedThreshold        = FireBehavior.PierceSpeedThreshold or DEFAULT_BEHAVIOR.PierceSpeedThreshold
 	local ResolvedPenetrationSpeedRetention   = FireBehavior.PenetrationSpeedRetention or DEFAULT_BEHAVIOR.PenetrationSpeedRetention
 	local ResolvedPierceNormalBias            = FireBehavior.PierceNormalBias or DEFAULT_BEHAVIOR.PierceNormalBias
+	local ResolvedResetPierceOnBounce		  = FireBehavior.ResetPierceOnBounce or DEFAULT_BEHAVIOR.ResetPierceOnBounce
 	local ResolvedCanBounceFunction           = FireBehavior.CanBounceFunction
 	local ResolvedMaxBounces                  = FireBehavior.MaxBounces or DEFAULT_BEHAVIOR.MaxBounces
 	local ResolvedBounceSpeedThreshold        = FireBehavior.BounceSpeedThreshold or DEFAULT_BEHAVIOR.BounceSpeedThreshold
@@ -3078,6 +3103,7 @@ function Vetra.Fire(self: Vetra, Context: any, FireBehavior: VetraBehavior): Vet
 		},
 
 		Behavior = {
+			ResetPierceOnBounce		  = ResolvedResetPierceOnBounce,
 			Acceleration              = EffectiveAcceleration,
 			MaxDistance               = ResolvedMaxDistance,
 			MinSpeed                  = ResolvedMinSpeed,
