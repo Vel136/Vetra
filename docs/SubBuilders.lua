@@ -183,6 +183,22 @@ local BounceBuilder = {}
 function BounceBuilder:Filter(callback: (context: any, result: RaycastResult, velocity: Vector3) -> boolean): BounceBuilder end
 
 --[=[
+	When `true`, pierce state (filter, `PiercedInstances`, `PierceCount`) is
+	automatically reset after each confirmed bounce, restoring the full pierce
+	budget for the new arc.
+
+	Required for bounce + pierce combinations where the post-bounce trajectory
+	should be able to re-detect previously pierced surfaces. For conditional
+	resets (e.g. only after the first bounce), call `cast:ResetPierceState()`
+	manually inside an `OnBounce` handler instead.
+
+	Default: `false`
+
+	@param value boolean
+	@return BounceBuilder
+]=]
+function BounceBuilder:ResetPierceOnBounce(value: boolean): BounceBuilder end
+--[=[
 	Maximum total bounces across the bullet's entire lifetime.
 
 	Default: `5`

@@ -3490,6 +3490,7 @@ export type VetraBehavior = {
 	AdaptiveScaleFactor          : number?,
 	MinSegmentSize               : number?,
 	MaxBouncesPerFrame           : number?,
+	ResetPierceOnBounce          : boolean?,
 	CornerTimeThreshold          : number?,
 	CornerNormalDotThreshold     : number?,
 	CornerDisplacementThreshold  : number?,
