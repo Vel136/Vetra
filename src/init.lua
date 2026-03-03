@@ -1,62 +1,123 @@
 --!native
 --!optimize 2
 --!strict
--- ─── HybridSolver ────────────────────────────────────────────────────────────
+-- ─── Vetra v2.0.1 ─────────────────────────────────────────────────────
 --[[
-    HybridSolver — Analytic-trajectory projectile simulation module for Roblox.
+    MIT License
 
-    Architecture Overview:
-        This module manages a flat array of active HybridCast objects, each
-        representing one in-flight projectile. Every frame, _StepProjectile
-        iterates the array and advances each projectile by the frame delta.
+    Copyright (c) 2026 VeDevelopment
 
-        Trajectory math is done analytically (not Euler integration), meaning
-        the projectile position at any time T is computed directly from the
-        kinematic formula:  P(t) = Origin + V0*t + 0.5*A*t²
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
 
-        The analytic approach is deliberately chosen over Euler integration
-        (P += V*dt; V += A*dt each frame) because Euler methods accumulate
-        floating-point error at every step. Over long flight times or many
-        bounces, this drift causes the simulated path to visibly diverge from
-        the intended parabolic arc. With the analytic form, each position is
-        computed directly from the segment's fixed parameters, so there is zero
-        accumulated error regardless of frame count or flight duration.
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
 
-        Raycasting is then performed between the analytically computed positions
-        of the previous frame and the current frame. If a hit is detected, the
-        module evaluates whether it qualifies for piercing, bouncing, or
-        terminal termination — in that priority order. Pierce is checked first
-        because a bullet that can pierce should never simultaneously bounce on
-        the same surface; treating them as mutually exclusive prevents physically
-        inconsistent outcomes.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+]]
 
-    Context Integration:
-        Every cast is paired with a BulletContext via a bidirectional weak map.
-        The BulletContext is the public-facing object consumers interact with.
-        This separation exists to enforce a hard boundary between internal solver
-        state and the API surface exposed to weapon code. The solver drives the
-        context's state each frame (_UpdateState) and reads context metadata
-        (UserData, Id, etc.) when firing signals, so consumers always receive a
-        fully-populated context alongside raw physics data.
+-- ─── Vetra ────────────────────────────────────────────────────────────
+--[[
+    Vetra — Analytic-trajectory projectile simulation module for Roblox.
 
-    Signal Model:
-        Signals are module-level (not per-cast). Consumers connect once and
-        receive events from all active casts. Centralising signals this way
-        avoids the connection/disconnection overhead of per-cast signals and
-        eliminates a class of connection-leak bugs where consumers forget to
-        disconnect when a cast ends. The context argument on every signal
-        emission allows consumers to identify which cast fired it and dispatch
-        accordingly.
+    ── Architecture Overview ────────────────────────────────────────────────────
 
-    Performance Notes:
-        - Swap-remove (O(1)) is used for the active cast registry so terminating
-          a cast mid-array does not shift subsequent elements.
-        - Weak maps allow GC to reclaim terminated cast objects without explicit
-          cleanup calls.
-        - RaycastParams are pooled to avoid per-fire allocation pressure on the
-          GC, which matters when many bullets fire per second.
-        - Analytic position avoids per-frame sqrt calls and accumulated error
-          that Euler integration would introduce.
+    This module maintains a flat array of active VetraCast objects on each
+    solver instance, each representing one in-flight projectile. On every frame,
+    _StepProjectile iterates that array and advances each projectile by the
+    frame delta.
+
+    Trajectory mathematics is computed analytically rather than via Euler
+    integration. The projectile's world-space position at any time T is derived
+    directly from the kinematic equation:
+
+        P(t) = Origin + V0*t + 0.5*A*t²
+
+    This design choice is fundamental to the module's correctness guarantees.
+    Euler integration (P += V*dt; V += A*dt per frame) accumulates floating-point
+    error at every step. Over long flight times or after many bounces, that error
+    causes the simulated arc to visibly diverge from the intended parabola. The
+    analytic form computes each position independently from the segment's fixed
+    parameters, so accumulated error is structurally impossible regardless of
+    frame count or flight duration. The tradeoff is that the trajectory must be
+    representable as a constant-acceleration arc — non-constant forces require
+    opening a new trajectory segment.
+
+    After computing the analytic positions for the previous and current frames,
+    a single raycast is performed between them to detect surface contacts. Each
+    contact is resolved in priority order: pierce first, then bounce, then
+    terminal impact. Pierce is evaluated before bounce because a bullet capable
+    of piercing a surface must never simultaneously bounce off it — they are
+    mutually exclusive physical outcomes. Enforcing this priority in code prevents
+    compounding both effects on a single contact, which would produce physically
+    incoherent results.
+
+    ── Instance Isolation ───────────────────────────────────────────────────────
+
+    Each call to Factory.new() produces a fully independent solver instance. All
+    mutable state — the active cast registry, signal objects, bidirectional
+    context maps, and per-frame raycast budget — lives on the instance table,
+    not at module scope. The consequences of this design are:
+
+        • Casts registered on instance A are only stepped by instance A's frame
+          loop. Two solvers never interleave or share cast state.
+        • Signals are per-instance. A handler connected to instance A's OnHit
+          signal will never fire for a cast that belongs to instance B.
+        • Multiple Factory.new() calls are valid and produce genuinely separate
+          physics contexts. This is useful for separating server-authoritative hit
+          validation from client-side cosmetic traces without cross-contamination.
+
+    All internal functions that require solver state accept the Solver instance
+    as their first explicit parameter. Pure functions that operate only on a
+    single cast (PositionAtTime, VelocityAtTime, ModifyTrajectory, IsCornerTrap,
+    ResolveBounce) take no Solver argument because they never access instance
+    state.
+
+    ── Context Integration ──────────────────────────────────────────────────────
+
+    Every cast is paired with a BulletContext via a bidirectional weak map stored
+    on the solver instance. BulletContext is the public-facing object that weapon
+    code interacts with. This separation enforces a hard API boundary: weapon
+    scripts read and write context fields (Position, Velocity, UserData) while
+    the solver drives all internal physics state. The solver updates the context
+    via _UpdateState each frame so any consumer polling the context between
+    connections always sees current data.
+
+    ── Signal Model ─────────────────────────────────────────────────────────────
+
+    Signals are per-solver-instance and shared across all casts on that instance.
+    Consumers connect once per solver and receive events from every cast it manages.
+    Centralising signals this way avoids the per-cast connect/disconnect lifecycle
+    and eliminates a class of connection-leak bugs where callers forget to
+    disconnect when a cast ends. The BulletContext argument passed on every
+    emission allows consumers to identify which cast triggered the event and
+    dispatch accordingly.
+
+    ── Performance Notes ────────────────────────────────────────────────────────
+
+        • The active cast registry uses swap-remove (O(1)) so terminating a cast
+          mid-array never shifts subsequent elements. This matters when many
+          bullets terminate in the same frame (e.g. a shotgun blast where all
+          pellets hit simultaneously).
+        • Weak maps on both directions of the cast-to-context link allow GC to
+          reclaim terminated cast objects without any explicit cleanup call on
+          the consumer side.
+        • RaycastParams objects are pooled to avoid per-fire allocation pressure.
+          At high fire rates (dozens of bullets per second), creating a new
+          RaycastParams on every call would generate significant GC churn.
+        • Analytic position computation avoids the per-frame velocity integration
+          step that Euler methods require, and produces no accumulated error over
+          the cast's lifetime.
 ]]
 
 -- ─── Services ────────────────────────────────────────────────────────────────
@@ -64,121 +125,153 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
--- ─── Module References ───────────────────────────────────────────────────────
-
---[[
-    Utilities is a shared folder containing cross-cutting concerns (logging,
-    signals, type checking). These are required from ReplicatedStorage so they
-    are accessible on both server and client without duplication. Placing shared
-    infrastructure here avoids maintaining separate server/client copies that
-    could drift out of sync.
-]]
-local Utilities = ReplicatedStorage.Shared.Modules.Utilities
-
 -- ─── Sub-Module Requires ─────────────────────────────────────────────────────
 --[[
-    ParamsPooler: Manages a pool of RaycastParams objects. Creating a new
-    RaycastParams on every Fire() call would generate GC pressure when many
-    bullets fire per second. The pool reuses existing params objects, mutating
-    only the fields that differ per cast. Crucially, the pool clones the
-    caller's params rather than using them directly — this ensures that the
-    pierce system's filter list mutations (which add/remove instances to skip)
-    never corrupt the caller's original RaycastParams.
+    ParamsPooler:
+        Manages a reusable pool of RaycastParams objects. Allocating a new
+        RaycastParams on every Fire() call generates GC pressure at high fire
+        rates. The pool maintains a set of pre-allocated objects and hands them
+        out via Acquire(), returning them via Release(). Critically, the pool
+        clones the caller's params rather than using them directly — this ensures
+        that filter list mutations performed by the pierce system (which appends
+        or removes instances as the bullet travels) never corrupt the caller's
+        original RaycastParams object. Without cloning, a single params object
+        shared between multiple Fire() calls would accumulate stale filter
+        entries from every previous pierce chain that used it.
 
-    Visualizer: Optional debug renderer for cast segments, normals, bounces,
-    and corner traps. All Visualizer calls are gated on Behavior.VisualizeCasts
-    so there is zero runtime cost in production builds.
+    Visualizer:
+        Optional debug renderer that draws cast segments, surface normals,
+        bounce directions, corner trap markers, and velocity vectors in the 3D
+        world. All Visualizer calls are gated behind Behavior.VisualizeCasts,
+        so the visual system is entirely dormant (zero runtime cost) in
+        production builds where that flag is false.
 
-    Type: Luau type definitions for HybridCast, CastTrajectory, etc.
-    Imported here purely for type annotations — no runtime cost. Keeping type
-    definitions in a separate module avoids circular dependencies and lets
-    other modules share the same types without requiring HybridSolver itself.
+    Type:
+        Luau type definition module for VetraCast, CastTrajectory, and related
+        structures. Imported here purely for type annotations and has no runtime
+        effect. Keeping type definitions in a dedicated module prevents circular
+        dependency chains and allows other modules to share the same type
+        vocabulary without requiring Vetra itself.
 
-    BehaviorBuilder: Fluent typed configuration builder for HybridBehavior tables.
-    Consumers chain namespace methods (:Physics(), :Bounce(), :Pierce(), etc.)
-    and call :Build() to produce a validated, frozen HybridBehavior. HybridSolver
-    does not depend on BehaviorBuilder internally — Fire() accepts any table
-    matching HybridBehavior regardless of how it was constructed. BehaviorBuilder
-    is re-exported on the Factory table so consumers require only HybridSolver
-    and access the builder via HybridSolver.BehaviorBuilder.
+    BehaviorBuilder:
+        Fluent typed builder for constructing VetraBehavior configuration tables.
+        Consumers chain namespace methods (:Physics(), :Bounce(), :Pierce(), etc.)
+        and call :Build() to receive a validated, frozen VetraBehavior. Vetra
+        does not depend on BehaviorBuilder internally — Fire() accepts any table
+        that structurally matches VetraBehavior regardless of how it was constructed.
+        BehaviorBuilder is re-exported on the Factory table so consumers only need to
+        require Vetra and access the builder via Vetra.BehaviorBuilder,
+        avoiding an extra require path.
 
-    Signal: Lightweight event emitter. Used for module-level signals so
-    consumers subscribe once rather than per-cast. This avoids the overhead
-    of creating and connecting new signal objects for every fired bullet.
+    Signal:
+        Lightweight event emitter. Each Factory.new() call creates a fresh set of
+        Signal objects, ensuring events from different solver instances are fully
+        isolated. Per-instance signal objects also mean there is no shared signal
+        state that could cause cross-instance event leakage.
 
-    LogService: Structured logger. Accepts an identity string (used as a prefix
-    on all messages) and a boolean for whether to print in production builds.
-    Structured logging makes it easy to filter solver messages in the output
-    window independently of other systems.
+    LogService:
+        Structured logger accepting an identity string (prefixed to every message)
+        and a flag to enable printing in non-Studio builds. Structured prefixes
+        allow filtering solver output in the console independently of other systems
+        without relying on search strings.
 
-    t: Runtime type checking utility. Used in Fire() to validate caller input
-    before creating any state. Failing fast with a descriptive warning at the
-    boundary is preferable to an obscure nil-index error deep inside SimulateCast.
+    t:
+        Runtime type-checking utility. Used in Fire() to validate caller-supplied
+        input at the API boundary before any internal state is allocated. Failing
+        fast at the boundary with a descriptive message is preferable to a
+        cryptic nil-index error inside a physics function three call frames deep.
 ]]
 local ParamsPooler    = require(script.RaycastParamsPooler)
 local Visualizer      = require(script.TrajectoryVisualizer)
 local Type            = require(script.TypeDefinition)
-local BehaviorBuilder = require(script.BehaviorBuilder)  
+local BehaviorBuilder = require(script.BehaviorBuilder)
 
 local BulletContext = require(script.BulletContext)
 
-local Signal     = require(Utilities.Signal)
-local LogService = require(Utilities.Logger)
-local t          = require(Utilities.TypeCheck)
+local VeSignal     = require(script.VeSignal)
+local LogService = require(script.Logger)
+local t          = require(script.TypeCheck)
 
 -- ─── Logger ──────────────────────────────────────────────────────────────────
 
 --[[
-    Module-level logger. The identity string "HybridSolver" is prefixed to
-    every log message, making it easy to filter solver output in the console
-    without sifting through messages from unrelated systems. The second argument
-    (true) enables printing even in non-Studio builds, which is intentional:
-    physics bugs that only manifest in live servers need to be observable without
-    a Studio repro.
+    Module-level logger. The IDENTITY string "Vetra" is prepended to
+    every log message this module emits. This makes it trivial to filter solver
+    output in the developer console without wading through messages from
+    unrelated systems. The second argument (true) keeps logging active in
+    non-Studio builds, which is intentional: physics bugs that only surface
+    in live servers need to be observable without requiring a Studio reproduction.
 ]]
-local IDENTITY = "HybridSolver"
+local IDENTITY = "Vetra"
 local Logger = LogService.new(IDENTITY, true)
 
 -- ─── Cached Globals ──────────────────────────────────────────────────────────
 
 --[[
-    Caching frequently called globals into upvalue locals is a standard Luau
-    micro-optimisation. The Luau VM resolves upvalues via direct slot indices
-    in the closure, whereas global lookups require a hash-table probe of the
-    environment table on every access. For functions called hundreds of times
-    per second across all active casts — such as os.clock() in corner-trap
-    timing, math.max/clamp in adaptive segment sizing, and CFrame.new for
-    cosmetic bullet orientation — this difference compounds into measurable
-    savings at scale.
+    Frequently called globals are cached into upvalue locals at module load time.
+    In Luau, resolving an upvalue uses a direct slot index inside the closure,
+    whereas a global lookup requires a hash-table probe on the environment table
+    every time the name is read. For functions called hundreds of times per second
+    across all active casts — position computation, bounce timing, sub-segment
+    iteration — this difference is measurable at scale.
 
-    Each global below is used on a hot path:
-        OsClock      — called every bounce to record LastBounceTime, and in
-                       ResimulateHighFidelity to measure per-frame wall time.
-        CFrameNew    — called every frame per bullet to orient the cosmetic part.
-        MathMax      — used in sub-segment count clamping.
-        MathClamp    — used in sub-segment count clamping.
-        MathFloor    — used to compute integer sub-segment counts from floats.
+    The specific globals cached here and why they appear on the hot path:
+
+        OsClock:
+            Called on every bounce to record Runtime.LastBounceTime for corner-trap
+            detection, and in ResimulateHighFidelity to measure per-sub-segment
+            wall time against the frame budget. At 60Hz with 20 active bullets
+            and 40 sub-segments each, OsClock is called thousands of times per
+            second — caching it meaningfully reduces environment lookups.
+
+        CFrameNew:
+            Called every frame per bullet to orient the cosmetic part toward its
+            direction of travel. Also called by several Visualizer helpers when
+            debug rendering is active.
+
+        MathMax:
+            Used in adaptive segment size adjustment to clamp the lower bound
+            of CurrentSegmentSize above MinSegmentSize.
+
+        MathClamp:
+            Used in ResimulateHighFidelity to constrain SubSegmentCount to the
+            range [1, MAX_SUBSEGMENTS].
+
+        MathFloor:
+            Used in sub-segment count calculation. The raw division of
+            FrameDisplacement / CurrentSegmentSize is a float; flooring it
+            produces the integer count of whole raycasts that fit in the frame.
 ]]
-local OsClock = os.clock
-local CFrameNew = CFrame.new
-local MathMax = math.max
-local MathClamp = math.clamp
-
-local MathFloor = math.floor
+local OsClock    = os.clock
+local CFrameNew  = CFrame.new
+local MathMax    = math.max
+local MathClamp  = math.clamp
+local MathFloor  = math.floor
 
 -- ─── Runtime Environment Detection ───────────────────────────────────────────
 
 --[[
-    Detecting server vs client at module load time determines which RunService
-    event the simulation loop connects to. This decision is made once and stored
-    rather than re-checked each frame.
+    Determines whether this module is executing on the server or the client.
+    This check runs once at module load time and the result is stored as a
+    boolean constant, avoiding a repeated property lookup on RunService every
+    frame.
 
-    The server uses Heartbeat because it fires after Roblox's physics step has
-    settled, giving authoritative positions for hit validation. The client uses
-    RenderStepped because it fires before the frame is composited, ensuring that
-    cosmetic bullet visuals are always positioned correctly when the GPU draws
-    the frame. Using Heartbeat on the client would cause bullets to lag one frame
-    behind their visual position, producing a subtle but noticeable trail offset.
+    The result dictates which RunService event each solver instance's simulation
+    loop connects to:
+
+        Server → Heartbeat:
+            Heartbeat fires after Roblox's internal physics simulation step has
+            settled for the frame. Using it on the server ensures that hit
+            positions are resolved against the most up-to-date authoritative
+            world state, which matters for server-side damage validation.
+
+        Client → RenderStepped:
+            RenderStepped fires before the frame is composited and sent to the
+            GPU. Using it on the client ensures cosmetic bullet visuals are
+            positioned correctly at render time. If Heartbeat were used on the
+            client instead, bullet visuals would always lag one frame behind
+            their logical position, producing a subtle but visible trailing
+            offset on fast projectiles.
 ]]
 local IS_SERVER = RunService:IsServer()
 
@@ -186,209 +279,254 @@ local IS_SERVER = RunService:IsServer()
 
 --[[
     GLOBAL_FRAME_BUDGET_MS:
-        The maximum total wall-clock time in milliseconds that HybridSolver is
-        permitted to spend on high-fidelity sub-segment raycasts across all
-        active casts in a single frame. Once FrameBudget.RemainingMicroseconds
-        reaches zero, ResimulateHighFidelity stops processing further sub-segments
-        for any cast in that frame. This prevents runaway simulation from starving
-        rendering or other game logic. 4ms is chosen because it leaves roughly
-        half a typical 60Hz frame (~8.3ms of script budget) for game logic.
+        The maximum total wall-clock time in milliseconds that a Vetra
+        instance may spend on high-fidelity sub-segment raycasts across all of
+        its active casts within a single frame. The budget is consumed by
+        ResimulateHighFidelity as each sub-segment raycast completes, and once
+        it reaches zero, any remaining sub-segments for all casts on that
+        instance are skipped for the rest of the frame.
 
-    FrameBudget:
-        A table (rather than a plain number) so it can be passed by reference to
-        nested call sites without re-reading a module-level scalar. RemainingMicroseconds
-        is reset to the full budget at the start of each _StepProjectile call and
-        decremented by each sub-segment's measured cost.
+        4ms is chosen because a 60Hz frame allocates roughly 16.7ms total, of
+        which Roblox's internal systems consume the majority. Leaving script
+        budget at around 4ms for high-fidelity raycasts preserves headroom for
+        game logic without producing visible frame hitches under typical bullet
+        loads. This budget is reset at the start of each _StepProjectile call.
+
+        Because the budget lives on the solver instance (not at module scope),
+        two concurrent solver instances each receive the full 4ms allocation
+        independently rather than competing for a shared pool.
 
     MAX_SUBSEGMENTS:
-        Hard upper bound on sub-segments per cast per frame. Even with an
-        extremely small CurrentSegmentSize and a very fast bullet, a single cast
-        cannot consume more than 500 raycasts per frame. Without this cap, a bullet
-        travelling at extreme speed with a tiny segment size could monopolise the
-        entire frame budget and cause a visible hitch.
+        Hard upper bound on the number of sub-segment raycasts a single cast may
+        perform in a single frame. Even at extreme speeds with a very small
+        CurrentSegmentSize, no single cast can issue more than 500 raycasts per
+        frame. Without this cap, a bullet moving at thousands of studs per second
+        with a segment size of 0.01 would attempt ~10,000 raycasts in one frame
+        and freeze the game thread. This cap is a last-resort safety valve; in
+        normal operation MaxPierceCount and the frame budget throttle the count
+        long before 500 is reached.
 
     PROVIDER_TIMEOUT:
-        If CosmeticBulletProvider takes longer than this many seconds to return,
-        a warning is logged. The provider runs synchronously during Fire() and
-        must never yield — yielding here would stall the thread that called Fire(),
-        which is typically a weapon script running on the game loop. Any provider
-        call exceeding a few milliseconds is almost certainly doing something wrong
-        (e.g. an accidental task.wait() or a slow Instance search).
+        Maximum number of seconds CosmeticBulletProvider is expected to take before
+        a warning is logged. The provider is called synchronously inside Fire(),
+        which runs on the game's main thread. Any yield inside the provider would
+        stall the thread that called Fire() — typically a weapon script running
+        inside a RunService event — blocking all subsequent work in that event
+        connection until the yield resolves. A 3-second threshold is generous for
+        any synchronous operation; exceeding it almost certainly indicates an
+        accidental task.wait() or a slow Instance search inside the provider.
 
     DEFAULT_GRAVITY:
-        Cached at module load from workspace.Gravity and stored as a downward
-        Vector3. We store the negated form (negative Y) directly so it can be
-        added as an acceleration term without sign inversion at every call site.
-        Reading workspace.Gravity at load time rather than each frame avoids
-        repeated property lookups and ensures consistent gravity across a cast's
-        lifetime even if workspace.Gravity changes mid-session.
+        Captures workspace.Gravity at module load time and stores it as a
+        downward Vector3 (negative Y component) that can be directly used as an
+        acceleration term. This serves two purposes:
+            1. Avoids reading the workspace property on every Fire() call.
+            2. Ensures gravity is consistent across a cast's lifetime even if
+               workspace.Gravity is changed mid-session by another script.
+        The negated form is pre-computed so callers adding it to Acceleration
+        never need to negate it at the call site, removing one potential source
+        of sign errors.
 
     NUDGE:
-        After a pierce or bounce, the new raycast origin must be displaced slightly
-        past the contact surface along the ray or normal direction. Without this
-        offset, the very next workspace:Raycast() call would originate on the surface
-        itself and, due to floating-point imprecision, would immediately re-detect
-        the same surface at near-zero distance. This would produce spurious double-hits
-        or, in the bounce case, an instant re-bounce that sends the bullet backward.
-        0.01 studs is small enough to be imperceptible but large enough to reliably
-        clear floating-point surface-contact ambiguity.
+        A small displacement (0.01 studs) applied along the ray or normal direction
+        after a pierce or bounce to move the next raycast's origin safely clear of
+        the contact surface. Without this offset, the next workspace:Raycast() call
+        would originate on the surface plane itself. Due to floating-point precision
+        limits, a ray origin exactly on a surface may re-detect that same surface at
+        near-zero distance, producing a spurious double-hit or, in the bounce case,
+        an instant re-bounce that reverses the bullet's direction. 0.01 studs is
+        imperceptibly small in practice but large enough to reliably clear
+        floating-point surface contact ambiguity.
 
     ZERO_VECTOR:
-        Cached to avoid constructing Vector3.zero at every comparison site. This
-        is also used as a sentinel value for "no previous bounce normal/position"
-        in the Runtime table — checking `~= ZERO_VECTOR` is more readable than
-        checking a separate boolean flag, and avoids an extra field in HybridCast.
+        Cached to avoid constructing Vector3.zero at every comparison site. Also
+        used as a sentinel value for "no previous bounce data" in Runtime fields
+        (LastBounceNormal, LastBouncePosition). Using the zero vector as a sentinel
+        allows IsCornerTrap to gate its normal-opposition and spatial-proximity
+        guards behind a single `~= ZERO_VECTOR` check rather than carrying a
+        separate boolean field for each guard. This keeps the VetraCast table
+        lean and makes the sentinel's meaning self-documenting at the check site.
 ]]
 local GLOBAL_FRAME_BUDGET_MS = 4
-local FrameBudget = {
-	RemainingMicroseconds = 0,
-}
-local MAX_SUBSEGMENTS = 500
-local PROVIDER_TIMEOUT = 3
-local DEFAULT_GRAVITY = Vector3.new(0, -workspace.Gravity, 0)
-local NUDGE = 0.01
-local ZERO_VECTOR = Vector3.zero
+local MAX_SUBSEGMENTS        = 500
+local PROVIDER_TIMEOUT       = 3
+local DEFAULT_GRAVITY        = Vector3.new(0, -workspace.Gravity, 0)
+local NUDGE                  = 0.01
+local ZERO_VECTOR            = Vector3.zero
 
 -- ─── Default Behavior ────────────────────────────────────────────────────────
 
 --[[
-    DEFAULT_BEHAVIOR is the canonical fallback for every field in HybridBehavior.
-    When Fire() is called without a full behavior table, any missing fields are
-    resolved against this table. Its values are chosen to be safe and physically
-    reasonable out of the box so that a caller can fire a bullet with minimal
-    configuration and get sensible results.
+    DEFAULT_BEHAVIOR is the authoritative fallback for every field in
+    VetraBehavior. When Fire() receives a partial behavior table, any missing
+    field is resolved against this table. The defaults are chosen to be physically
+    reasonable and safe out-of-the-box so that a caller with minimal configuration
+    still gets a sensible, non-degenerate projectile.
 
-    Design rationale for each default:
+    Field-by-field rationale:
 
-        Acceleration = zero:
-            Extra non-gravity acceleration (e.g. rocket thrust) defaults to
-            none. Gravity is handled separately via the Gravity field and added
-            on top of Acceleration inside Fire(), keeping the two concerns distinct.
+        Acceleration = Vector3.zero:
+            Extra non-gravity acceleration (e.g. sustained rocket thrust) defaults
+            to none. Gravity is handled via a separate Gravity field and added to
+            Acceleration inside Fire() so the two forces remain conceptually
+            distinct and individually overridable.
 
         MaxDistance = 500:
-            Prevents bullets from flying indefinitely in open worlds. 500 studs
-            covers most combat scenarios without letting stray bullets simulate
-            forever in empty space.
+            Prevents bullets from simulating indefinitely in open worlds. 500 studs
+            covers most first-person or third-person combat distances. Stray bullets
+            that miss every surface are culled at this limit rather than running
+            forever and accumulating wasted simulation cost.
 
         MinSpeed = 1:
-            Bullets that have nearly stopped (e.g. after many energy-absorbing
-            bounces) are culled cleanly. A threshold of 1 stud/second is
-            imperceptibly slow and safe to cull without visual artifacts.
+            Bullets that have decelerated to near-zero (e.g. after repeated
+            energy-absorbing bounces) are culled cleanly at 1 stud/second. At this
+            speed the bullet is visually imperceptible and no longer contributes
+            meaningful gameplay, making it safe to terminate without visible
+            artifacts.
 
         HighFidelitySegmentSize = 0.5:
-            Sub-segments are ~0.5 studs long. This means even a wall that is
-            only 1 stud thick will be detected by at least one raycast, preventing
-            tunnelling through thin surfaces for bullets moving at typical speeds.
+            Sub-segments are approximately 0.5 studs long. This means a bullet
+            moving at standard speed will issue ~10 raycasts per frame at 60Hz,
+            and even a wall only 1 stud thick will be reliably intersected without
+            tunnelling. Smaller values increase fidelity at the cost of more raycasts
+            per frame; larger values reduce cost at the risk of thin-surface tunnelling.
 
         Restitution = 0.7:
-            Retains 70% of kinetic energy per bounce. This gives a moderately
-            bouncy feel similar to a rubber ball — energetic enough to look
-            intentional but lossy enough that infinite bouncing is impossible.
+            Retains 70% of kinetic energy per bounce, producing a moderately bouncy
+            feel similar to a rubber ball. This is lossy enough that a bullet cannot
+            bounce indefinitely — repeated bounces converge the speed toward zero —
+            while energetic enough for the bouncing to appear purposeful and
+            interesting.
 
         PenetrationSpeedRetention = 0.8:
-            Each pierce absorbs 20% of the bullet's kinetic energy, simulating
-            the mechanical work done in deforming the material. This makes
-            deeper pierce chains progressively less dangerous, which is
-            important for game balance.
+            Each pierce absorbs 20% of the bullet's kinetic energy, simulating the
+            mechanical work done deforming the material. This makes longer pierce
+            chains progressively less lethal and provides a natural ceiling on how
+            many targets a single bullet can damage at meaningful impact speed.
 
         PierceNormalBias = 1.0:
-            Requires the bullet to be travelling at least somewhat head-on
-            into the surface (ImpactDot >= 0.0), meaning all approach angles
-            are accepted. Lower values (closer to 0) restrict piercing to
-            near-normal impacts, preventing a bullet skimming a surface at
-            5 degrees from tunnelling through it.
+            Requires the bullet's impact angle dot product to be at least 0.0,
+            meaning all approach angles qualify for piercing (even a near-grazing
+            trajectory). Reducing this value toward 0 would restrict piercing to
+            near-perpendicular impacts only, preventing bullets that skim a surface
+            at shallow angles from tunnelling through it.
 ]]
-local DEFAULT_BEHAVIOR: HybridBehavior = {
-	Acceleration 		      = Vector3.new(0, 0, 0),
-	MaxDistance		 		  = 500,
-	RaycastParams 		      = RaycastParams.new(),
-	MinSpeed 		   		  = 1,
-	CanPierceFunction 		  = nil,
-	MaxPierceCount 			  = 3,
-	PierceSpeedThreshold 	  = 50,
-	Gravity 			 	  = Vector3.new(0,workspace.Gravity,0),
-	PenetrationSpeedRetention = 0.8,
-	PierceNormalBias          = 1.0,
-	CanBounceFunction         = nil,
-	MaxBounces                = 5,
-	BounceSpeedThreshold      = 20,
-	Restitution               = 0.7,
-	MaterialRestitution       = {},
-	NormalPerturbation        = 0.0,
-	HighFidelitySegmentSize   = 0.5,
-	HighFidelityFrameBudget   = 4,
-	AdaptiveScaleFactor       = 1.5,
-	MinSegmentSize            = 0.1,
-	MaxBouncesPerFrame        = 10,
-	CornerTimeThreshold       = 0.002,
-	CornerNormalDotThreshold  = -0.85,
-	CornerDisplacementThreshold = 0.5,
-	CosmeticBulletTemplate    = nil,
-	CosmeticBulletContainer   = nil,
-	VisualizeCasts            = false,
+
+local DEFAULT_BEHAVIOR: VetraBehavior = {
+	Acceleration                 = Vector3.new(0, 0, 0),
+	MaxDistance                  = 500,
+	RaycastParams                = RaycastParams.new(),
+	MinSpeed                     = 1,
+	CanPierceFunction            = nil,
+	MaxPierceCount               = 3,
+	PierceSpeedThreshold         = 50,
+	Gravity                      = Vector3.new(0, -workspace.Gravity, 0),
+	PenetrationSpeedRetention    = 0.8,
+	PierceNormalBias             = 1.0,
+	CanBounceFunction            = nil,
+	MaxBounces                   = 5,
+	BounceSpeedThreshold         = 20,
+	Restitution                  = 0.7,
+	MaterialRestitution          = {},
+	NormalPerturbation           = 0.0,
+	HighFidelitySegmentSize      = 0.5,
+	HighFidelityFrameBudget      = 4,
+	AdaptiveScaleFactor          = 1.5,
+	MinSegmentSize               = 0.1,
+	MaxBouncesPerFrame           = 10,
+	CornerTimeThreshold          = 0.002,
+	CornerNormalDotThreshold     = -0.85,
+	CornerDisplacementThreshold  = 0.5,
+	CosmeticBulletTemplate       = nil,
+	CosmeticBulletContainer      = nil,
+	VisualizeCasts               = true,
 }
 
 -- ─── Physics Helpers ─────────────────────────────────────────────────────────
+--[[
+    PositionAtTime and VelocityAtTime are pure functions: they derive their
+    result entirely from their parameters and have no side effects on any shared
+    state. They intentionally accept no Solver argument — they never touch instance
+    or module-level tables. This makes them safe to call from any context and
+    trivial to reason about in isolation.
+
+    Both functions sit on the most critical hot path in the module. Every active
+    cast calls PositionAtTime at least twice per frame (once for the previous
+    position, once for the current position) and VelocityAtTime at least once.
+    At 20 active bullets and 40 sub-segments each, that is 1600+ calls per frame.
+    Keeping these functions free of table lookups, closures, and branch overhead
+    is therefore important for maintaining consistent frame times.
+]]
 
 --[=[
     PositionAtTime
 
     Description:
-        Computes the world-space position of a projectile at a given time T
-        using the standard kinematic equation for constant acceleration:
+        Computes the exact world-space position of a projectile at a given time
+        offset within a trajectory segment using the standard kinematic equation
+        for constant acceleration:
+
             P(t) = Origin + V0*t + (1/2)*A*t²
 
-        This is the analytic form — it calculates the exact answer for time T
-        directly from the segment's fixed parameters (Origin, V0, A), without
-        iterating through intermediate steps. This is deliberately preferred
-        over Euler integration (P += V*dt; V += A*dt each frame) for two reasons:
+        This is the analytic form of the position equation, meaning it computes
+        the result in closed form directly from the segment's fixed parameters
+        without stepping through intermediate time values. It is deliberately
+        chosen over Euler integration (P += V*dt; V += A*dt each frame) for
+        two fundamental reasons:
 
-        1. Euler accumulates floating-point error on every frame. Over long flight
-           times or many frames, the simulated position drifts away from the true
-           parabola. For a sniper bullet travelling 500 studs, even a small
-           per-frame error multiplies into a visible arc distortion. The analytic
-           form produces bit-identical results regardless of how many frames have
-           elapsed, because each position is computed independently.
+        1. Euler integration accumulates floating-point error on every step. Over
+           long flight times or many frames, the simulated arc drifts away from
+           the true parabola. For a sniper bullet that travels 500 studs, even a
+           small per-frame error multiplies into a visible arc distortion at range.
+           The analytic form produces bit-identical results regardless of how many
+           frames have elapsed, because every position is computed independently
+           from the same fixed parameters.
 
-        2. Euler requires both position AND velocity to be tracked and updated
-           together. The analytic form only requires the segment's immutable
-           parameters (Origin, V0, A, StartTime), making trajectory state simpler
-           and cheaper to store.
+        2. Euler integration requires both position and velocity to be tracked and
+           mutated together each frame. The analytic form derives both from the
+           segment's immutable initial conditions, making the trajectory state
+           simpler to store and reason about — each segment is fully described by
+           Origin, V0, A, and StartTime.
 
     Parameters:
         ElapsedTime: number
-            Seconds elapsed since this trajectory segment started. This is always
-            (Runtime.TotalRuntime - ActiveTrajectory.StartTime), not wall-clock
-            time. After a bounce, a new trajectory segment starts with its own
-            StartTime, so ElapsedTime correctly resets to zero for the new arc.
+            Seconds elapsed since this trajectory segment's StartTime. This is
+            always (Runtime.TotalRuntime - ActiveTrajectory.StartTime), not
+            wall-clock time. After a bounce opens a new segment, ElapsedTime
+            correctly resets to zero for the new arc because StartTime is set
+            to the bounce time — ensuring the formula evaluates the new arc from
+            its own origin, not from the original fire point.
 
         TrajectoryOrigin: Vector3
-            The world-space origin of this trajectory segment. For the initial
-            fire, this is the muzzle position. After a bounce, it is the contact
-            point offset by NUDGE along the surface normal to clear floating-point
-            surface ambiguity.
+            World-space origin of this trajectory segment. For the initial firing,
+            this is the muzzle position. After a bounce it is the contact point
+            offset along the surface normal by NUDGE to clear floating-point
+            surface ambiguity and prevent the first raycast on the new arc from
+            immediately re-detecting the same surface.
 
         InitialVelocity: Vector3
-            The velocity vector at the start of this trajectory segment, in
-            studs/second. After a bounce, this is the reflected+scaled velocity
+            Velocity vector at the start of this trajectory segment in studs per
+            second. After a bounce this is the reflected and energy-scaled velocity
             produced by ResolveBounce.
 
         Acceleration: Vector3
-            The constant acceleration acting on the bullet throughout this segment.
-            Typically gravity (0, -workspace.Gravity, 0) combined with any extra
-            Acceleration from the Behavior table. The combined value is computed
-            once in Fire() and stored on the trajectory so this function never
-            needs to perform the addition at the call site.
+            The constant acceleration acting on the bullet for the entirety of
+            this segment. Typically the sum of gravity and any additional
+            Behavior.Acceleration. The combined value is computed once in Fire()
+            and stored on the trajectory so this function never needs to add the
+            two terms together at runtime.
 
     Returns:
         Vector3
-            The exact world-space position at ElapsedTime seconds into
-            this trajectory segment.
+            The exact world-space position at ElapsedTime seconds into this
+            trajectory segment. The result is precise to floating-point limits
+            regardless of how many frames have elapsed since the segment started.
 
     Notes:
-        The t² / 2 form is mathematically identical to 0.5 * t^2. Luau's
-        compiler optimises both forms the same way; the exponent notation is
-        used here for readability.
+        The t² / 2 form and 0.5 * t^2 are mathematically identical. The exponent
+        notation is used here because it mirrors the standard physics notation and
+        is marginally easier to verify against a textbook. Luau compiles both to
+        the same bytecode.
 ]=]
 local function PositionAtTime(
 	ElapsedTime: number,
@@ -397,10 +535,10 @@ local function PositionAtTime(
 	Acceleration: Vector3
 ): Vector3
 	-- Standard constant-acceleration kinematic position formula.
-	-- Each term is independent: the origin term is constant, the velocity term
-	-- grows linearly, and the acceleration term grows quadratically. Luau
-	-- evaluates Vector3 arithmetic left-to-right with operator precedence, so
-	-- no additional parentheses are needed to get the correct result.
+	-- The origin term is invariant; the velocity term grows linearly with time;
+	-- the acceleration term grows quadratically. Luau evaluates Vector3 arithmetic
+	-- left-to-right respecting standard operator precedence, so no extra
+	-- parentheses are required to produce the correct result.
 	return TrajectoryOrigin + InitialVelocity * ElapsedTime + Acceleration * (ElapsedTime ^ 2 / 2)
 end
 
@@ -408,50 +546,71 @@ end
     VelocityAtTime
 
     Description:
-        Computes the velocity vector of a projectile at time T using the
-        analytic first derivative of the kinematic position equation:
+        Computes the exact velocity vector of a projectile at a given time offset
+        within a trajectory segment by evaluating the analytic first derivative of
+        the kinematic position equation:
+
             V(t) = V0 + A*t
 
         Like PositionAtTime, this is analytic and produces exact results without
-        iterative error. It is evaluated every frame because the current velocity
-        is needed for multiple purposes:
-            - Threshold comparisons: pierce speed, bounce speed, and MinSpeed
-              culling all compare against CurrentVelocity.Magnitude.
-            - Cosmetic orientation: CFrame.new(pos, pos + velocity.Unit) aligns
-              the visible bullet part with its direction of travel.
-            - Signal arguments: OnHit, OnBounce, and OnPierce all receive the
-              velocity at the moment of the event so consumers can compute
-              impact force or penetration depth.
+        accumulating per-frame error. The velocity is evaluated on every active
+        cast every frame because it is consumed by multiple downstream systems:
+
+            Speed threshold checks:
+                Pierce speed, bounce speed, and MinSpeed culling all compare
+                CurrentVelocity.Magnitude against their respective thresholds.
+                Using the analytic value here means the check is always accurate
+                at the exact moment of the potential surface interaction, not at
+                the frame's start position.
+
+            Cosmetic orientation:
+                The visible bullet part is oriented by building a CFrame toward
+                (Position + Velocity.Unit), aligning the part's forward axis with
+                the direction of travel. Using the analytically correct velocity
+                direction at the current moment ensures the cosmetic part is never
+                visually misaligned relative to its actual trajectory.
+
+            Signal arguments:
+                OnHit, OnBounce, and OnPierce all receive the velocity at the time
+                of the event so consumers can compute impact force, apply damage
+                falloff, or play velocity-dependent VFX without needing to
+                re-derive it themselves.
 
     Parameters:
         ElapsedTime: number
-            Seconds elapsed since this trajectory segment started. Same semantics
-            as PositionAtTime.
+            Seconds elapsed since this trajectory segment's StartTime. Same
+            semantics as PositionAtTime — this is segment-local time, not total
+            cast lifetime.
 
         InitialVelocity: Vector3
-            Velocity at the beginning of the trajectory segment.
+            Velocity at the beginning of the trajectory segment. Unchanged for
+            the segment's lifetime; only varies between segments (e.g. after a
+            bounce applies reflection and restitution).
 
         Acceleration: Vector3
-            The constant acceleration (gravity + extra) for this segment.
+            The constant acceleration for this segment. Same value stored on the
+            segment's Acceleration field.
 
     Returns:
         Vector3
             The exact velocity vector at ElapsedTime seconds into this segment.
-
-    Notes:
-        The returned vector is not normalised. Callers that need a unit direction
-        should call .Unit themselves. Normalising here would discard the magnitude,
-        which most callers need for speed threshold checks.
+            The magnitude of this vector is the bullet's current speed in studs
+            per second. The vector is not normalised; callers that need a unit
+            direction vector should call .Unit themselves. Normalising here would
+            discard the magnitude, which most callers also need for threshold
+            comparisons.
 ]=]
+
 local function VelocityAtTime(
 	ElapsedTime: number,
 	InitialVelocity: Vector3,
 	Acceleration: Vector3
 ): Vector3
 	-- First derivative of the kinematic position equation. Under constant
-	-- acceleration, velocity changes linearly with time. V0 is the velocity
-	-- at the segment's start; A*t is the cumulative velocity change due to
-	-- acceleration over elapsed time.
+	-- acceleration, velocity changes linearly with time. V0 is the velocity at
+	-- the segment's start; A*t is the cumulative velocity gain from acceleration
+	-- over the elapsed interval. Adding them gives the exact velocity at time T
+	-- without any accumulated per-step error.
 	return InitialVelocity + Acceleration * ElapsedTime
 end
 
@@ -461,68 +620,87 @@ end
     ModifyTrajectory
 
     Description:
-        Applies a mid-flight change to one or more of a cast's kinematic
-        parameters (position, velocity, or acceleration). This is the shared
-        implementation used by all of the CAST_STATE_METHODS setters
-        (SetPosition, SetVelocity, SetAcceleration, AddPosition, etc.).
+        Applies a mid-flight change to one or more kinematic parameters of a cast
+        (position, velocity, or acceleration). This is the single shared
+        implementation used by every CAST_STATE_METHODS setter: SetPosition,
+        SetVelocity, SetAcceleration, AddPosition, AddVelocity, and AddAcceleration
+        all delegate here. Centralising the logic means the "should we mutate in
+        place or open a new segment?" decision is made in exactly one location and
+        cannot diverge across six separate setter implementations.
 
-        There are two cases:
-            1. The change is being applied in the same simulation tick that
-               started the current trajectory segment (StartTime == TotalRuntime).
-               In this case, we mutate the active trajectory in place. No new
-               segment is created because the segment hasn't been simulated yet,
-               so there is no history to preserve.
+        There are two cases based on whether simulation time has elapsed on the
+        current trajectory segment:
 
-            2. The change is being applied after the current segment has already
-               been partially simulated (StartTime < TotalRuntime). In this case,
-               we close the current segment by recording its EndTime, compute the
-               analytically exact position and velocity at the current moment as
-               the handoff point, and open a new trajectory segment starting from
-               those values. This preserves the recorded history of the bullet's
-               full flight path while correctly redirecting it from this point
-               forward.
+        Case 1 — Zero elapsed time (StartTime == TotalRuntime):
+            The change is being applied at the precise instant the current segment
+            started — no simulation has run on it yet. Mutating the segment in place
+            is safe because there is no recorded history to preserve. This is the
+            zero-overhead fast path: it avoids a table allocation and a table.insert
+            call. This case is commonly hit when Fire() constructs the initial segment
+            and immediately applies a velocity override before the first frame step.
 
-        CancelResimulation is set to true when a new segment is created. This
-        signal tells ResimulateHighFidelity's sub-segment loop to stop processing
-        sub-segments on the old trajectory, because continuing to simulate an
-        outdated arc after a mid-flight change would produce physically incorrect
-        raycast positions.
+        Case 2 — Positive elapsed time (StartTime < TotalRuntime):
+            The current segment has already been partially simulated. The historical
+            positions recorded in its arc are real data that consumers (e.g. replays
+            or trajectory renderers) may be reading. To preserve that history while
+            redirecting the bullet from this point forward, the current segment is
+            closed by recording its EndTime, then a new segment is opened from the
+            analytically computed handoff position and velocity. The new segment
+            begins with the caller's overrides (or the computed handoff values for
+            any nil arguments). This ensures that the full Trajectories history
+            remains accurate as an append-only log of every arc the bullet has
+            travelled.
 
-        Input validation is performed before any state is mutated. If any supplied
-        vector contains NaN or infinity (which would propagate silently through
-        all subsequent kinematic computations and produce nonsensical positions),
-        the modification is aborted with a warning and the cast continues on its
-        previous trajectory unchanged.
+        CancelResimulation is set to true when a new segment is opened. This flag
+        is read by ResimulateHighFidelity's inner loop as a signal to stop
+        processing remaining sub-segments. Continuing to step sub-segments on the
+        old (now-closed) trajectory after a mid-flight change would produce raycast
+        positions on an arc the bullet has already left, yielding physically
+        incorrect hit detections.
+
+        All input vectors are validated before any state is mutated. NaN or infinity
+        in a velocity or position vector would propagate silently through all
+        subsequent PositionAtTime and VelocityAtTime calls, producing positions at
+        (nan, nan, nan) that never satisfy any termination condition. The cast would
+        simulate forever, leaking an entry in _ActiveCasts, with no useful
+        diagnostic. Aborting early here prevents that failure mode and surfaces the
+        error at the earliest possible point.
 
     Parameters:
-        Cast: HybridCast
-            The cast whose trajectory is being modified.
+        Cast: VetraCast
+            The cast whose trajectory is being modified. ModifyTrajectory reads and
+            writes Cast.Runtime fields only; it never touches the solver registry,
+            signals, or context maps.
 
         Velocity: Vector3?
-            New initial velocity for the (possibly new) segment, or nil to keep
-            the current velocity at the moment of the change.
+            New initial velocity for the resulting segment, or nil to use the
+            analytically computed velocity at the moment of the change.
 
         Acceleration: Vector3?
-            New constant acceleration for the (possibly new) segment, or nil to
-            inherit the current trajectory's acceleration.
+            New constant acceleration for the resulting segment, or nil to inherit
+            the current trajectory's acceleration unchanged.
 
         Position: Vector3?
-            New origin for the (possibly new) segment, or nil to use the
-            analytically computed position at the current time.
+            New world-space origin for the resulting segment, or nil to use the
+            analytically computed position at the moment of the change.
+
+    Returns:
+        nil — modifies Cast.Runtime in place.
 
     Notes:
-        Passing nil for all three parameters is a no-op: ModifyTrajectory will
-        create a new segment that is kinematically identical to the current one,
-        wasting a table allocation. Callers should always supply at least one
-        non-nil parameter.
+        Passing nil for all three parameters is technically valid but produces
+        a new trajectory segment that is kinematically identical to the current one.
+        This wastes a table allocation and a table.insert call with no observable
+        effect. Callers should always supply at least one non-nil parameter.
 ]=]
-local function ModifyTrajectory(Cast: HybridCast, Velocity: Vector3?, Acceleration: Vector3?, Position: Vector3?)
-	-- Guard against NaN and infinity in all input vectors before touching any
-	-- state. A NaN velocity would silently corrupt every subsequent PositionAtTime
-	-- call for this cast, producing positions at (nan, nan, nan) and preventing
-	-- the cast from ever terminating normally. Aborting here avoids that failure
-	-- mode entirely and gives the caller a clear diagnostic.
-	if Velocity and not t.Vector3(Velocity)     then
+
+local function ModifyTrajectory(Cast: VetraCast, Velocity: Vector3?, Acceleration: Vector3?, Position: Vector3?)
+	-- Validate all input vectors before touching any state. A NaN velocity
+	-- would silently corrupt every subsequent PositionAtTime call, producing
+	-- (nan, nan, nan) positions that never trigger any termination condition and
+	-- cause the cast to simulate indefinitely. Aborting here surfaces the error
+	-- at the API boundary rather than letting it propagate into physics math.
+	if Velocity and not t.Vector3(Velocity) then
 		Logger:Warn("ModifyTrajectory: Velocity contains NaN or inf — ignoring")
 		return
 	end
@@ -530,40 +708,44 @@ local function ModifyTrajectory(Cast: HybridCast, Velocity: Vector3?, Accelerati
 		Logger:Warn("ModifyTrajectory: Acceleration contains NaN or inf — ignoring")
 		return
 	end
-	if Position and not t.Vector3(Position)     then
+	if Position and not t.Vector3(Position) then
 		Logger:Warn("ModifyTrajectory: Position contains NaN or inf — ignoring")
 		return
 	end
 
 	local Runtime = Cast.Runtime
-	local Last = Runtime.ActiveTrajectory
+	local Last    = Runtime.ActiveTrajectory
 
 	if Last.StartTime == Runtime.TotalRuntime then
-		-- Case 1: The modification is happening at the very start of the current
-		-- segment (no simulation time has elapsed on it yet). Mutate in place
-		-- rather than creating a new segment, since there is no recorded history
-		-- to preserve for this segment. This is the zero-cost fast path.
+		-- Case 1: The modification occurs at the exact moment this segment began.
+		-- No simulation time has elapsed on it, so there is no historical arc to
+		-- preserve. Mutate the segment fields directly — this avoids allocating a
+		-- new table and keeps the Trajectories array compact.
 		Last.Origin          = Position     or Last.Origin
 		Last.InitialVelocity = Velocity     or Last.InitialVelocity
-		local NewAccel       = Acceleration or Last.Acceleration
-		Last.Acceleration    = NewAccel
+		Last.Acceleration    = Acceleration or Last.Acceleration
 	else
-		-- Case 2: The current segment has been partially simulated. We must
-		-- close it by recording its end time, then open a new segment from the
-		-- current analytically exact position and velocity. This ensures the
-		-- Trajectories history remains accurate for any consumer that replays it.
+		-- Case 2: The current segment has non-zero elapsed time, meaning it has
+		-- been partially simulated and its arc is part of the bullet's recorded
+		-- history. Close the current segment by stamping its EndTime, then derive
+		-- the handoff point analytically so the seam between the old and new arcs
+		-- is mathematically exact rather than approximated by the last frame's
+		-- cached position (which could be up to one full frame stale).
 		Last.EndTime = Runtime.TotalRuntime
 
-		-- Compute the handoff point analytically to avoid Euler drift at the seam.
-		-- These are the exact position and velocity the bullet had at the moment
-		-- the caller requested the change.
-		local Elapsed = Runtime.TotalRuntime - Last.StartTime
-		local EndPos  = PositionAtTime(Elapsed, Last.Origin, Last.InitialVelocity, Last.Acceleration)
-		local EndVel  = VelocityAtTime(Elapsed, Last.InitialVelocity, Last.Acceleration)
+		-- Analytically compute the exact position and velocity at the current
+		-- moment in the active segment's arc. These become the new segment's origin
+		-- and initial velocity if the caller did not supply explicit overrides.
+		-- Using the analytic values (rather than cached per-frame values) prevents
+		-- a visible position discontinuity at the segment seam.
+		local Elapsed  = Runtime.TotalRuntime - Last.StartTime
+		local EndPos   = PositionAtTime(Elapsed, Last.Origin, Last.InitialVelocity, Last.Acceleration)
+		local EndVel   = VelocityAtTime(Elapsed, Last.InitialVelocity, Last.Acceleration)
 		local NewAccel = Acceleration or Last.Acceleration
 
-		-- The new segment starts from the current moment in time, with the
-		-- caller-supplied overrides (or the computed handoff values if nil).
+		-- Open a new trajectory segment starting at the current moment. The new
+		-- segment's StartTime anchors all subsequent ElapsedTime computations
+		-- (TotalRuntime - StartTime) to this transition point.
 		local NewTrajectory: Type.CastTrajectory = {
 			StartTime       = Runtime.TotalRuntime,
 			EndTime         = -1,
@@ -574,251 +756,253 @@ local function ModifyTrajectory(Cast: HybridCast, Velocity: Vector3?, Accelerati
 
 		table.insert(Runtime.Trajectories, NewTrajectory)
 		Runtime.ActiveTrajectory   = NewTrajectory
-		-- Signal ResimulateHighFidelity to abandon the current sub-segment loop,
-		-- because the trajectory the sub-segments were stepping no longer exists.
+		-- Notify ResimulateHighFidelity to abandon the current sub-segment loop.
+		-- Continuing to advance sub-segments on the old trajectory after a mid-flight
+		-- change would produce raycast positions on an arc the bullet has already
+		-- left, resulting in phantom hit detections and incorrect distance accumulation.
 		Runtime.CancelResimulation = true
 	end
 end
 
+-- ─── Cast State Methods ───────────────────────────────────────────────────────
 
 --[[
-    CAST_STATE_METHODS defines the instance methods available on a HybridCast
-    table via its metatable __index. These are exposed to consumers through the
-    BulletContext API, allowing weapon scripts to read or modify a bullet's
-    current kinematic state mid-flight.
+    CAST_STATE_METHODS defines the public instance-method surface exposed on
+    every VetraCast via its metatable __index. These methods are surfaced through
+    the BulletContext API, allowing weapon scripts to read or modify a bullet's
+    kinematic state mid-flight without direct access to the solver's internal tables.
 
-    All mutation methods delegate to ModifyTrajectory, which handles the
-    open/close segment logic in one place. This avoids duplicating the
-    "mutate in place vs. create new segment" decision across six separate
-    setters, each of which would need to get it right independently.
+    Design decision — all mutation methods delegate to ModifyTrajectory:
+        The "mutate in place vs. open a new segment" decision is complex enough
+        (and critical enough to get right) that it lives in exactly one function.
+        Having six separate setter methods each duplicate that logic would be
+        fragile and prone to divergence over time. Delegating to ModifyTrajectory
+        means every setter inherits correct segment-sealing, CancelResimulation
+        signalling, and input validation automatically.
 
-    The Add* variants read the current analytic value and pass it as the new
-    value plus a delta. They do not call ModifyTrajectory twice — the Get*
-    call is a pure read with no side effects, so combining the result into a
-    single ModifyTrajectory call is both cheaper and atomic (no intermediate
-    state is ever written).
+    Design decision — Add* methods perform a single ModifyTrajectory call:
+        The Add* variants (AddPosition, AddVelocity, AddAcceleration) read the
+        current analytic value and immediately pass the result to ModifyTrajectory
+        as the new override. They do NOT call ModifyTrajectory twice (once to read,
+        once to write) — the Get* call is a pure read with no side effects, so
+        combining both into a single ModifyTrajectory call is both cheaper and
+        effectively atomic: no intermediate partially-modified state is ever written.
+
+    These methods only read and write Cast-level state. They never require a
+    Solver argument because ModifyTrajectory (which they delegate to) also has
+    no Solver dependency.
 ]]
+
 local CAST_STATE_METHODS = {
 
-	-- Returns the bullet's current world-space position by evaluating the
-	-- analytic position formula at the current elapsed time within the active
-	-- segment. This is always accurate to the current simulation time regardless
-	-- of when in the frame it is called.
-	GetPosition = function(self : HybridCast)
+	-- Returns the bullet's current world-space position by evaluating the analytic
+	-- kinematic formula at the elapsed time within the active trajectory segment.
+	-- Using the analytic value guarantees accuracy regardless of when in the frame
+	-- this method is called — it is not tied to any cached per-frame snapshot.
+	GetPosition = function(self: VetraCast)
 		local Traj    = self.Runtime.ActiveTrajectory
 		local Elapsed = self.Runtime.TotalRuntime - Traj.StartTime
 		return PositionAtTime(Elapsed, Traj.Origin, Traj.InitialVelocity, Traj.Acceleration)
 	end,
-	
-	-- Resets the three corner-trap sentinel fields on Runtime back to their
-	-- Fire()-time values. This is necessary after any programmatic mid-flight
-	-- velocity change (e.g. SetVelocity, AddVelocity) that deliberately reverses
-	-- or sharply redirects the bullet, because the corner trap detector in
-	-- IsCornerTrap compares the new travel direction against the most recent
-	-- bounce normal and position. A sharp reversal will almost always satisfy
-	-- Guard 2 (opposing normals) or Guard 3 (spatial proximity) even though no
-	-- actual degenerate geometry is involved, causing the cast to terminate
-	-- immediately after the velocity change.
+
+	-- Resets the three corner-trap sentinel fields on Runtime to their Fire()-time
+	-- initial values. This is necessary after any programmatic mid-flight velocity
+	-- change that deliberately reverses or sharply redirects the bullet (e.g.
+	-- SetVelocity, AddVelocity).
 	--
-	-- Resetting here tells IsCornerTrap that this is effectively a fresh start:
-	--   LastBounceTime     = -math.huge  →  Guard 1 (temporal) never fires on
-	--                                       the next bounce regardless of timing.
-	--   LastBounceNormal   = ZERO_VECTOR →  Guard 2 (normal opposition) is skipped
-	--                                       because HasPreviousBounceNormal is false.
-	--   LastBouncePosition = ZERO_VECTOR →  Guard 3 (spatial proximity) is skipped
-	--                                       because HasPreviousBouncePosition is false.
+	-- Why this matters:
+	--     IsCornerTrap compares the current bounce against the most recent stored
+	--     bounce normal and contact position. A sharp velocity reversal applied via
+	--     SetVelocity will not register in the bounce tracking fields, but the next
+	--     genuine surface contact will compare against the stale previous-bounce data.
+	--     If the new trajectory happens to hit a surface whose normal is nearly
+	--     opposite the previously stored LastBounceNormal (Guard 2), or if the first
+	--     contact after the velocity change is close to the last recorded bounce
+	--     position (Guard 3), IsCornerTrap will fire a false positive and terminate
+	--     the cast prematurely — even though no actual degenerate geometry is involved.
 	--
-	-- Note: this does NOT reset BounceCount or BouncesThisFrame. Those counters
-	-- track lifetime and per-frame bounce budgets respectively and should not be
-	-- affected by a velocity change — the bullet has still bounced that many times.
-	ResetBounceState = function(self: HybridCast)
+	-- After this call, IsCornerTrap's guards behave as follows:
+	--     LastBounceTime = -math.huge:
+	--         Guard 1 (temporal proximity) cannot fire on the next bounce, because
+	--         the time since the last recorded bounce appears infinite.
+	--     LastBounceNormal = ZERO_VECTOR:
+	--         Guard 2 (normal opposition) is skipped entirely. The HasPreviousBounceNormal
+	--         check treats ZERO_VECTOR as "no previous data" and short-circuits the guard.
+	--     LastBouncePosition = ZERO_VECTOR:
+	--         Guard 3 (spatial proximity) is skipped. HasPreviousBouncePosition treats
+	--         ZERO_VECTOR as "no previous data" and short-circuits the guard.
+	--
+	-- This does NOT reset BounceCount or BouncesThisFrame. Those counters track
+	-- lifetime and per-frame bounce budgets respectively and are independent of the
+	-- corner-trap detection state.
+	ResetBounceState = function(self: VetraCast)
 		self.Runtime.LastBounceNormal   = Vector3.zero
 		self.Runtime.LastBouncePosition = Vector3.zero
 		self.Runtime.LastBounceTime     = -math.huge
 	end,
-	
+
 	-- Returns the bullet's current velocity vector by evaluating the analytic
-	-- derivative formula. The magnitude of this vector is the current speed in
-	-- studs/second. This is used by consumers who need to compute impact force
-	-- or determine whether to apply a damage falloff at range.
-	GetVelocity = function(self : HybridCast)
+	-- derivative formula at the elapsed time within the active trajectory segment.
+	-- The magnitude of the returned vector is the current speed in studs/second.
+	-- Not normalised — callers that need a unit direction should call .Unit on the
+	-- result themselves.
+	GetVelocity = function(self: VetraCast)
 		local Traj    = self.Runtime.ActiveTrajectory
 		local Elapsed = self.Runtime.TotalRuntime - Traj.StartTime
 		return VelocityAtTime(Elapsed, Traj.InitialVelocity, Traj.Acceleration)
 	end,
 
-	-- Returns the constant acceleration vector for the active segment. This is
-	-- the combined gravity + extra acceleration value stored on the trajectory,
-	-- not workspace.Gravity. Consumers can use this to display the effective
-	-- gravity field for a given projectile type.
-	GetAcceleration = function(self : HybridCast)
+	-- Returns the constant acceleration vector for the active segment. This is the
+	-- combined (gravity + extra Acceleration) value stored on the trajectory at
+	-- segment creation time — not workspace.Gravity directly. Consumers reading
+	-- this can retrieve the effective gravity field for a given projectile type
+	-- (e.g. for low-gravity areas or zero-gravity scenarios).
+	GetAcceleration = function(self: VetraCast)
 		return self.Runtime.ActiveTrajectory.Acceleration
 	end,
 
 	-- Teleports the bullet to a new world-space position without changing its
-	-- velocity or acceleration. Opens a new trajectory segment from that position
-	-- if simulation time has already elapsed on the current segment.
-	SetPosition = function(self : HybridCast, Position: Vector3)
+	-- velocity or acceleration. If simulation time has already elapsed on the
+	-- current segment, ModifyTrajectory opens a new segment from the specified
+	-- position, preserving the recorded arc history up to this point.
+	SetPosition = function(self: VetraCast, Position: Vector3)
 		ModifyTrajectory(self, nil, nil, Position)
 	end,
 
-	-- Changes the bullet's velocity to the given vector. The new velocity becomes
-	-- the InitialVelocity of either the current segment (if it just started) or
-	-- a new segment opened at the current position. Acceleration is inherited.
-	SetVelocity = function(self : HybridCast, Velocity: Vector3)
+	-- Overrides the bullet's current velocity with the supplied vector. The new
+	-- velocity becomes InitialVelocity of either the current segment (if it just
+	-- started) or a new segment opened at the analytically current position.
+	-- Acceleration is inherited from the current segment unchanged.
+	SetVelocity = function(self: VetraCast, Velocity: Vector3)
 		ModifyTrajectory(self, Velocity, nil, nil)
 	end,
 
-	-- Replaces the bullet's constant acceleration for future simulation. Because
-	-- acceleration is constant within a segment, changing it requires starting
-	-- a new segment unless the current one has zero elapsed time.
-	SetAcceleration = function(self, Acceleration: Vector3)
+	-- Replaces the constant acceleration for future simulation. Because acceleration
+	-- is invariant within a segment, applying a new value always requires either
+	-- mutating the current segment in place (zero elapsed time) or opening a new
+	-- segment (positive elapsed time). Both cases are handled by ModifyTrajectory.
+	SetAcceleration = function(self: VetraCast, Acceleration: Vector3)
 		ModifyTrajectory(self, nil, Acceleration, nil)
 	end,
 
-	-- Translates the bullet by an offset vector in world space. Internally this
-	-- reads the current analytic position and adds the offset, then calls
-	-- ModifyTrajectory with the result. The read-then-write is atomic in the
-	-- sense that no frame tick occurs between the two operations (we are on the
-	-- simulation thread), so the computed position is always consistent.
-	AddPosition = function(self, Offset: Vector3)
+	-- Translates the bullet by Offset in world space. Reads the current analytic
+	-- position and adds the offset before delegating to ModifyTrajectory. The
+	-- read-then-write is effectively atomic — no frame tick can occur between the
+	-- GetPosition call and the ModifyTrajectory call because both run on the
+	-- simulation thread without yielding.
+	AddPosition = function(self: VetraCast, Offset: Vector3)
 		ModifyTrajectory(self, nil, nil, self:GetPosition() + Offset)
 	end,
 
-	-- Adds a delta to the bullet's current velocity. Useful for impulse effects
-	-- such as an explosion knockback applied mid-flight. The current velocity is
-	-- read analytically before the delta is applied.
-	AddVelocity = function(self, Delta: Vector3)
+	-- Applies an impulse by adding Delta to the bullet's current velocity. Useful
+	-- for mid-flight effects like explosion knockback or wind gusts. The current
+	-- velocity is read analytically, ensuring the delta is applied to the precise
+	-- instantaneous velocity rather than a frame-start approximation.
+	AddVelocity = function(self: VetraCast, Delta: Vector3)
 		ModifyTrajectory(self, self:GetVelocity() + Delta, nil, nil)
 	end,
 
-	-- Adds a delta to the bullet's constant acceleration. Useful for variable
-	-- wind or thrust that builds up over time by making repeated AddAcceleration
-	-- calls each frame.
-	AddAcceleration = function(self, Delta: Vector3)
+	-- Adds a delta to the bullet's constant acceleration for the new segment.
+	-- Useful for incrementally building up a non-constant force (e.g. a sustained
+	-- thruster that fires AddAcceleration every frame) without needing to track
+	-- the running total externally.
+	AddAcceleration = function(self: VetraCast, Delta: Vector3)
 		ModifyTrajectory(self, nil, self:GetAcceleration() + Delta, nil)
 	end,
-
 }
--- ─── Active Cast Registry ────────────────────────────────────────────────────
-
---[[
-    CastToBulletContext and BulletContextToCast form a bidirectional weak map
-    between internal HybridCast objects and public-facing BulletContext objects.
-
-    Why bidirectional?
-        - CastToBulletContext lets the frame loop look up the context from a
-          cast, so signals can be fired with the context as the first argument.
-          Without it, every signal call site would need to crawl the BulletContext
-          API to find the matching context, which is O(n) without a reverse map.
-        - BulletContextToCast lets external callers (e.g. a weapon that holds a
-          BulletContext reference) reach the cast state if they need to pause,
-          introspect, or terminate it directly. This avoids forcing consumers to
-          store both the context and the cast separately.
-
-    Why weak keys (__mode = "k")?
-        When a cast terminates, its HybridCast table is removed from _ActiveCasts
-        and all other strong references are cleared. If these maps used strong
-        references as keys, the HybridCast would be kept alive by the map itself
-        even after termination — a memory leak that grows with every fired bullet.
-        Weak keys allow the GC to collect the HybridCast naturally once no other
-        code holds a strong reference. The BulletContext side uses weak values
-        for the same reason: once the context is no longer held by weapon code,
-        the mapping entry should not prevent its collection.
-]]
-local CastToBulletContext : {[HybridCast] : BulletContext.BulletContext} = setmetatable({}, { __mode = "k" })
-local BulletContextToCast : {[BulletContext.BulletContext] : HybridCast} = setmetatable({}, { __mode = "k" })
-
---[[
-    _ActiveCasts: The flat array of all currently simulated HybridCast objects.
-    Iteration over this array happens every frame in _StepProjectile.
-
-    A flat array is chosen over a dictionary for two reasons:
-        1. Cache locality: iterating indices 1..N over a contiguous array is
-           friendlier to the CPU cache than dictionary key enumeration, which
-           follows hash chain pointers into scattered memory.
-        2. O(1) swap-remove: removing an element from the middle of an array
-           by swapping it with the last element and shrinking the length by one
-           avoids the O(n) element-shifting cost of table.remove. This pattern
-           requires storing each cast's current index on itself (_registryIndex),
-           which is maintained by Register() and Remove().
-]]
-local _ActiveCasts = {}
-
-
---[[
-    _FrameEvent: The RunService event the simulation loop connects to.
-
-    Server uses Heartbeat (fires after Roblox physics, before replication)
-    for authoritative hit detection — positions are settled and consistent.
-
-    Client uses RenderStepped (fires before rendering) so that cosmetic bullet
-    visuals are always updated to their new positions before the frame is drawn.
-    If we used Heartbeat on the client, the cosmetic part would visually lag one
-    frame behind the computed position, producing a subtle but persistent trail
-    offset on fast-moving bullets.
-]]
-local _FrameEvent = IS_SERVER and RunService.Heartbeat or RunService.RenderStepped
 
 -- ─── Registry Helpers ────────────────────────────────────────────────────────
+--[[
+    Register and Remove accept the Solver instance as their first argument so
+    they operate on the per-instance Solver._ActiveCasts array rather than any
+    module-level state. This is the key structural change that isolates each
+    solver instance's cast population — casts registered on instance A can never
+    appear in instance B's iteration.
+
+    The backing data structure is a flat integer-indexed array. This choice over
+    a dictionary (keyed by cast ID or the cast table itself) is motivated by:
+
+        1. Cache locality:
+            Iterating indices 1..N over a contiguous array is substantially more
+            cache-friendly than dictionary enumeration, which follows hash chain
+            pointers into scattered heap memory. At high cast counts the cache
+            pressure difference is measurable.
+
+        2. O(1) swap-remove:
+            Removing an arbitrary element from a dense array normally costs O(n)
+            because all elements after the removed one must shift left by one slot.
+            Swap-remove avoids this by replacing the removed element with the last
+            element and shrinking the array length by one. This is O(1) regardless
+            of array size. The tradeoff is that iteration order is not preserved
+            after a removal — but _StepProjectile does not depend on order.
+
+    Each cast stores its current array index in _registryIndex. This field is
+    what makes O(1) swap-remove possible in Remove(): instead of scanning
+    _ActiveCasts to find the cast to remove (O(n)), we read its index directly
+    and jump straight to that slot. _registryIndex must be kept current whenever
+    the swap moves a cast to a new position.
+]]
 
 --[=[
     Register
 
     Description:
-        Inserts a HybridCast into the _ActiveCasts array and records its current
-        array index on the cast itself via the _registryIndex field.
+        Inserts a VetraCast into the solver instance's _ActiveCasts array and
+        records the cast's current array index in its own _registryIndex field.
 
-        The stored index is what makes O(1) swap-remove possible in Remove():
-        instead of linearly searching _ActiveCasts for the cast to remove (O(n)),
-        we read its pre-stored index directly and jump to that slot. This is
-        critical when many casts terminate in the same frame — e.g. a shotgun
-        blast where all pellets hit simultaneously — because O(n) removal would
-        compound to O(n²) across a batch of terminations.
+        The index is stored on the cast itself (rather than in a separate parallel
+        lookup table) because the cast is already a mutable record. Embedding the
+        index avoids the overhead of a separate hash-table lookup and keeps the
+        registry metadata co-located with the object it describes.
+
+        The stored _registryIndex is the critical invariant that enables O(1)
+        removal in Remove(). Without it, Remove() would need to linearly scan
+        _ActiveCasts to find the element, making batch terminations (e.g. a
+        shotgun blast with many simultaneous terminal hits) quadratic in cost.
 
     Parameters:
+        Solver: Vetra
+            The solver instance whose _ActiveCasts array receives the cast.
+
         CastToRegister: {}
-            The HybridCast table to register. The _registryIndex field will be
-            written onto this table, so the caller must not rely on the table
-            being unmodified after this call. Only tables are accepted; any other
-            type is silently rejected with a warning.
+            The VetraCast table to register. After this call, _registryIndex
+            will be set on the table. Callers must not rely on the table being
+            unmodified after registration.
 
     Returns:
         boolean
-            True if registration succeeded. False if the input was not a table,
-            or if the cast was already registered (detected by the presence of
-            a _registryIndex field). Double-registration is treated as a bug in
-            the caller, not a recoverable condition.
-
-    Notes:
-        The _registryIndex is written directly onto the HybridCast table rather
-        than stored in a separate map. This is idiomatic Luau for simulation
-        objects — the table is a mutable record, and embedding metadata directly
-        avoids the hash-table overhead of a parallel lookup structure.
+            True if registration succeeded. False if the input is not a table
+            or if the cast already has a _registryIndex field set, indicating it
+            was previously registered without being properly removed. Double-
+            registration is treated as a caller error rather than a recoverable
+            state — silently overwriting the existing index would corrupt the
+            registry by creating an orphaned entry at the old index slot that
+            the solver would never be able to remove.
 ]=]
-local function Register(CastToRegister: {_registryIndex : number?} | any): boolean
+local function Register(Solver: Vetra, CastToRegister: {_registryIndex: number?} | any): boolean
 	if not t.table(CastToRegister) then
 		Logger:Warn("Register: CastToRegister must be a table")
 		return false
 	end
-
 	-- A cast that already has _registryIndex set was previously registered and
-	-- not properly removed before re-registration was attempted. This indicates
-	-- a logic error in the caller (e.g. calling Fire() on an already-live cast).
-	-- Reject rather than silently overwrite the index, which would corrupt the
-	-- registry and cause the old entry at that index to become unreachable.
+	-- never properly removed before re-registration was attempted. This is a
+	-- logic error in the caller. Silently overwriting the existing index would
+	-- produce an orphaned slot in _ActiveCasts at the old index — that slot would
+	-- point to the cast but the cast's _registryIndex would point elsewhere,
+	-- making it impossible to remove via the normal O(1) swap-remove path.
 	if CastToRegister._registryIndex then
 		Logger:Warn("Register: cast already registered")
 		return false
 	end
-	-- Append to the end of the array. The index is #_ActiveCasts + 1 rather than
-	-- #_ActiveCasts because the cast has not been inserted yet at this point.
-	-- Storing this index on the cast is what makes O(1) removal possible —
-	-- Remove() reads _registryIndex to find the cast's position without searching.
-	local RegistryIndex = #_ActiveCasts + 1
-	CastToRegister._registryIndex = RegistryIndex
-	_ActiveCasts[RegistryIndex] = CastToRegister
 
+	-- Append to the end of the array. The new index is (#ActiveCasts + 1) because
+	-- the cast has not been inserted yet at this point — the count reflects the
+	-- current length before insertion. Storing this index on the cast now is what
+	-- makes Remove()'s O(1) jump-to-slot approach work.
+	local ActiveCasts   = Solver._ActiveCasts
+	local RegistryIndex = #ActiveCasts + 1
+	CastToRegister._registryIndex    = RegistryIndex
+	ActiveCasts[RegistryIndex]       = CastToRegister
 	return true
 end
 
@@ -826,49 +1010,67 @@ end
     Remove
 
     Description:
-        Removes a HybridCast from _ActiveCasts using the O(1) swap-remove pattern:
-        the element to remove is overwritten with the last element in the array,
-        then the array is shortened by one. This preserves contiguity without
-        shifting elements, making it O(1) regardless of array size.
+        Removes a VetraCast from the solver instance's _ActiveCasts array using
+        the O(1) swap-remove pattern. The element at the removal slot is
+        overwritten with the last element in the array, then the array is shortened
+        by one. This maintains array density (no holes) without shifting any
+        elements, regardless of the array's current length.
 
-        The swapped element's _registryIndex is updated immediately to reflect
-        its new position. If this update were omitted, the next Remove() call on
-        that element would read a stale index pointing to the wrong slot and
-        corrupt the registry.
+        After the swap, the moved element's _registryIndex is immediately updated
+        to reflect its new position. If this update were skipped, the moved element
+        would carry a stale index pointing to its old slot. The next Remove() call
+        on that element would then read the stale index, attempt to access a slot
+        that may now contain a different cast, and corrupt the registry.
+
+        The removed cast's _registryIndex is set to nil after removal to mark it
+        as unregistered. This prevents accidental re-use of a stale index and
+        makes re-registration attempts detectable by Register().
 
     Parameters:
+        Solver: Vetra
+            The solver instance whose _ActiveCasts array the cast is removed from.
+
         CastToRemove: { _registryIndex: number? }
-            The HybridCast to remove. Must have been registered via Register().
-            A missing _registryIndex indicates the cast was never registered or
-            was already removed — both are treated as errors.
+            The VetraCast to remove. Must have been registered via Register().
+            A missing _registryIndex means the cast was never registered or was
+            already removed — both indicate a caller logic error.
 
     Returns:
         boolean
-            True on success. False if preconditions fail (not a table, empty
-            registry, or missing index).
+            True on success. False if any precondition fails: non-table input,
+            empty registry, or missing _registryIndex.
 
     Notes:
-        The frame loop in _StepProjectile iterates from index 1 to ActiveCount
-        (snapshotted before the loop begins) in ascending order. When a cast at
-        index I is removed and replaced by the cast from index N (the last one),
-        the moved cast occupies index I — a position that will be visited later
-        in the same iteration (since I < N for any non-last element). This means
-        the moved cast is guaranteed to be processed in the same frame it was
-        moved, with no skipped frames. Casts that have already been processed
-        (indices < I) can never be moved into a position that will be re-visited,
-        so no cast is ever simulated twice in a single frame as a result of a swap.
+        Interaction with _StepProjectile's iteration order:
 
-        The edge case where the element to remove is the last element in the array
-        is handled explicitly. In that case, the "swap" would move the element
-        onto itself and then nil it out — which would lose it from the registry.
-        Detecting this case and skipping the swap avoids that bug.
+        _StepProjectile iterates _ActiveCasts from index 1 to ActiveCount
+        (snapshotted before the loop) in ascending order. When a cast at index I
+        is removed and replaced by the cast from the last occupied index N:
+            • The moved cast now occupies index I, which is less than N.
+            • The iteration cursor advances from I toward N.
+            • Index I will NOT be revisited — the cursor has already passed it.
+            • Therefore the moved cast (now at I) WILL be processed later in the
+              same iteration, at the position it was moved to.
+            • No cast is ever skipped (the moved cast is visited at its new index).
+            • No cast is ever processed twice (no previously-visited index is revisited).
+
+        The edge case where the cast to remove is already at the last index
+        is handled explicitly. In that case, the "last element" is the element
+        being removed itself. Performing the swap would write it back to its own
+        slot, then the array shrink (setting ActiveCasts[LastIndex] = nil) would
+        delete it — correctly removing it. However, the index update step
+        (LastRegisteredCast._registryIndex = RemoveIndex) would be a no-op writing
+        the same value back. The explicit short-circuit below is equivalent but
+        avoids the redundant write.
 ]=]
-local function Remove(CastToRemove: { _registryIndex: number? } | any): boolean
+local function Remove(Solver: Vetra, CastToRemove: {_registryIndex: number?} | any): boolean
 	if not t.table(CastToRemove) then
 		Logger:Warn("Remove: CastToRemove must be a table")
 		return false
 	end
-	if #_ActiveCasts == 0 then
+
+	local ActiveCasts = Solver._ActiveCasts
+	if #ActiveCasts == 0 then
 		Logger:Warn("Remove: no active casts to remove from")
 		return false
 	end
@@ -876,45 +1078,42 @@ local function Remove(CastToRemove: { _registryIndex: number? } | any): boolean
 		Logger:Warn("Remove: cast has no _registryIndex — was it registered?")
 		return false
 	end
+
 	--[[
-		Swap-remove invariant: after the operation, the array remains densely
-		packed (no holes) and every element's _registryIndex correctly reflects
-		its current position. This is maintained by:
-		    a) Writing the last element into the removed slot.
-		    b) Updating the moved element's _registryIndex to the new slot index.
-		    c) Nilling the last slot (now vacated by the move).
-		    d) Clearing the removed cast's _registryIndex to nil (it is no longer
-		       in the registry and should not be used as an array index).
+	    Swap-remove invariant: after this operation completes, the array must
+	    satisfy all of the following:
+	        a) Dense — no nil holes between index 1 and the new last index.
+	        b) Correct — every remaining element's _registryIndex equals its
+	           current array position.
+	        c) Compact — the array length decreases by exactly one.
 
-		If _StepProjectile is currently iterating and terminates a cast at index I:
-		- The cast from index N moves to index I.
-		- The iteration cursor is at I and will advance to I+1 next.
-		- The moved cast (now at I) was previously at N, which has not been
-		  visited yet (since N > I for any non-last removal).
-		- Therefore the moved cast WILL be visited at index I in this same frame.
-		- No cast is skipped or double-processed.
+	    These properties are maintained by the four-step operation below:
+	        1. Write the last element into the removal slot.
+	        2. Update the moved element's _registryIndex to the new slot index.
+	        3. Nil the last slot to shrink the array.
+	        4. Nil the removed cast's _registryIndex to mark it as unregistered.
 	]]
-	local RemoveIndex = CastToRemove._registryIndex
-	local LastIndex = #_ActiveCasts
-	local LastRegisteredCast = _ActiveCasts[LastIndex]
+	local RemoveIndex        = CastToRemove._registryIndex
+	local LastIndex          = #ActiveCasts
+	local LastRegisteredCast = ActiveCasts[LastIndex]
 
-	-- Edge case: the cast being removed is already the last element.
-	-- Swapping it with itself would work mathematically but would then nil out
-	-- the moved element at LastIndex, which is the same slot — losing the entry.
-	-- Detect and short-circuit this case.
+	-- Short-circuit: the element to remove is already the last in the array.
+	-- No swap is needed — just shrink the array by setting the last slot to nil
+	-- and clear the removed cast's index. Skipping the swap avoids a redundant
+	-- self-write to _registryIndex before it is immediately cleared.
 	if RemoveIndex == LastIndex then
-		_ActiveCasts[LastIndex] = nil
-		CastToRemove._registryIndex = nil
+		ActiveCasts[LastIndex]       = nil
+		CastToRemove._registryIndex  = nil
 		return true
 	end
 
-	-- General case: overwrite the removed slot with the last element, update
-	-- its index to reflect the new position, then shrink the array by one.
-	_ActiveCasts[RemoveIndex] = LastRegisteredCast
-	LastRegisteredCast._registryIndex = RemoveIndex
-	_ActiveCasts[LastIndex] = nil
-	CastToRemove._registryIndex = nil
-
+	-- General case: overwrite the removal slot with the last element, then
+	-- update the moved element's _registryIndex to reflect its new position,
+	-- shrink the array by one, and clear the removed cast's index.
+	ActiveCasts[RemoveIndex]              = LastRegisteredCast
+	LastRegisteredCast._registryIndex     = RemoveIndex
+	ActiveCasts[LastIndex]                = nil
+	CastToRemove._registryIndex           = nil
 	return true
 end
 
@@ -924,247 +1123,251 @@ end
     Terminate
 
     Description:
-        Fully shuts down a cast: marks it dead, releases pooled resources,
-        destroys cosmetic objects, severs the bidirectional context map entries,
-        and removes it from the active registry.
+        Fully shuts down a cast by executing a sequence of cleanup operations:
+        marking the cast dead, releasing pooled resources, destroying cosmetic
+        objects, severing the bidirectional context map, and removing the cast
+        from the active registry.
 
-        The order of operations here is deliberate and important:
+        The order of these steps is not arbitrary — each step creates preconditions
+        for the steps that follow, and executing them out of order would produce
+        resource leaks or use-after-free bugs.
 
-        1. Set Alive = false FIRST. If any step below triggers a re-entrant call
-           to Terminate (e.g. a signal handler that calls context:Terminate(), or
-           a coroutine that resumes inside a signal), the re-entrant call will see
-           Alive = false and return immediately. Without this guard, double
-           termination could release pooled RaycastParams twice, double-destroy the
-           cosmetic object, or attempt to Remove() a cast that is no longer in the
-           registry — all of which are unsafe.
+        Step 1 — Mark Cast.Alive = false FIRST:
+            Any subsequent step in this function may invoke code that has a
+            reference to this cast (e.g. a signal handler that calls
+            context:Terminate(), or a coroutine that resumes inside a signal
+            emission). If those paths see Alive = true, they would attempt to
+            terminate the cast again, starting a second concurrent termination
+            sequence. Marking Alive = false at the top of the function makes
+            termination idempotent: any re-entrant call checks this flag
+            immediately and returns without action.
 
-        2. Reset and release RaycastParams. The pierce system mutates the filter
-           list on the pooled params during its lifetime. Before returning params
-           to the pool, the filter is reset to the original snapshot (OriginalFilter)
-           so the next cast that acquires these params receives a clean slate.
+        Step 2 — Reset and release RaycastParams:
+            The pierce system appends instances to the pooled RaycastParams
+            filter list as the bullet travels. Before returning the params
+            object to the pool, the filter list must be reset to the original
+            snapshot (OriginalFilter, frozen in Fire()) so the next cast that
+            acquires these params receives a clean filter state. Without this
+            reset, the next bullet to use these params would inherit the previous
+            cast's accumulated pierce-exclusion list and fail to collide with
+            those instances.
 
-        3. Destroy the cosmetic bullet. This must happen before the context is
-           terminated so that any signal handler connected to OnTerminated can
-           still access the context's state (position, velocity) for final VFX
-           positioning without the cosmetic object already being gone.
+        Step 3 — Destroy the cosmetic bullet:
+            The cosmetic Instance is destroyed before the BulletContext is
+            invalidated. This ordering allows any OnTerminated signal handler
+            to safely read the context's last position and velocity for terminal
+            VFX placement (e.g. a hit spark at the impact point). If the context
+            were invalidated first, an OnTerminated handler would be working with
+            stale data.
 
-        4. Sever the bidirectional map. Both directions must be cleared together:
-           leaving one direction populated would hold a dangling reference to a
-           dead object, preventing GC from collecting it and potentially causing
-           use-after-free if code later looks up the surviving reference.
+        Step 4 — Sever the bidirectional context map:
+            Both directions of the cast↔context map must be cleared simultaneously.
+            Clearing only one direction would leave a dangling reference: the
+            surviving direction would hold a strong reference to a dead object,
+            preventing the GC from reclaiming it and creating a potential
+            use-after-free if any code later resolves that reference. Both
+            directions use the solver instance's own maps (not module-level tables)
+            so this step only affects this solver's mappings.
 
-        5. Remove from _ActiveCasts last. Remove() reads _registryIndex, which is
-           still valid at this point. If Remove() were called earlier (e.g. before
-           the context is cleaned up), the slot might be immediately overwritten
-           by the next Register() call, creating a race condition.
+        Step 5 — Remove from Solver._ActiveCasts:
+            The cast is removed from the active iteration array last. At this
+            point _registryIndex is still valid (nothing above has mutated it),
+            so Remove() can perform its O(1) swap-remove correctly. If Remove()
+            were called earlier, the vacated slot might be immediately overwritten
+            by a new Register() call before the context cleanup in step 4 is
+            complete, creating a window where two casts share the same array slot.
 
     Parameters:
-        Cast: HybridCast
-            The cast to terminate. If Alive is already false, this function
-            returns immediately — termination is idempotent by design so
-            callers do not need to guard against double-termination themselves.
+        Solver: Vetra
+            The solver instance that owns this cast. Required to access the
+            per-instance context maps (_CastToBulletContext, _BulletContextToCast)
+            and the active registry.
 
-    Notes:
-        Termination is always initiated by the solver internally (distance expiry,
-        speed expiry, terminal hit, corner trap). External code terminates a cast
-        by calling context:Terminate(), which delegates to the Terminate function
-        stored in Context.__solverData — ultimately calling this function.
+        Cast: VetraCast
+            The cast to terminate. If Cast.Alive is already false, this function
+            returns immediately. Termination is idempotent by design so all callers
+            (SimulateCast, context:Terminate(), corner-trap detection) can call this
+            without guarding against double-invocation themselves.
 ]=]
-local function Terminate(Cast: HybridCast)
-	-- Idempotency guard. This can be hit if a signal handler calls
-	-- context:Terminate() after the solver has already decided to terminate
-	-- the cast in the same frame (e.g. a terminal hit fires OnHit, the handler
-	-- calls Terminate, and then SimulateCast's own Terminate call runs).
-	-- The second call is silently ignored rather than erroring.
+local function Terminate(Solver: Vetra, Cast: VetraCast)
+	-- Idempotency guard. If a signal handler or coroutine calls context:Terminate()
+	-- while the solver is already in the process of terminating this cast (e.g. a
+	-- terminal hit fires OnHit, the handler calls Terminate, then SimulateCast's
+	-- own post-hit Terminate call runs), the second invocation is silently ignored.
+	-- Without this guard, the second call would attempt to release already-released
+	-- params and remove a cast that is no longer in the registry.
 	if not Cast.Alive then return end
 
-	-- Mark dead FIRST so any re-entrant path (signal handlers, coroutine resumes)
-	-- sees a dead cast and takes no action. This is the critical invariant that
-	-- makes all subsequent steps safe to perform without re-entrancy guards.
+	-- Mark dead FIRST. Any code path below that can trigger re-entrant execution
+	-- (signal handlers, coroutine.resume inside a signal) will see Alive = false
+	-- and return immediately. This invariant makes all subsequent cleanup steps
+	-- safe to execute without additional re-entrancy guards.
 	Cast.Alive = false
 
-	-- Reset the filter list on the pooled RaycastParams to the original snapshot
-	-- before returning them to the pool. The pierce system accumulates excluded
-	-- instances in this list over the cast's lifetime. Without this reset, the
-	-- next cast that acquires these params would inherit a contaminated filter
-	-- that ignores instances from a previous bullet's pierce chain — causing
-	-- bullets to pass through objects they should collide with.
-	Cast.Behavior.RaycastParams.FilterDescendantsInstances = 
+	-- Reset the pooled RaycastParams filter to the snapshot taken at Fire() time.
+	-- The pierce system appends instances to this filter as the bullet travels.
+	-- Without resetting, the next cast that acquires these params from the pool
+	-- would receive a filter contaminated with the previous cast's pierce exclusions,
+	-- causing bullets to pass through objects they should collide with.
+	Cast.Behavior.RaycastParams.FilterDescendantsInstances =
 		table.clone(Cast.Behavior.OriginalFilter)
 
-	-- Return params to the pool. Failing to release here would gradually exhaust
-	-- the pool, causing Fire() to fall back to direct (non-pooled) params and
-	-- increasing per-frame GC pressure.
+	-- Return the params to the pool. If Release() is not called here, the pool
+	-- gradually depletes and Fire() falls back to non-pooled params, increasing
+	-- per-fire allocation and GC pressure. At high fire rates this fallback
+	-- compounds into measurable frame time spikes.
 	ParamsPooler.Release(Cast.Behavior.RaycastParams)
 
-	-- Destroy the cosmetic bullet. Nilling the reference after destruction allows
-	-- the GC to collect the Instance object immediately rather than waiting for
-	-- the next GC cycle while the table slot still holds a reference.
+	-- Destroy the cosmetic bullet Instance. Nilling the reference after destruction
+	-- releases the table's strong reference to the Instance, allowing the GC to
+	-- collect it immediately rather than at the next cycle.
 	if Cast.Runtime.CosmeticBulletObject then
 		Cast.Runtime.CosmeticBulletObject:Destroy()
 		Cast.Runtime.CosmeticBulletObject = nil
 	end
 
-	-- Sever both directions of the bidirectional weak map simultaneously.
-	-- Severing only one direction would leave a dangling half-reference that
-	-- prevents GC from collecting the surviving object and could cause incorrect
-	-- lookups if code checks the map after termination.
-	local LinkedContext = CastToBulletContext[Cast]
+	-- Sever both directions of the bidirectional context map atomically.
+	-- Clearing only one direction would leave a dangling half-reference:
+	-- the surviving direction would hold a strong pointer to a dead object and
+	-- prevent GC collection, potentially causing use-after-free if code later
+	-- resolves that surviving reference.
+	local LinkedContext = Solver._CastToBulletContext[Cast]
 	if LinkedContext then
 		-- Notify the BulletContext that its underlying cast has ended. The context
-		-- marks itself dead and clears its __solverData.Terminate reference,
-		-- preventing future calls to context:Terminate() from invoking this
-		-- function on a cast that is already gone.
+		-- marks itself dead and clears the injected Terminate closure in its
+		-- __solverData, so future calls to context:Terminate() become no-ops
+		-- rather than invoking this function on an already-gone cast.
 		if LinkedContext.Alive then
 			LinkedContext:Terminate()
 		end
-		BulletContextToCast[LinkedContext] = nil
-		CastToBulletContext[Cast] = nil
+		Solver._BulletContextToCast[LinkedContext] = nil
+		Solver._CastToBulletContext[Cast]          = nil
 	end
 
-	-- Remove from the active array last. _registryIndex is still valid here
-	-- because nothing above has modified it. After this call, the cast's slot
-	-- in _ActiveCasts is either nilled (if it was the last element) or occupied
-	-- by a different cast (swapped from the end).
-	Remove(Cast)
+	-- Remove from _ActiveCasts last. _registryIndex is still valid at this point;
+	-- none of the steps above have modified it. After this call, the slot is either
+	-- nilled (last element) or occupied by the cast swapped in from the end.
+	Remove(Solver, Cast)
 end
-
--- ─── Module-Level Signals ────────────────────────────────────────────────────
-
---[[
-    All signals are declared at module scope rather than per-cast. This is an
-    intentional architectural decision driven by two goals:
-
-    1. Connection lifecycle simplicity: per-cast signals would require weapon
-       code to connect on every Fire() call and disconnect on every termination.
-       Forgetting to disconnect on termination would accumulate dead connections
-       that are never garbage-collected (Signal objects typically hold strong
-       references to connected functions). Module-level signals are connected
-       once during weapon initialisation and never need to be disconnected.
-
-    2. Unified dispatch point: having a single signal for all casts lets a weapon
-       script handle events from all of its bullets in one handler, dispatching
-       by context identity rather than managing N separate signal objects. This
-       mirrors how Roblox's built-in RemoteEvent model works.
-
-    Signal contracts — every signal passes the BulletContext as its first argument
-    so consumers can identify the bullet and access its UserData and current state:
-
-        OnHit (Context, Result: RaycastResult?, Velocity: Vector3)
-            Fired when the bullet reaches a terminal state. Result is the
-            RaycastResult at the hit surface, or nil if the bullet expired by
-            distance or minimum speed (non-collision terminations). Consumers
-            can distinguish impact from expiry by checking `Result ~= nil`.
-
-        OnTravel (Context, Position: Vector3, Velocity: Vector3)
-            Fired every frame as the bullet advances. Used for trail effects,
-            sound attenuation curves, hit-detection preview, or mid-flight state
-            polling. OnTravel uses Fire (not FireSafe) because it fires on every
-            active bullet every frame — FireSafe's deep-copy overhead is
-            unacceptable on this hot path. Consumers must not throw inside
-            OnTravel handlers.
-
-        OnPierce (Context, Result: RaycastResult, Velocity: Vector3, PierceCount: number)
-            Fired each time the bullet successfully pierces an instance.
-            PierceCount is the cumulative total including this pierce, incremented
-            before the signal fires so handlers always see the updated count.
-
-        OnBounce (Context, Result: RaycastResult, Velocity: Vector3, BounceCount: number)
-            Fired each time the bullet bounces off a surface. BounceCount is
-            cumulative and incremented before firing, consistent with OnPierce.
-
-        OnTerminated (Context)
-            Fired unconditionally just before the cast is terminated, regardless
-            of the termination reason (impact, expiry, corner trap). This is the
-            reliable cleanup hook — consumers can use it to play impact sounds,
-            return bullet visuals to a pool, or mark a pending hit as resolved.
-]]
-
-
---[[
-    OnTravel uses Fire (not FireSafe) intentionally — it fires every frame
-    and FireSafe's deep-copy overhead is unacceptable on this hot path.
-    Consumers must ensure their OnTravel handlers do not throw.
-]]
-local Signals = {
-	OnHit = Signal.new(),
-	OnTravel = Signal.new(),
-	OnPierce = Signal.new(),
-	OnBounce = Signal.new(),
-	OnTerminated = Signal.new(),
-}
 
 -- ─── Signal Emission Helpers ─────────────────────────────────────────────────
 
 --[[
-    These helpers centralise two concerns that every signal emission site shares:
+    Each of these helpers centralises two concerns shared by every signal
+    emission site in the module:
 
-    1. The CastToBulletContext lookup — every signal must pass the BulletContext
-       as its first argument, which requires looking it up from the cast. Doing
-       this lookup inline at every call site would be verbose and would scatter
-       the "is the context still live?" guard across the codebase.
+    1. BulletContext lookup:
+        Every signal passes the BulletContext as its first argument so consumers
+        can identify the cast and access its UserData and current position/velocity.
+        Performing the Solver._CastToBulletContext[Cast] lookup inline at each of
+        the dozen call sites would scatter the "is this context still live?" nil
+        guard everywhere. Centralising here means that guard exists in one place.
 
-    2. The context state update (_UpdateState) — consumers polling
-       context.Position or context.Velocity between frames expect them to reflect
-       the bullet's state at the time of the event, not the previous frame.
-       Updating here ensures the context is always current when the signal fires,
-       regardless of which call site triggered the emission.
+    2. Context state synchronisation (_UpdateState):
+        Consumers that poll context.Position or context.Velocity inside a signal
+        handler expect values that reflect the bullet's state at the moment the
+        event fired. Without an explicit _UpdateState call before the signal fires,
+        those fields would hold values from the previous frame. Updating here
+        ensures the context is always current at signal emission time, regardless
+        of which call site triggered it.
 
-    The nil-context early return handles the edge case where Terminate() has
-    already severed the CastToBulletContext mapping (e.g. if a signal handler
-    called context:Terminate(), which ran Terminate(), which cleared the map)
-    before another signal tries to fire in the same frame. Silently dropping
-    the signal is correct here — the cast is already dead from the consumer's
-    perspective.
+    Every helper takes Solver as its first argument because both the signal
+    objects and the _CastToBulletContext map are per-instance fields. The
+    nil-context early return in each helper handles the edge case where
+    Terminate() has already severed _CastToBulletContext before a second signal
+    attempt fires in the same frame (e.g. a corner-trap termination followed
+    immediately by an OnTerminated emission).
+
+    ── Signal contracts ─────────────────────────────────────────────────────────
+
+        OnHit (Context, Result: RaycastResult?, Velocity: Vector3):
+            Fired when the bullet reaches a terminal state. Result is the
+            RaycastResult at the impact surface, or nil if the bullet expired
+            by distance or minimum speed. Consumers distinguish physical impact
+            from silent expiry by testing `Result ~= nil`.
+
+        OnTravel (Context, Position: Vector3, Velocity: Vector3):
+            Fired every frame as the bullet advances its position. Used for trail
+            particle effects, sound attenuation curves, or any system that needs
+            continuous per-frame position data. OnTravel uses Fire (not FireSafe)
+            because it fires on every active bullet every frame — FireSafe's
+            deep-copy overhead is unacceptable on this hot path. Signal handler
+            errors inside OnTravel will be unhandled; consumers must not throw.
+
+        OnPierce (Context, Result: RaycastResult, Velocity: Vector3, PierceCount: number):
+            Fired each time the bullet successfully pierces an instance. PierceCount
+            is the cumulative total including the current pierce, incremented before
+            the signal fires so handlers see the already-updated count.
+
+        OnBounce (Context, Result: RaycastResult, Velocity: Vector3, BounceCount: number):
+            Fired each time the bullet bounces off a surface. BounceCount is
+            cumulative and incremented before firing, consistent with OnPierce.
+
+        OnTerminated (Context):
+            Fired unconditionally just before the cast is removed from the registry,
+            regardless of the termination reason (impact, distance expiry, speed
+            expiry, corner trap). This is the reliable one-time cleanup hook —
+            consumers should use it for impact sounds, returning bullet visuals
+            to an object pool, or resolving pending hit confirmations.
 ]]
 
-local function FireOnHit(Cast: HybridCast, HitResult: RaycastResult?, HitVelocity: Vector3)
-	local Context = CastToBulletContext[Cast]
+local function FireOnHit(Solver: Vetra, Cast: VetraCast, HitResult: RaycastResult?, HitVelocity: Vector3)
+	local Context = Solver._CastToBulletContext[Cast]
 	if not Context then return end
-	-- Snap the context position to the hit point so consumers reading
-	-- context.Position in their OnHit handler get the surface contact point,
-	-- not the bullet's position from the previous frame.
+	-- Snap the context position to the hit point before firing. Consumers reading
+	-- context.Position inside their OnHit handler will get the surface contact
+	-- position, not the bullet's interpolated position from the previous frame.
+	-- This ensures that impact VFX spawned at context.Position appear exactly
+	-- on the surface rather than slightly behind it.
 	if HitResult then
 		Context:_UpdateState(HitResult.Position, HitVelocity, Cast.Runtime.DistanceCovered)
 	end
-	Signals.OnHit:FireSafe(Context, HitResult, HitVelocity)
+	Solver.Signals.OnHit:FireSafe(Context, HitResult, HitVelocity)
 end
 
-local function FireOnTravel(Cast: HybridCast, TravelPosition: Vector3, TravelVelocity: Vector3)
-	local Context = CastToBulletContext[Cast]
+local function FireOnTravel(Solver: Vetra, Cast: VetraCast, TravelPosition: Vector3, TravelVelocity: Vector3)
+	local Context = Solver._CastToBulletContext[Cast]
 	if not Context then return end
-	-- Update the context every frame so external code polling context.Position
-	-- between signal connections always sees the current bullet position without
-	-- needing to subscribe to OnTravel explicitly.
+	-- Update the context every frame. External code polling context.Position
+	-- between signal connections (e.g. a distance-based audio system that reads
+	-- bullet position from a stored context reference) always sees the current
+	-- frame's position without requiring an explicit OnTravel subscription.
 	Context:_UpdateState(TravelPosition, TravelVelocity, Cast.Runtime.DistanceCovered)
-	Signals.OnTravel:Fire(Context, TravelPosition, TravelVelocity)
+	-- Use Fire rather than FireSafe. OnTravel fires for every active bullet every
+	-- frame. FireSafe performs deep copies to isolate handler errors, which adds
+	-- non-trivial overhead at high bullet counts. OnTravel consumers are expected
+	-- not to throw; if they do, the error will be unhandled rather than isolated.
+	Solver.Signals.OnTravel:Fire(Context, TravelPosition, TravelVelocity)
 end
 
-local function FireOnPierce(Cast: HybridCast, PierceResult: RaycastResult, PierceVelocity: Vector3)
-	local Context = CastToBulletContext[Cast]
+local function FireOnPierce(Solver: Vetra, Cast: VetraCast, PierceResult: RaycastResult, PierceVelocity: Vector3)
+	local Context = Solver._CastToBulletContext[Cast]
 	if not Context then return end
-	-- Increment BEFORE firing. The PierceCount on the signal represents the
-	-- count INCLUDING the current pierce, so consumers can check
-	-- "is this the third pierce?" without adding one themselves.
+	-- Increment PierceCount BEFORE firing the signal. The count argument on the
+	-- signal represents the total including the current pierce, so a handler
+	-- checking "is this the third pierce?" can compare directly against 3 without
+	-- adding one. This convention matches OnBounce and ensures consistent semantics
+	-- across both counter-carrying signals.
 	Cast.Runtime.PierceCount += 1
 	Context:_UpdateState(PierceResult.Position, PierceVelocity, Cast.Runtime.DistanceCovered)
-	Signals.OnPierce:FireSafe(Context, PierceResult, PierceVelocity, Cast.Runtime.PierceCount)
+	Solver.Signals.OnPierce:FireSafe(Context, PierceResult, PierceVelocity, Cast.Runtime.PierceCount)
 end
 
-local function FireOnBounce(Cast: HybridCast, BounceResult: RaycastResult, PostBounceVelocity: Vector3)
-	local Context = CastToBulletContext[Cast]
+local function FireOnBounce(Solver: Vetra, Cast: VetraCast, BounceResult: RaycastResult, PostBounceVelocity: Vector3)
+	local Context = Solver._CastToBulletContext[Cast]
 	if not Context then return end
-	-- Increment BEFORE firing for the same reason as FireOnPierce — consumers
-	-- receive the updated count so they don't need to add one.
+	-- Increment BounceCount BEFORE firing the signal for the same reason as
+	-- FireOnPierce — consumers receive the updated count so they do not need to
+	-- add one themselves when checking lifetime bounce budgets.
 	Cast.Runtime.BounceCount += 1
 	Context:_UpdateState(BounceResult.Position, PostBounceVelocity, Cast.Runtime.DistanceCovered)
-	Signals.OnBounce:FireSafe(Context, BounceResult, PostBounceVelocity, Cast.Runtime.BounceCount)
+	Solver.Signals.OnBounce:FireSafe(Context, BounceResult, PostBounceVelocity, Cast.Runtime.BounceCount)
 end
 
-local function FireOnTerminated(Cast: HybridCast)
-	local Context = CastToBulletContext[Cast]
+local function FireOnTerminated(Solver: Vetra, Cast: VetraCast)
+	local Context = Solver._CastToBulletContext[Cast]
 	if not Context then return end
-	Signals.OnTerminated:FireSafe(Context)
+	Solver.Signals.OnTerminated:FireSafe(Context)
 end
 
 -- ─── Corner Trap Detection ───────────────────────────────────────────────────
@@ -1173,114 +1376,131 @@ end
     IsCornerTrap
 
     Description:
-        Detects whether the bullet has entered a geometric configuration where
-        it would bounce infinitely between two surfaces without making meaningful
-        forward progress. This situation arises in concave geometry — V-grooves,
-        inside corners, narrow slots, micro-cracks — where each bounce reflects
-        the bullet directly toward the opposing surface.
+        Detects whether a bullet has entered a geometric configuration that would
+        cause it to bounce indefinitely between two or more surfaces without making
+        meaningful forward progress. This degenerate condition arises in concave
+        geometry — V-grooves, inside corners, narrow slots, procedurally generated
+        micro-cracks — where each reflection from one surface directs the bullet
+        straight at the opposing surface.
 
-        Without this detection, such geometry would trigger a bounce loop that
-        consumes all of MaxBounces in a single frame, producing a visible
-        stutter (the bullet freezes in the corner) and wasting simulation budget.
-        In degenerate cases it could also trigger MaxBouncesPerFrame and produce
-        incorrect final positions.
+        Without this detection, such geometry would trigger a bounce chain that
+        consumes the entire MaxBounces budget in a single frame, producing a
+        visible freeze (the bullet stalls inside the corner geometry) and wasting
+        the frame's simulation budget on a bullet that will never escape. In the
+        worst case with MaxBouncesPerFrame = 10 and CornerTimeThreshold = 0, a
+        bullet could perform hundreds of tight reflections in one simulation tick.
 
-        Three independent guards are evaluated; any single guard firing is
-        sufficient to declare a trap and terminate the cast. The guards are
-        ordered from cheapest to most expensive:
+        Three independent heuristic guards are evaluated in order from cheapest
+        (scalar comparison) to most expensive (vector distance). Any single guard
+        firing is sufficient to declare a corner trap; all three need not be
+        satisfied simultaneously. The threshold values in DEFAULT_BEHAVIOR are
+        chosen to be permissive enough to avoid false positives on intentional
+        tight-bounce geometry while still catching all practical degenerate cases.
 
-        Guard 1 — Temporal proximity (scalar comparison, fastest):
-            Two bounces occurring within CornerTimeThreshold seconds of each
-            other (default 0.002s) indicate the bullet is bouncing faster than
-            any physically meaningful surface separation allows. At 60Hz, 0.002s
-            is roughly one-eighth of a frame — no real surface geometry produces
-            legitimate bounces this close together in time.
+        Guard 1 — Temporal proximity (cheapest: single scalar comparison):
+            If the interval between the current bounce and the most recent previous
+            bounce is shorter than CornerTimeThreshold (default 0.002 seconds),
+            the bullet is bouncing faster than any physically plausible surface
+            separation would allow. At 60Hz, 0.002 seconds is one-eighth of a frame
+            — no legitimate game geometry produces valid bounces this close together
+            in time. A false positive here would require two genuine collisions to
+            occur within 2ms of each other, which is impossible in a real 60Hz
+            simulation step.
 
-        Guard 2 — Normal opposition (dot product):
-            If the current surface normal and the previous bounce normal point
-            nearly opposite each other (dot product < CornerNormalDotThreshold,
-            default -0.85, corresponding to ~148°), the two surfaces are nearly
-            face-to-face. A ball in a square groove bouncing between left and
-            right walls would produce normals with dot ≈ -1.0. The threshold
-            gives a generous tolerance margin to avoid false positives on slightly
-            angled surfaces.
+        Guard 2 — Normal opposition (medium cost: dot product):
+            If the current surface normal and the previously stored bounce normal
+            point nearly opposite each other (dot product < CornerNormalDotThreshold,
+            default -0.85, corresponding to ~148° between the normals), the two
+            surfaces are nearly face-to-face. A bullet bouncing between the left and
+            right walls of a square groove would produce normals with a dot product
+            approaching -1.0. The -0.85 threshold accommodates non-axis-aligned
+            surfaces while rejecting geometry where the opposing angle is too narrow
+            for any trajectory to escape. This guard is only evaluated if a previous
+            bounce normal has been recorded (LastBounceNormal ~= ZERO_VECTOR),
+            because comparing against the zero-vector sentinel would produce a dot
+            of 0.0 that never triggers the guard regardless of the current normal.
 
-        Guard 3 — Spatial proximity (distance check):
+        Guard 3 — Spatial proximity (most expensive: distance computation):
             If the two most recent bounce contact points are less than
-            CornerDisplacementThreshold studs apart (default 0.5), the bullet
-            is making negligible forward progress. This catches small pits, micro
-            geometry, and procedurally generated terrain irregularities where
-            normals might not be perfectly opposing but the bullet is clearly stuck.
+            CornerDisplacementThreshold studs apart (default 0.5), the bullet is
+            making negligible forward progress between bounces. This catches small
+            pits and procedurally generated terrain irregularities where the surface
+            normals may not be perfectly opposing (Guard 2 would miss them) but the
+            bullet is clearly oscillating within a tiny spatial region. This guard is
+            only evaluated if a previous bounce position has been recorded.
+
+        This function reads only Cast and Behavior state. It has no side effects
+        and requires no Solver argument.
 
     Parameters:
-        Cast: HybridCast
-            The cast being evaluated. Reads LastBounceTime, LastBounceNormal,
-            and LastBouncePosition from Runtime to compare against the new bounce.
+        Cast: VetraCast
+            The cast being evaluated. LastBounceTime, LastBounceNormal, and
+            LastBouncePosition are read from Cast.Runtime.
 
         SurfaceNormal: Vector3
-            The outward-facing normal of the surface just hit. Must be a unit vector.
+            The outward-facing unit normal of the surface just contacted. Used for
+            Guard 2's dot product against the previously stored bounce normal.
 
         ContactPosition: Vector3
-            World-space position where the bullet just made contact.
+            World-space contact point of the current bounce. Used for Guard 3's
+            displacement measurement against the previously stored bounce position.
 
     Returns:
         boolean
-            True if a corner trap is detected. The caller should terminate the
-            cast immediately rather than reflecting the velocity.
+            True if any guard fires, indicating the bullet is trapped. The caller
+            (SimulateCast) should terminate the cast rather than reflecting the
+            velocity and continuing simulation.
 
     Notes:
-        This is a heuristic and will occasionally produce false positives —
-        legitimate tight-angle bounces in intentionally narrow geometry may be
-        incorrectly identified as traps. This is an accepted tradeoff: an
-        infinite bounce loop is a far worse outcome than a premature termination.
-        If your game requires bullets to navigate tight geometry, reduce the
-        thresholds or disable corner trap detection via MaxBounces = 0.
+        This is a heuristic and will occasionally produce false positives in
+        intentionally tight geometry (e.g. a pinball machine, a narrow pipe
+        interior). This is an accepted engineering tradeoff: an infinite bounce
+        loop consuming all frame budget is a far worse outcome than a single
+        premature termination in edge-case geometry. If your game deliberately
+        requires bullets to navigate tight concave spaces, reduce the thresholds
+        or increase MaxBounces to push the guard windows outside your geometry's
+        operating range.
 ]=]
-local function IsCornerTrap(Cast: HybridCast, SurfaceNormal: Vector3, ContactPosition: Vector3): boolean
-	local Runtime = Cast.Runtime
+local function IsCornerTrap(Cast: VetraCast, SurfaceNormal: Vector3, ContactPosition: Vector3): boolean
+	local Runtime  = Cast.Runtime
 	local Behavior = Cast.Behavior
 
-	-- Guard 1: Temporal proximity. OsClock is cached as a local upvalue to avoid
-	-- a global hash lookup on this frequently-called check. If the interval since
-	-- the last bounce is shorter than the threshold, no real physical geometry
-	-- could have produced this bounce legitimately.
-	local TimeSinceLastBounce = OsClock() - Runtime.LastBounceTime
+	-- Guard 1: Temporal proximity. OsClock is cached as a module-level upvalue
+	-- to avoid a global hash lookup on this frequently-called check. If the
+	-- interval since the last bounce is below CornerTimeThreshold, the two bounces
+	-- occurred so close in time that no real physical geometry could have produced
+	-- both of them legitimately within a single simulation step.
+	local TimeSinceLastBounce      = OsClock() - Runtime.LastBounceTime
 	local IsBounceIntervalTooShort = TimeSinceLastBounce < Behavior.CornerTimeThreshold
-	if IsBounceIntervalTooShort then
-		return true
-	end
+	if IsBounceIntervalTooShort then return true end
 
 	-- Guard 2: Normal opposition. The dot product of two unit vectors equals
-	-- cos(angle_between_them). A value of -1.0 means the normals point exactly
-	-- opposite each other (180°, perfectly parallel opposing surfaces). The
-	-- threshold of -0.85 catches any configuration where the surfaces are within
-	-- about 32° of being parallel-opposing, which covers all practical concave
-	-- corner traps with a reasonable margin for non-axis-aligned geometry.
-	-- We only perform this check if a previous bounce normal exists (i.e., this
-	-- is not the first bounce), because comparing against ZERO_VECTOR would
-	-- always produce a dot of 0.0 and never trigger the guard.
+	-- cos(angle_between_them). A value of -1.0 means the normals are exactly
+	-- anti-parallel (surfaces are face-to-face, 180° apart). The threshold of
+	-- -0.85 corresponds to normals that are at least ~148° apart — permissive
+	-- enough to tolerate non-axis-aligned corners while reliably catching all
+	-- practical concave trap geometries. The guard is skipped on the first bounce
+	-- (when LastBounceNormal is still ZERO_VECTOR) to avoid a false-positive from
+	-- comparing a real normal against the zero-vector sentinel.
 	local HasPreviousBounceNormal = Runtime.LastBounceNormal ~= ZERO_VECTOR
 	if HasPreviousBounceNormal then
-		local NormalDotProduct = SurfaceNormal:Dot(Runtime.LastBounceNormal)
+		local NormalDotProduct   = SurfaceNormal:Dot(Runtime.LastBounceNormal)
 		local NormalsAreOpposing = NormalDotProduct < Behavior.CornerNormalDotThreshold
-		if NormalsAreOpposing then
-			return true
-		end
+		if NormalsAreOpposing then return true end
 	end
 
-	-- Guard 3: Spatial proximity. A bullet making genuine forward progress
-	-- through geometry will have non-trivial displacement between successive
-	-- bounce contact points. Sub-threshold displacement indicates the bullet
-	-- is oscillating in a very confined region. We skip this check if no
-	-- previous bounce position is recorded (ZERO_VECTOR sentinel) to avoid
-	-- comparing against the world origin.
+	-- Guard 3: Spatial proximity. A bullet making genuine forward progress through
+	-- geometry will have non-trivial displacement between successive contact points.
+	-- A displacement below CornerDisplacementThreshold (default 0.5 studs) indicates
+	-- the bullet is oscillating in a very confined region — it is not escaping the
+	-- corner geometry. Like Guard 2, this check is skipped on the first bounce to
+	-- avoid comparing a real contact point against the ZERO_VECTOR sentinel, which
+	-- represents the world origin and would produce a meaningless distance.
 	local HasPreviousBouncePosition = Runtime.LastBouncePosition ~= ZERO_VECTOR
 	if HasPreviousBouncePosition then
-		local BounceDisplacement = (ContactPosition - Runtime.LastBouncePosition).Magnitude
+		local BounceDisplacement     = (ContactPosition - Runtime.LastBouncePosition).Magnitude
 		local IsDisplacementTooSmall = BounceDisplacement < Behavior.CornerDisplacementThreshold
-		if IsDisplacementTooSmall then
-			return true
-		end
+		if IsDisplacementTooSmall then return true end
 	end
 
 	return false
@@ -1292,106 +1512,132 @@ end
     ResolveBounce
 
     Description:
-        Computes the post-bounce velocity vector given the bullet's incoming
+        Computes the post-bounce velocity vector from the bullet's incoming
         velocity and the surface normal at the contact point.
 
-        The core reflection formula is the standard geometric mirror reflection:
+        ── Core Reflection Mathematics ──────────────────────────────────────────
+
+        The reflection formula used is the standard geometric mirror reflection:
+
             V_reflected = V - 2 * (V · N) * N
-        where V is the incoming velocity and N is the unit surface normal.
 
-        The derivation: (V · N) gives the signed scalar projection of V onto N
-        — that is, how much of V is directed into the surface. Multiplying by N
-        converts it back to a vector along the normal. Subtracting twice this
-        component from V reverses the normal component while preserving the
-        tangential component, producing a mirror reflection about the surface
-        plane. This formula is exact for elastic reflection from a flat surface.
+        Derivation:
+            (V · N) is the scalar projection of V onto the surface normal N — the
+            signed component of the velocity directed into (or away from) the surface.
+            Multiplying by N converts it back to a vector along the normal direction.
+            Subtracting twice this normal component from V cancels the inward velocity
+            and replaces it with an equal outward component, while leaving the tangential
+            (surface-parallel) component of V entirely unchanged. The result is a perfect
+            mirror reflection of V about the surface plane, which is the physically
+            correct behaviour for elastic reflection from a flat surface.
 
-        Energy dissipation is modelled multiplicatively: the reflected velocity
-        is scaled by (Restitution × MaterialRestitutionMultiplier). Restitution
-        < 1.0 means kinetic energy is lost each bounce (inelastic collision),
-        simulating material deformation and sound emission. This also ensures
-        that a bullet with finite Restitution will eventually slow below
-        BounceSpeedThreshold and stop bouncing naturally.
+        ── Energy Dissipation ────────────────────────────────────────────────────
 
-        Per-material restitution (MaterialRestitution table) allows different
-        surfaces to absorb different amounts of energy. A rubber floor can have
-        Restitution = 1.0 while a concrete wall uses Restitution = 0.5, without
-        requiring separate Behavior tables per surface type.
+        The reflected velocity is scaled by (Restitution × MaterialRestitutionMultiplier).
+        Restitution < 1.0 models an inelastic collision where kinetic energy is lost to
+        material deformation, heat, and sound on each bounce. This scaling is applied
+        uniformly to all velocity components — energy is lost proportionally in all
+        directions, not selectively. The practical effect is that bullets with
+        Restitution < 1.0 will naturally converge toward zero speed after a finite
+        number of bounces, eventually triggering the MinSpeed termination condition.
 
-        The NormalPerturbation path replaces the clean reflection with one
-        computed against a randomly perturbed normal, simulating rough or
-        irregular surfaces. The two paths are mutually exclusive: combining
-        a clean reflection and a perturbed reflection would produce a
-        double-reflection that is neither physically meaningful nor artistically
-        predictable.
+        Per-material restitution (the MaterialRestitution lookup table on Behavior)
+        provides a per-surface energy-absorption multiplier. This allows a rubber floor
+        and a concrete wall to coexist in the same scene with different bounce energy
+        profiles, without requiring separate Behavior tables for each surface type.
+        Any material not in the table uses a multiplier of 1.0 (no modification to
+        the base Restitution coefficient).
+
+        ── Normal Perturbation ───────────────────────────────────────────────────
+
+        When NormalPerturbation > 0, the reflection is computed against a randomly
+        perturbed surface normal rather than the clean geometric normal. A uniform
+        random direction vector is scaled by NormalPerturbation and added to the
+        surface normal; the result is re-normalised. This perturbed normal is then
+        used for the full reflection + restitution computation. The perturbed result
+        entirely replaces the clean reflection — both are never combined, because
+        applying a clean reflection and then a perturbed reflection would produce a
+        double-reflection with no physical interpretation. The perturbation path and
+        the clean path are mutually exclusive.
+
+        ResolveBounce reads only Cast and HitResult. It has no side effects beyond
+        computing its return value and requires no Solver argument.
 
     Parameters:
-        Cast: HybridCast
-            The cast being resolved. Reads Behavior.Restitution,
+        Cast: VetraCast
+            The cast whose bounce is being resolved. Reads Behavior.Restitution,
             Behavior.MaterialRestitution, and Behavior.NormalPerturbation.
 
         HitResult: RaycastResult
-            The raycast result at the contact point. Provides the surface normal
-            (used for reflection) and the material (used for the per-material
-            restitution lookup).
+            The raycast result at the contact point. Provides the geometric surface
+            normal for the reflection formula and the material enum for the per-
+            material restitution lookup.
 
         IncomingVelocity: Vector3
-            The bullet's velocity vector at the moment of surface contact. This
-            should be the analytically computed velocity at the hit time, not a
-            frame-start value, to ensure the reflection is computed from the
-            correct impact angle.
+            The bullet's velocity at the exact moment of contact. This should be
+            the analytically computed velocity at the hit time (VelocityAtTime at
+            ElapsedAfterAdvance), not the frame-start velocity, to ensure the
+            reflection angle is computed from the bullet's true impact direction
+            rather than an approximation that may lag by up to one full frame delta.
 
     Returns:
         Vector3
-            The post-bounce velocity vector. This becomes InitialVelocity for
-            the new trajectory segment created in SimulateCast. It already has
-            energy loss applied; the caller does not need to scale it further.
+            The post-bounce velocity vector with energy dissipation already applied.
+            This becomes InitialVelocity for the new trajectory segment opened in
+            SimulateCast. The caller does not need to scale it further.
 
     Notes:
         If Restitution = 0.0, the returned vector has zero magnitude. SimulateCast
-        does not check for this here — instead, the IsBelowMinSpeed check in the
-        next frame will terminate the cast naturally. This avoids special-casing
-        zero-restitution in ResolveBounce itself.
+        does not special-case this here — the IsBelowMinSpeed check at the start
+        of the next frame will terminate the cast cleanly. Handling this case inside
+        ResolveBounce would require either duplicating termination logic or returning
+        a sentinel, both of which are worse than letting the normal termination path
+        handle it one frame later.
 ]=]
-local function ResolveBounce(Cast: HybridCast, HitResult: RaycastResult, IncomingVelocity: Vector3): Vector3
-	local Behavior = Cast.Behavior
+local function ResolveBounce(Cast: VetraCast, HitResult: RaycastResult, IncomingVelocity: Vector3): Vector3
+	local Behavior      = Cast.Behavior
 	local SurfaceNormal = HitResult.Normal
 
-	-- Standard geometric reflection. (V · N) is the component of V along N
-	-- (positive = moving into the surface). Subtracting 2*(V·N)*N flips that
-	-- component, turning the inward velocity into an outward velocity while
-	-- preserving sideways motion. This is the physically correct formula for
-	-- elastic reflection from a flat surface.
+	-- Standard geometric mirror reflection about the surface plane.
+	-- (IncomingVelocity · SurfaceNormal) is the signed magnitude of the velocity
+	-- component directed along the normal (positive means moving into the surface).
+	-- Subtracting twice this component from IncomingVelocity reverses the normal-
+	-- direction component while leaving the surface-tangent component unchanged,
+	-- producing a clean elastic reflection. This formula is exact for a flat surface
+	-- and a point-mass projectile.
 	local ReflectedVelocity = IncomingVelocity - 2 * IncomingVelocity:Dot(SurfaceNormal) * SurfaceNormal
 
-	-- Per-material restitution override. Defaults to 1.0 (use only the base
-	-- Restitution coefficient) if the material is not in the lookup table. This
-	-- allows surfaces with different absorption characteristics to coexist in the
-	-- same scene without requiring separate Behavior tables per material.
+	-- Look up a per-material restitution multiplier. If the material is not present
+	-- in the MaterialRestitution table, default to 1.0 (the base Restitution value
+	-- applies unchanged). This allows surfaces with different physical properties
+	-- (e.g. rubber vs concrete vs ice) to coexist in the scene without requiring
+	-- separate Behavior configurations per material.
 	local MaterialRestitutionMultiplier = 1.0
 	if Behavior.MaterialRestitution then
 		MaterialRestitutionMultiplier = Behavior.MaterialRestitution[HitResult.Material] or 1.0
 	end
 
-	-- Apply energy loss. The combined coefficient is Restitution × material multiplier.
-	-- Values below 1.0 reduce speed after each bounce; 1.0 is perfectly elastic
-	-- (no energy loss). The same multiplier applies to all velocity components
-	-- uniformly — energy is lost proportionally, not directionally.
+	-- Apply energy dissipation. The combined coefficient (Restitution × material
+	-- multiplier) scales the reflected velocity uniformly across all three axes.
+	-- A coefficient of 1.0 is perfectly elastic (no energy loss). Values below
+	-- 1.0 simulate the mechanical energy converted to heat, sound, and deformation
+	-- on each bounce, ensuring the bullet cannot bounce indefinitely.
 	local ScaledVelocity = ReflectedVelocity * Behavior.Restitution * MaterialRestitutionMultiplier
 
-	-- Perturbation path: if NormalPerturbation > 0, we re-reflect against a
-	-- randomly perturbed normal instead of the clean surface normal. This simulates
-	-- rough or uneven surfaces where the micro-geometry deflects the bullet
-	-- unpredictably. The perturbed result overwrites ScaledVelocity entirely
-	-- because applying both clean and perturbed reflections would produce a
-	-- double-reflection that has no physical interpretation.
+	-- Normal perturbation path: re-compute the reflection against a randomly
+	-- deviated surface normal to simulate micro-roughness on the contact surface.
+	-- A small random vector (scaled by NormalPerturbation) is added to the
+	-- geometric normal and the result is re-normalised. This gives a perturbed
+	-- normal that stays close to the original for small perturbation values but
+	-- introduces angular scatter for larger ones. The perturbed reflection entirely
+	-- replaces the clean ScaledVelocity computed above — combining both would
+	-- produce a physically meaningless double-reflection.
 	local ShouldPerturb = Behavior.NormalPerturbation > 0
 	if ShouldPerturb then
-		-- Generate a uniformly random unit-sphere direction by sampling each axis
-		-- in [-0.5, 0.5] and taking the unit vector. Scale by NormalPerturbation
-		-- to control how far the normal can deviate. Adding to the surface normal
-		-- and re-normalising gives a perturbed normal that stays near the original
-		-- surface orientation for small NormalPerturbation values.
+		-- Sample a uniformly random direction in [-0.5, 0.5]³ and take its unit
+		-- vector. Scaling by NormalPerturbation controls how far the perturbed
+		-- normal can deviate from the geometric surface normal. Small values produce
+		-- a subtle scatter; values approaching 1.0 produce near-random reflections.
 		local NoiseVector = Vector3.new(
 			math.random() - 0.5,
 			math.random() - 0.5,
@@ -1399,9 +1645,10 @@ local function ResolveBounce(Cast: HybridCast, HitResult: RaycastResult, Incomin
 		).Unit * Behavior.NormalPerturbation
 
 		local PerturbedNormal = (SurfaceNormal + NoiseVector).Unit
-
-		-- Recompute the full reflection + restitution against the perturbed normal.
-		-- This replaces the clean ScaledVelocity computed above.
+		-- Recompute the full reflection and restitution against the perturbed normal.
+		-- This result overwrites ScaledVelocity so only the perturbed outcome is
+		-- returned. Applying both the clean and perturbed reflections sequentially
+		-- would double-reflect the bullet, which has no physical meaning.
 		ScaledVelocity = IncomingVelocity - 2 * IncomingVelocity:Dot(PerturbedNormal) * PerturbedNormal
 		ScaledVelocity = ScaledVelocity * Behavior.Restitution * MaterialRestitutionMultiplier
 	end
@@ -1415,149 +1662,164 @@ end
     ResolvePierce
 
     Description:
-        Processes a pierce chain starting from the first confirmed pierceable hit.
-        The bullet has already been determined to meet pierce conditions (speed,
-        angle, callback approval, and count limit) by SimulateCast before this
-        function is called. ResolvePierce takes over to handle chained pierce
-        behaviour: it casts successive rays through the geometry, asking
-        CanPierceFunction about each new hit, until the chain ends either in
-        open space or on a non-pierceable (solid) surface.
+        Handles a pierce chain initiated by the first confirmed pierceable hit.
+        By the time this function is called, SimulateCast has already determined
+        that the first surface qualifies for piercing (speed threshold, angle bias,
+        pierce count limit, and CanPierceFunction callback all confirmed). This
+        function takes over to advance the chain: it casts successive rays along
+        the same direction through the geometry, asking CanPierceFunction about
+        each new hit, until the chain ends either at a non-pierceable (solid) surface
+        or in open space with no further hits.
 
-        Filter mutation strategy:
-            To prevent the next raycast in the chain from re-detecting an
-            already-pierced instance, that instance must be excluded from the
-            active RaycastParams filter. The mutation strategy depends on the
-            filter mode in use:
-                - Exclude mode: the pierced instance is appended to the filter
-                  list. Roblox's Exclude filter skips any instance in the list,
-                  so adding the instance tells the next cast to ignore it.
-                - Include mode: the pierced instance is removed from the filter
-                  list. Roblox's Include filter only tests instances in the list,
-                  so removing it excludes it from future detection.
-            This mutation is intentionally permanent for the cast's lifetime —
-            an instance pierced once will never be re-detected by the same cast,
-            even if the bullet's trajectory curves back toward it. This is a
-            deliberate game-design choice: re-piercing the same object on a
-            curved trajectory would be surprising to players and could cause
-            duplicate damage events.
+        ── Filter Mutation Strategy ──────────────────────────────────────────────
 
-        Speed attenuation:
-            Each pierce reduces the bullet's speed by PenetrationSpeedRetention
-            (e.g. 0.8 = retaining 80% of speed, 20% lost per pierce). The
-            direction is preserved (only magnitude changes) to simulate linear
-            penetration without deflection. This attenuated velocity is passed
-            to the next CanPierceFunction call, allowing the callback to make
-            speed-aware decisions (e.g. stopping the chain when speed falls below
-            a meaningful threshold).
+        Once an instance is pierced, the active RaycastParams filter must be
+        modified to prevent the next ray in the chain from immediately re-detecting
+        the same instance at near-zero distance. The mutation approach depends on
+        the filter mode:
+
+            Exclude mode (FilterType = Exclude):
+                The pierced instance is appended to the filter list. The Roblox
+                raycast API skips any instance present in an Exclude filter list,
+                so adding it here tells the next cast to pass through it.
+
+            Include mode (FilterType = Include):
+                The pierced instance is removed from the filter list using a
+                swap-remove. The Roblox raycast API only tests instances present
+                in an Include filter list, so removing it excludes it from all
+                future detection. Swap-remove (O(1)) is used rather than
+                table.remove (O(n)) because filter lists on heavily-piercing
+                bullets can be large.
+
+        These filter mutations are intentionally permanent for the cast's lifetime.
+        An instance pierced once by a given cast will never be re-detected by that
+        cast, even if the trajectory curves back toward it under gravity. This is a
+        deliberate game-design constraint: allowing a curved trajectory to re-pierce
+        the same instance would produce duplicate damage events that are surprising
+        to players and difficult for weapon code to deduplicate correctly.
+
+        ── Speed Attenuation ─────────────────────────────────────────────────────
+
+        Each pierce in the chain reduces the bullet's speed by multiplying the
+        velocity magnitude by PenetrationSpeedRetention. The direction unit vector
+        is preserved unchanged — we model penetration as a straight-line deceleration
+        (the bullet slows but does not deflect). The attenuated velocity is passed
+        to the subsequent CanPierceFunction call, allowing that callback to make
+        speed-aware decisions (e.g. stopping the chain when speed drops below a
+        threshold that represents insufficient energy to pierce further).
 
     Parameters:
-        Cast: HybridCast
-            The cast performing the pierce. Reads Behavior for configuration and
-            mutates Runtime.PiercedInstances and Runtime.PierceCount.
+        Solver: Vetra
+            The solver instance, required for FireOnPierce and
+            _CastToBulletContext access.
+
+        Cast: VetraCast
+            The cast performing the pierce. Behavior is read for configuration;
+            Runtime.PiercedInstances and Runtime.PierceCount are mutated.
 
         InitialPierceResult: RaycastResult
-            The hit result that triggered the pierce chain. This is the FIRST
-            pierceable surface — it has already been approved by CanPierceFunction
-            in the caller before ResolvePierce is invoked.
+            The hit result that initiated the chain — the first surface that
+            CanPierceFunction approved in SimulateCast.
 
         PierceOrigin: Vector3
-            The world-space position from which the triggering raycast was cast.
-            Not used directly inside this function but passed for completeness
-            in case future chain-start logic needs it.
+            World-space origin of the triggering raycast. Not used directly
+            inside the chain loop but included for completeness in case
+            chain-start logic is added in the future.
 
         RayDirection: Vector3
-            The direction vector of the original raycast that produced
-            InitialPierceResult. All subsequent pierce raycasts use this same
-            direction, maintaining the bullet's straight-line path through
-            the geometry.
+            Direction vector of the original raycast. All subsequent pierce raycasts
+            in the chain use this same direction, maintaining the bullet's straight
+            path through the geometry.
 
         CurrentVelocity: Vector3
-            The bullet's velocity at the moment of the first pierce contact.
-            Mutated locally per pierce (speed attenuated) without affecting the
-            caller's velocity variable.
+            Bullet velocity at the first pierce contact. Mutated locally per pierce
+            (speed attenuated) without affecting the caller's variable.
 
     Returns:
-        (boolean, RaycastResult?, Vector3)
-            First: true if the chain ended at a solid (non-pierceable) hit.
-            Second: the solid hit result if the first return is true, else nil.
-            Third: the final attenuated velocity after all pierces in the chain.
+        (boolean, RaycastResult?, Vector3?)
+            [1]: true if the chain ended at a solid (non-pierceable) surface.
+            [2]: The solid hit RaycastResult if [1] is true, else nil.
+            [3]: Final attenuated velocity after all pierces in the chain.
 
     Notes:
-        A hard iteration cap of 100 guards against degenerate geometry (e.g.
-        two overlapping meshes where each reports the other as a new hit) that
-        would otherwise cause an infinite loop. In practice, MaxPierceCount is
-        checked inside the loop and provides the real limit long before 100
-        iterations are reached.
+        A hard iteration cap of 100 guards against degenerate geometry (e.g. two
+        zero-thickness overlapping meshes where each reports the other as a new hit)
+        that would otherwise produce an infinite loop. In practice, MaxPierceCount
+        is checked inside the loop and terminates the chain far before 100 iterations.
 
         RayDirection is validated to be non-degenerate before the loop begins.
-        A zero-length direction would cause workspace:Raycast to throw or return
-        unpredictable results, corrupting the chain with no useful diagnostic.
+        A near-zero direction vector would cause workspace:Raycast to either throw
+        or return erratic results; catching it before the loop gives a clear
+        diagnostic and avoids corrupting the chain state.
 ]=]
 local function ResolvePierce(
-	Cast: HybridCast,
+	Solver: Vetra,
+	Cast: VetraCast,
 	InitialPierceResult: RaycastResult,
 	PierceOrigin: Vector3,
 	RayDirection: Vector3,
 	CurrentVelocity: Vector3
 ): (boolean, RaycastResult?, Vector3?)
 
-	-- Validate ray direction before entering the loop. A degenerate direction
-	-- (length near zero) would cause workspace:Raycast to misbehave. Checking
-	-- here rather than inside the loop avoids repeating the check on every
-	-- iteration and gives a clear failure point for debugging.
+	-- Validate the ray direction before entering the loop. A near-zero direction
+	-- vector would cause workspace:Raycast to behave unpredictably or throw.
+	-- Checking once before the loop is cheaper than checking inside each iteration
+	-- and gives a clear failure point for debugging.
 	if RayDirection.Magnitude < 1e-6 then
 		Logger:Warn("ResolvePierce: RayDirection is zero — skipping")
-
-		return false, nil , nil
+		return false, nil, nil
 	end
 
-	local Runtime = Cast.Runtime
-	local Behavior = Cast.Behavior
-
-	--[[
-	    Filter mutation note: instances added to (or removed from) the filter list
-	    during this pierce chain remain excluded for the entire lifetime of this cast.
-	    This is a permanent side-effect by design. A bullet that pierced a wall
-	    earlier in its flight should not re-detect that wall if its trajectory
-	    curves back due to gravity. If you need to support re-detection of previously
-	    pierced instances (e.g. for boomerang projectiles), you would need to
-	    snapshot and restore the filter around specific trajectory segments.
-	]]
-	local RayParams = Behavior.RaycastParams
+	local Runtime           = Cast.Runtime
+	local Behavior          = Cast.Behavior
+	local RayParams         = Behavior.RaycastParams
 	local CanPierceCallback = Behavior.CanPierceFunction
 
+	--[[
+	    The filter mutations performed inside this loop are permanent side effects
+	    on the cast's pooled RaycastParams for the duration of the cast's lifetime.
+	    A bullet that pierced a wall earlier in its trajectory will never re-detect
+	    that wall, even if gravity curves the path back toward it. If re-detection
+	    of previously pierced instances is needed (e.g. a boomerang projectile),
+	    the filter state would need to be snapshot and restored around specific
+	    trajectory segments — this is not currently supported by the module.
+	]]
+
 	-- Cache the filter mode outside the loop. FilterType does not change during
-	-- a cast's lifetime, so there is no reason to re-read the property on every
-	-- iteration. Determining this once and branching on a local boolean is cheaper
-	-- than reading an Enum property from a Roblox object each iteration.
+	-- a cast's lifetime, so reading it once and branching on a local boolean is
+	-- more efficient than re-reading the Enum property from the Roblox object on
+	-- every iteration of a potentially long pierce chain.
 	local IsExcludeFilter = RayParams.FilterType == Enum.RaycastFilterType.Exclude
 
 	local PierceIterationCount = 0
-	local CurrentPierceResult = InitialPierceResult
-	local FoundSolidHit = false
+	local CurrentPierceResult  = InitialPierceResult
+	local FoundSolidHit        = false
 
 	while true do
 		local PiercedInstance = CurrentPierceResult.Instance
 
-		-- Record this instance in PiercedInstances so SimulateCast can detect
-		-- if the bullet re-encounters it via a different raycast path in the same
-		-- frame (e.g. during high-fidelity sub-segments). Without this record,
-		-- the same instance might be processed as a new hit by a later sub-segment.
+		-- Record the pierced instance in PiercedInstances. SimulateCast consults
+		-- this list when processing subsequent raycasts in the same frame to detect
+		-- re-encounters via different high-fidelity sub-segment paths. Without this
+		-- record, the same instance could be reported as a fresh hit by a later
+		-- sub-segment, causing duplicate damage events.
 		local PiercedList = Runtime.PiercedInstances
 		PiercedList[#PiercedList + 1] = PiercedInstance
 
-		-- Mutate the active filter to exclude the just-pierced instance from all
-		-- future raycasts in this chain and in this cast's lifetime.
+		-- Mutate the active filter to exclude this instance from all future raycasts.
+		-- For Exclude filters, we append the instance (O(1)). For Include filters,
+		-- we swap-remove it (O(n) search, but O(1) removal once found) rather than
+		-- using table.remove (O(n) search + O(n) shift) to keep the operation
+		-- as fast as possible on large filter lists.
 		local CurrentFilterList = RayParams.FilterDescendantsInstances
 		if IsExcludeFilter then
-			-- Exclude mode: appending to the list tells Roblox to skip this
-			-- instance. O(1) append — no search needed.
+			-- Exclude mode: add the just-pierced instance to the list so the next
+			-- raycast will skip it entirely. This is a simple O(1) append.
 			CurrentFilterList[#CurrentFilterList + 1] = PiercedInstance
 		else
-			-- Include mode: the instance must be removed from the list so Roblox
-			-- no longer tests it. We use swap-remove (O(1)) rather than
-			-- table.remove (O(n)) to avoid shifting elements in what can be a
-			-- large filter list.
+			-- Include mode: remove the just-pierced instance from the list so the
+			-- next raycast will no longer test it. Swap-remove avoids shifting all
+			-- elements after the removed index, which matters for large filter lists.
 			local InstanceIndex = table.find(CurrentFilterList, PiercedInstance)
 			if InstanceIndex then
 				CurrentFilterList[InstanceIndex] = CurrentFilterList[#CurrentFilterList]
@@ -1566,67 +1828,65 @@ local function ResolvePierce(
 		end
 		RayParams.FilterDescendantsInstances = CurrentFilterList
 
-		-- Attenuate speed by PenetrationSpeedRetention. The direction (Unit vector)
-		-- is preserved because we assume the bullet travels in a straight line
-		-- through the material without deflection. This gives the attenuated
-		-- velocity that is both passed to the next CanPierceFunction call and
-		-- fired with the OnPierce signal.
+		-- Attenuate the bullet's speed by PenetrationSpeedRetention. The direction
+		-- (unit vector) is preserved because we model penetration as linear deceleration
+		-- with no deflection. The attenuated velocity is both passed to the next
+		-- CanPierceFunction call and carried through to the OnPierce signal so
+		-- consumers see the already-reduced speed at each pierce event.
 		local PostPierceSpeed = CurrentVelocity.Magnitude * Behavior.PenetrationSpeedRetention
 		CurrentVelocity = CurrentVelocity.Unit * PostPierceSpeed
 
-		-- Fire OnPierce with the attenuated velocity. FireOnPierce also increments
-		-- PierceCount, so the count check below sees the updated value.
-		FireOnPierce(Cast, CurrentPierceResult, CurrentVelocity)
-		
+		-- Fire OnPierce. This also increments PierceCount (inside FireOnPierce),
+		-- so the count check on the next line sees the up-to-date value.
+		FireOnPierce(Solver, Cast, CurrentPierceResult, CurrentVelocity)
+
 		if Behavior.VisualizeCasts then
 			Visualizer.Hit(CFrameNew(CurrentPierceResult.Position), "pierce")
 			Visualizer.Normal(CurrentPierceResult.Position, CurrentPierceResult.Normal)
 		end
-		
+
 		if Runtime.PierceCount >= Behavior.MaxPierceCount then
-			-- MaxPierceCount reached. The bullet has exhausted its penetration
-			-- capacity. Stop the chain here — the next surface (if any) will be
-			-- handled as a terminal hit by SimulateCast.
+			-- Pierce budget exhausted. Stop the chain here — the next surface, if
+			-- any, becomes a candidate for terminal impact processing in SimulateCast.
 			break
 		end
-		-- Advance the ray origin past the just-pierced surface by NUDGE along
-		-- the travel direction. Without this offset, the next raycast would start
-		-- exactly on the surface and could re-detect it at near-zero distance,
-		-- producing a false re-hit of the same instance that was just filtered out.
-		local NextRayOrigin = CurrentPierceResult.Position + RayDirection.Unit * NUDGE
+
+		-- Advance the ray origin past the just-pierced surface by NUDGE along the
+		-- travel direction. Without this offset, the next workspace:Raycast() call
+		-- would start on the surface plane and could re-detect the same instance
+		-- (even though it was just added to the Exclude filter) due to floating-point
+		-- imprecision at the exact surface contact point.
+		local NextRayOrigin    = CurrentPierceResult.Position + RayDirection.Unit * NUDGE
 		local NextPierceResult = workspace:Raycast(NextRayOrigin, RayDirection, RayParams)
 
-		-- No further geometry hit: the pierce chain ends in open space. The bullet
-		-- continues flying as normal without needing a terminal event here.
-		if NextPierceResult == nil then
-			break
-		end
+		-- No further geometry hit: the chain ends in open space. The bullet continues
+		-- flying on its normal trajectory. No terminal event is generated here.
+		if NextPierceResult == nil then break end
 
 		PierceIterationCount += 1
 
-		-- Hard iteration safety cap. This should never be reached under normal
-		-- conditions because MaxPierceCount limits the chain first. It exists as
-		-- a last-resort guard against degenerate geometry (e.g. two stacked
-		-- transparent meshes that create an infinite alternating hit sequence).
+		-- Hard iteration safety cap. MaxPierceCount should terminate the chain well
+		-- before this limit is reached. This exists as a last resort against degenerate
+		-- geometry (e.g. two zero-thickness stacked meshes alternating as new hits in
+		-- each iteration) that would otherwise cause the loop to run indefinitely.
 		if PierceIterationCount >= 100 then
 			Logger:Warn("ResolvePierce: exceeded 100 iterations — possible degenerate geometry")
 			break
 		end
 
-		-- Ask CanPierceFunction whether the next instance can also be pierced.
-		-- We pass the attenuated CurrentVelocity so the callback can make
-		-- speed-aware decisions (e.g. stopping the chain once speed drops below
-		-- a meaningful threshold). The LinkedContext is passed instead of the
-		-- raw cast so the callback receives the public API object consistent with
-		-- how it was set up in Fire().
-		local LinkedContext = CastToBulletContext[Cast]
+		-- Query CanPierceFunction for the next hit instance. We pass the attenuated
+		-- CurrentVelocity so the callback can gate on speed — e.g. stopping the chain
+		-- once the bullet's energy is too low to pierce another surface. The
+		-- LinkedContext is passed instead of the raw cast so the callback receives
+		-- the public BulletContext API, consistent with how it was set up in Fire().
+		local LinkedContext    = Solver._CastToBulletContext[Cast]
 		local NextCanBePierced = CanPierceCallback and CanPierceCallback(LinkedContext, NextPierceResult, CurrentVelocity)
 
 		if not NextCanBePierced then
-			-- This instance cannot be pierced. The chain terminates here and
-			-- this surface becomes a solid hit that SimulateCast must handle
-			-- as a terminal impact.
-			FoundSolidHit = true
+			-- This instance cannot be pierced. The chain ends here and this surface
+			-- becomes the solid terminal hit that SimulateCast must resolve as a
+			-- definitive impact.
+			FoundSolidHit       = true
 			CurrentPierceResult = NextPierceResult
 			break
 		end
@@ -1637,25 +1897,99 @@ local function ResolvePierce(
 	return FoundSolidHit, CurrentPierceResult, CurrentVelocity
 end
 
-local function SimulateCast(Cast: HybridCast, Delta: number, IsSubSegment: boolean)
-	local Runtime = Cast.Runtime
-	local Behavior = Cast.Behavior
+-- ─── Core Simulation ─────────────────────────────────────────────────────────
+
+--[=[
+    SimulateCast
+
+    Description:
+        The core per-step simulation function. Advances a single cast forward by
+        Delta seconds using the analytic kinematic equations, performs a raycast
+        between the analytically computed previous and current positions, and
+        resolves any surface contact with the appropriate response: pierce, bounce,
+        or terminal impact.
+
+        ── Two Callers ───────────────────────────────────────────────────────────
+
+        SimulateCast is called from two contexts:
+
+            _StepProjectile (top-level, IsSubSegment = false):
+                Called once per cast per frame in standard mode (no sub-segmentation).
+                Delta is the full frame time. The yield-detection guards for
+                CanPierceFunction and CanBounceFunction are active.
+
+            ResimulateHighFidelity (sub-segment, IsSubSegment = true):
+                Called repeatedly with a small Delta (FrameDelta / SubSegmentCount).
+                Each call advances the cast by one sub-segment. The IsSubSegment flag
+                suppresses the yield-detection guards, which would otherwise fire false
+                positives because the callback thread fields being set between
+                sub-segments is expected normal behaviour in this context — not
+                evidence of a yield from a previous frame.
+
+        ── Hit Resolution Priority Order ─────────────────────────────────────────
+
+        Surface contacts are resolved in strict priority order:
+            1. Pierce — evaluated first. A bullet capable of piercing a surface should
+               never simultaneously bounce off it. Treating these as mutually exclusive
+               prevents physically inconsistent outcomes where a single contact generates
+               both a pierce event and a bounce trajectory change.
+            2. Bounce — evaluated only if pierce was not resolved on this contact.
+            3. Terminal impact — reached if neither pierce nor bounce resolved the hit,
+               or if a valid bounce was blocked by corner trap detection.
+
+        ── Distance and Speed Termination ────────────────────────────────────────
+
+        After hit processing, distance and speed checks are performed against the
+        current position and velocity. Both fire OnHit with a nil RaycastResult to
+        allow consumers to distinguish silent expiry from a physical surface impact.
+        Without the nil-result convention, consumers would need a separate boolean
+        flag or a different signal to differentiate the two termination reasons.
+
+        ── CancelResimulation Flag ───────────────────────────────────────────────
+
+        A bounce inside this function sets Runtime.CancelResimulation = true. This
+        flag is read by ResimulateHighFidelity's inner loop as a signal to stop
+        processing remaining sub-segments. Sub-segments after a bounce would be
+        computing positions on the now-closed pre-bounce trajectory, producing
+        incorrect hit detections on an arc the bullet has already left.
+
+    Parameters:
+        Solver: Vetra
+            The solver instance that owns this cast. Required for all FireOn*
+            helpers, ResolvePierce, _CastToBulletContext lookups, and Terminate.
+
+        Cast: VetraCast
+            The cast to advance by Delta seconds.
+
+        Delta: number
+            Time in seconds to advance the simulation. In top-level calls this
+            is the full frame delta; in sub-segment calls this is
+            FrameDelta / SubSegmentCount.
+
+        IsSubSegment: boolean
+            True when this call originates from ResimulateHighFidelity. Controls
+            whether the callback yield-detection guards are active.
+]=]
+
+local function SimulateCast(Solver: Vetra, Cast: VetraCast, Delta: number, IsSubSegment: boolean)
+	local Runtime          = Cast.Runtime
+	local Behavior         = Cast.Behavior
 	local ActiveTrajectory = Runtime.ActiveTrajectory
 
 	-- ─── Analytic Position Computation ───────────────────────────────────────
 
-	-- Compute elapsed time within the CURRENT trajectory segment only, not
-	-- total runtime. This is crucial after a bounce: TotalRuntime continues
-	-- accumulating but ActiveTrajectory.StartTime was set to the bounce time,
-	-- so ElapsedBeforeAdvance correctly represents how far into the new arc
-	-- we are, not how long the entire cast has been alive.
+	-- Compute the elapsed time within the CURRENT trajectory segment only, not
+	-- the total cast lifetime. This distinction is critical: after a bounce,
+	-- TotalRuntime keeps accumulating but ActiveTrajectory.StartTime was set to
+	-- the bounce time, so ElapsedBeforeAdvance correctly measures how far into
+	-- the new arc we are — not the entire time the bullet has been alive.
 	local ElapsedBeforeAdvance = Runtime.TotalRuntime - ActiveTrajectory.StartTime
 
-	-- The raycast starts from the position the bullet occupied at the END of
-	-- the previous frame (or the START of this sub-segment). Computing this
-	-- analytically rather than caching the previous frame's output ensures
-	-- the start position is always consistent with the trajectory, even if
-	-- ModifyTrajectory changed the arc mid-flight.
+	-- The raycast's starting point is the bullet's position at the END of the
+	-- previous frame (or the start of this sub-segment). Computing it analytically
+	-- rather than reading a cached value ensures the start position is always
+	-- consistent with the trajectory parameters, even if ModifyTrajectory changed
+	-- the arc mid-flight between the previous step and this one.
 	local LastPosition = PositionAtTime(
 		ElapsedBeforeAdvance,
 		ActiveTrajectory.Origin,
@@ -1663,14 +1997,15 @@ local function SimulateCast(Cast: HybridCast, Delta: number, IsSubSegment: boole
 		ActiveTrajectory.Acceleration
 	)
 
-	-- Advance TotalRuntime by Delta. All subsequent position and velocity
-	-- computations use ElapsedAfterAdvance so they reflect the end-of-step state.
+	-- Advance TotalRuntime by Delta. All subsequent position and velocity evaluations
+	-- use ElapsedAfterAdvance so they reflect the bullet's state at the END of this
+	-- step, which is where the raycast terminates and where hit detection is performed.
 	Runtime.TotalRuntime += Delta
 	local ElapsedAfterAdvance = Runtime.TotalRuntime - ActiveTrajectory.StartTime
 
-	-- The target position is where the bullet would be at the end of this step
-	-- if no hit occurs. The velocity is evaluated at the same time for use in
-	-- threshold checks, cosmetic orientation, and signal payloads.
+	-- The candidate end position is where the bullet would be at the end of this
+	-- step if no surface is hit. CurrentVelocity at this same moment is used for
+	-- speed threshold checks, cosmetic orientation, and signal payloads.
 	local CurrentTargetPosition = PositionAtTime(
 		ElapsedAfterAdvance,
 		ActiveTrajectory.Origin,
@@ -1683,126 +2018,137 @@ local function SimulateCast(Cast: HybridCast, Delta: number, IsSubSegment: boole
 		ActiveTrajectory.Acceleration
 	)
 
-	-- The displacement vector from last frame to this frame. Used as the
-	-- direction and magnitude for the raycast. Using the full displacement
-	-- vector (not just the unit direction) ensures the raycast length matches
-	-- exactly the distance the bullet travels this step — no more, no less.
+	-- The displacement vector from the frame start to the frame end position.
+	-- This vector serves as both the raycast direction and the raycast length in
+	-- a single value. Using the full displacement vector (not a unit direction +
+	-- separate length) ensures the raycast covers exactly the region traversed
+	-- this step — no more, no less. A surface beyond the frame-end position
+	-- cannot be detected; a surface within the step range cannot be missed.
 	local FrameDisplacement = CurrentTargetPosition - LastPosition
 
 	-- ─── Raycast ─────────────────────────────────────────────────────────────
 
-	-- The ray covers exactly the displacement vector. Casting from LastPosition
-	-- in the displacement direction with the displacement magnitude means the
-	-- raycast tests only the region the bullet actually traversed this step —
-	-- it cannot detect surfaces beyond the bullet's endpoint.
 	local RayDirection = FrameDisplacement
 
-	-- Skip frames where the bullet hasn't moved (e.g. Delta = 0 or speed near
-	-- zero). A zero-length raycast would be ill-defined and would waste a Roblox
-	-- API call. The IsBelowMinSpeed check later in this function will handle the
-	-- speed-zero termination on the next frame.
+	-- Skip this step if the displacement is negligible. A zero-length raycast is
+	-- undefined and would waste a Roblox API call. This can legitimately occur
+	-- when Delta approaches zero (e.g. a sub-segment at the very end of a frame
+	-- with extreme subdivision) or when the bullet is near-stationary. The
+	-- IsBelowMinSpeed check later in this function will handle near-zero speed
+	-- termination at the next step rather than requiring special handling here.
 	if FrameDisplacement.Magnitude < 1e-6 then return end
+
 	local RaycastResult = workspace:Raycast(LastPosition, RayDirection, Behavior.RaycastParams)
 
-	-- If the raycast hit something, use the hit point. Otherwise, use the
-	-- analytically computed target position. BulletHitPoint is used for travel
-	-- distance accumulation, cosmetic bullet placement, and visual segment drawing.
-	local BulletHitPoint = RaycastResult and RaycastResult.Position or CurrentTargetPosition
+	-- If the ray hit something, use the actual hit position. Otherwise use the
+	-- analytically computed frame-end position. BulletHitPoint drives travel
+	-- distance accumulation, cosmetic bullet placement, and visual segment drawing
+	-- regardless of whether a hit occurred, so both paths produce a valid position.
+	local BulletHitPoint       = RaycastResult and RaycastResult.Position or CurrentTargetPosition
 	local FrameRayDisplacement = (BulletHitPoint - LastPosition).Magnitude
 
 	-- ─── Travel Update ───────────────────────────────────────────────────────
 
-	-- Fire OnTravel BEFORE hit processing so consumers receive the frame's
-	-- current position even if the hit causes termination. If OnTravel fired
-	-- after hit processing and the hit terminated the cast, OnTravel would
-	-- never fire for this step — leaving trail effects or sound code with a
-	-- one-frame gap at the terminal position.
-	FireOnTravel(Cast, BulletHitPoint, CurrentVelocity)
+	-- Fire OnTravel BEFORE any hit processing. If the hit causes termination,
+	-- OnTravel must still fire for this step to give trail and position consumers
+	-- a complete per-frame record up to and including the terminal frame. If
+	-- OnTravel fired after hit processing and the hit terminated the cast, the
+	-- final frame's position would never reach trail effect or audio consumers —
+	-- leaving a one-frame gap at the terminal position.
+	FireOnTravel(Solver, Cast, BulletHitPoint, CurrentVelocity)
 	Runtime.DistanceCovered += FrameRayDisplacement
 
 	-- ─── Cosmetic Bullet Update ──────────────────────────────────────────────
 
-    --[[
-        Orient the cosmetic bullet part so it faces the direction of travel.
-        CFrame.new(position, lookAt) constructs a CFrame at position looking
-        toward lookAt, aligning the part's positive Z axis (front face) with
-        the travel direction. Adding velocity.Unit to position gives a point
-        one unit ahead in the travel direction — the minimal lookAt offset that
-        works for any non-zero velocity.
+	--[[
+	    Orient the cosmetic bullet Instance to face the direction of travel.
+	    CFrame.new(position, lookAt) constructs a CFrame at `position` looking
+	    toward `lookAt`, aligning the Instance's positive Z axis (front face)
+	    with the direction from `position` to `lookAt`. Adding velocity.Unit
+	    to the current position provides a look-at point exactly one unit ahead
+	    in the bullet's travel direction — the minimal offset required to define
+	    a non-degenerate look-at direction.
 
-        The fallback direction (0, 0, 1) handles the degenerate case where
-        speed is near zero (e.g. a bullet at the apex of its arc). Without it,
-        velocity.Unit would be NaN and CFrame.new would produce a degenerate
-        transform that could corrupt the part's state.
-    ]]
+	    The fallback direction (0, 0, 1) handles the degenerate case where the
+	    bullet's speed is near zero (typically at the apex of its arc under gravity).
+	    At near-zero speed, velocity.Unit is NaN (division by near-zero magnitude),
+	    which would produce a degenerate CFrame. The dot-product self-check
+	    (Velocity · Velocity > 1e-6) detects this cheaply without a square root call.
+	]]
 	if Runtime.CosmeticBulletObject then
 		local LookAt = BulletHitPoint + (
 			CurrentVelocity:Dot(CurrentVelocity) > 1e-6
 				and CurrentVelocity.Unit
-				or Vector3.new(0, 0, 1)  -- fallback direction if speed is zero
+				or Vector3.new(0, 0, 1)
 		)
 		Runtime.CosmeticBulletObject.CFrame = CFrameNew(BulletHitPoint, LookAt)
 	end
 
 	-- ─── Debug Visualisation ─────────────────────────────────────────────────
 
-	-- Visualisation is gated on both VisualizeCasts and Delta > 0. The Delta
-	-- guard prevents spurious zero-length segments from appearing in the
-	-- visualiser during time-zero initialisation passes or paused frames.
+	-- Gate visualisation on both VisualizeCasts and Delta > 0. The Delta guard
+	-- prevents zero-length line segments from appearing in the debug view during
+	-- time-zero initialisation passes or when a paused cast is released and
+	-- immediately receives a zero-delta first step.
 	if Behavior.VisualizeCasts and Delta > 0 then
 		Visualizer.Segment(CFrameNew(LastPosition, LastPosition + RayDirection), FrameRayDisplacement)
 	end
 
 	-- ─── Hit Detection ───────────────────────────────────────────────────────
 
-    --[[
-        The cosmetic bullet is a live Instance in the world. Without this guard,
-        every raycast would immediately detect the visible bullet part itself at
-        distance ~0, producing a self-hit on the first frame and terminating the
-        cast before it travels any distance. We check by reference equality so
-        any other part the bullet might coincidentally be near is not affected.
-    ]]
+	--[[
+	    Guard against the cosmetic bullet Instance being detected as a hit target.
+	    Without this, the raycast would immediately detect the visible bullet part
+	    at near-zero distance on the first frame (since it starts at the muzzle
+	    position, exactly where the bullet is), firing a false terminal OnHit before
+	    the bullet has moved at all. Instance reference equality is used rather than
+	    name or class comparison to ensure exactly and only the cosmetic part for
+	    THIS cast is filtered — nearby parts that happen to have the same class are
+	    unaffected.
+	]]
 	local IsHitOnCosmeticBullet = RaycastResult and RaycastResult.Instance == Runtime.CosmeticBulletObject
-	local IsValidHit = RaycastResult ~= nil and not IsHitOnCosmeticBullet
+	local IsValidHit            = RaycastResult ~= nil and not IsHitOnCosmeticBullet
 
 	if IsValidHit then
-		local LinkedContext = CastToBulletContext[Cast]
+		local LinkedContext     = Solver._CastToBulletContext[Cast]
 		local CanPierceCallback = Behavior.CanPierceFunction
 
-		-- ─── Yield Detection Guard ───────────────────────────────────────────
-        --[[
-            CanPierceFunction must be synchronous. It is called while the simulation
-            loop is running (inside _StepProjectile's frame event), so any yield
-            inside it would suspend the entire simulation loop until it resumed —
-            blocking frame processing for all other casts.
+		-- ─── Yield Detection Guard (Pierce) ──────────────────────────────────
 
-            Detection mechanism: before calling CanPierceFunction, we store the
-            current coroutine in PierceCallbackThread. After it returns, we clear
-            it. If PierceCallbackThread is still set when SimulateCast runs again
-            in the NEXT top-level frame (IsSubSegment = false), it means the
-            callback from the previous frame never returned — it yielded and the
-            next frame began before it woke up. We terminate the cast and log an
-            error rather than letting the hung coroutine corrupt simulation state.
+		--[[
+		    CanPierceFunction must execute and return synchronously. It is called
+		    while the frame simulation loop is running; any yield inside it would
+		    suspend the entire _StepProjectile execution (blocking all other casts
+		    in the same frame) until the coroutine resumed.
 
-            The IsSubSegment check suppresses this guard for sub-segment calls.
-            In a resimulation loop, PierceCallbackThread being set from the
-            previous sub-segment is expected: we set it, call the function, it
-            returns synchronously, we clear it, then move to the next sub-segment.
-            If we checked here, every sub-segment after the first would spuriously
-            trigger the guard.
-        ]]
+		    Detection mechanism:
+		        Before calling CanPierceFunction, the current coroutine is stored in
+		        Runtime.PierceCallbackThread. After the function returns (synchronously),
+		        the field is cleared. If — on the NEXT top-level frame (IsSubSegment =
+		        false) — PierceCallbackThread is still non-nil and belongs to a different
+		        coroutine than the current one, it means the callback from the previous
+		        frame yielded and never returned, leaving the field set. This indicates a
+		        programming error in consumer code and the cast is terminated with an error.
+
+		    The IsSubSegment check suppresses this guard for sub-segment calls.
+		    In a high-fidelity resimulation loop, each sub-segment sets the field,
+		    calls the callback (which returns immediately), and clears the field.
+		    If this check ran inside sub-segment calls, the field set by one sub-
+		    segment would be seen as a "hanging" thread by the next sub-segment,
+		    producing false-positive terminations on every bullet in high-fidelity mode.
+		]]
 		local HasHangingPierceCallback = Runtime.PierceCallbackThread ~= nil
 			and Runtime.PierceCallbackThread ~= coroutine.running()
 		if not IsSubSegment and CanPierceCallback and HasHangingPierceCallback then
-			Terminate(Cast)
+			Terminate(Solver, Cast)
 			Logger:Error("SimulateCast: CanPierceFunction appears to have yielded")
 			return
 		end
 
-		-- Record the current coroutine as the active pierce callback thread.
-		-- If CanPierceCallback is synchronous (as required), this will be cleared
-		-- on the next line after the function returns. If it yields, this value
-		-- will persist and trigger the guard on the next top-level frame step.
+		-- Record the current coroutine before calling CanPierceFunction. If the
+		-- callback is synchronous (as required), this field will be cleared by the
+		-- next line immediately after the function returns. If it yields, this field
+		-- persists and will trigger the guard on the next top-level frame step.
 		Runtime.PierceCallbackThread = coroutine.running()
 		local CanPierce = CanPierceCallback and CanPierceCallback(LinkedContext, RaycastResult, CurrentVelocity)
 		Runtime.PierceCallbackThread = nil
@@ -1810,27 +2156,29 @@ local function SimulateCast(Cast: HybridCast, Delta: number, IsSubSegment: boole
 		-- ─── Pierce Branch ───────────────────────────────────────────────────
 
 		-- ImpactDot measures how head-on the bullet is striking the surface.
-		-- The absolute value of (RayDirection.Unit · Normal) equals cos(impact angle).
-		-- 1.0 = perfectly perpendicular (straight into the surface).
-		-- 0.0 = perfectly parallel (grazing the surface).
-		-- PierceNormalBias of 1.0 means ImpactDot >= 0.0, so all angles qualify.
-		-- Lower PierceNormalBias values require more head-on impacts to pierce.
+		-- The absolute value of (RayDirection.Unit · Normal) equals cos(impact angle):
+		--     1.0 = perfectly perpendicular strike (straight into the surface face).
+		--     0.0 = perfectly parallel (bullet grazes the surface at 90°).
+		-- PierceNormalBias of 1.0 allows all angles (ImpactDot >= 0.0). Lower values
+		-- require increasingly head-on impacts to qualify for piercing, preventing
+		-- a bullet skimming a surface at a near-tangent from tunnelling through.
 		local IsAbovePierceSpeedThreshold = CurrentVelocity.Magnitude >= Behavior.PierceSpeedThreshold
-		local IsBelowMaxPierceCount = Runtime.PierceCount < Behavior.MaxPierceCount
-		local ImpactDot = math.abs(RayDirection.Unit:Dot(RaycastResult.Normal))
-		local MeetsNormalBias = ImpactDot >= (1.0 - Behavior.PierceNormalBias)
+		local IsBelowMaxPierceCount       = Runtime.PierceCount < Behavior.MaxPierceCount
+		local ImpactDot                   = math.abs(RayDirection.Unit:Dot(RaycastResult.Normal))
+		local MeetsNormalBias             = ImpactDot >= (1.0 - Behavior.PierceNormalBias)
 
-		-- All four conditions must be true simultaneously. Any single failed
-		-- condition short-circuits the pierce path and falls through to bounce or
-		-- terminal hit. The order is chosen so the cheapest comparisons (boolean
-		-- flags and magnitude against a constant) are evaluated before the more
-		-- expensive dot product with the normal.
+		-- All four conditions must be true simultaneously. The evaluation order
+		-- is chosen so the cheapest comparisons (magnitude vs constant, integer
+		-- vs integer) are evaluated before the more expensive dot product.
+		-- Any single false condition short-circuits the pierce path and falls
+		-- through to the bounce or terminal hit evaluation below.
 		local PierceConditionsMet = CanPierce and IsAbovePierceSpeedThreshold and IsBelowMaxPierceCount and MeetsNormalBias
 
 		local PierceWasResolved = false
 
-		if PierceConditionsMet then		
+		if PierceConditionsMet then
 			local FoundSolidHit, SolidHitResult, PostPierceVelocity = ResolvePierce(
+				Solver,
 				Cast,
 				RaycastResult,
 				LastPosition,
@@ -1839,48 +2187,48 @@ local function SimulateCast(Cast: HybridCast, Delta: number, IsSubSegment: boole
 			)
 
 			if FoundSolidHit and SolidHitResult then
-				-- The pierce chain ended at a surface the bullet cannot pierce.
-				-- That solid surface is the true terminal hit — we fire OnHit for
-				-- it, not for the first pierceable surface. This gives consumers
-				-- the position and normal of the actual stopping surface, which
-				-- is where the impact VFX and damage should be applied.
+				-- The pierce chain terminated at a surface the bullet cannot penetrate.
+				-- This solid surface is the true terminal hit. We emit OnHit for the
+				-- solid surface — not for the first pierceable surface — because the
+				-- stopping point is where impact VFX and damage should originate. The
+				-- consumer receives the contact position and normal of the actual blocker.
 				if Behavior.VisualizeCasts then
 					Visualizer.Hit(CFrameNew(RaycastResult.Position), "pierce")
 					Visualizer.Hit(CFrameNew(SolidHitResult.Position), "terminal")
 				end
 
-				FireOnHit(Cast, SolidHitResult, PostPierceVelocity)
-				FireOnTerminated(Cast)
-				Terminate(Cast)
+				FireOnHit(Solver, Cast, SolidHitResult, PostPierceVelocity)
+				FireOnTerminated(Solver, Cast)
+				Terminate(Solver, Cast)
 				return
 			end
-			-- Pierce chain ended in open space (no solid terminal surface found).
-			-- The bullet continues flying — no hit or termination event is needed.
-			-- Simply set PierceWasResolved to prevent the bounce and terminal hit
-			-- branches from evaluating this same surface.
-
+			-- The pierce chain ended in open space (no solid blocker found). The
+			-- bullet continues flying — no terminal event is generated. Setting
+			-- PierceWasResolved prevents the bounce and terminal hit branches from
+			-- re-evaluating this same surface contact as if pierce had not occurred.
 			PierceWasResolved = true
 		end
 
 		-- ─── Bounce Branch ───────────────────────────────────────────────────
 
-		-- Bounce is only evaluated if pierce did NOT occur. A surface cannot
-		-- simultaneously be pierced through and bounced off — the outcomes are
-		-- physically and logically mutually exclusive. Enforcing this in code
-		-- prevents unexpected compound behaviours when both CanPierceFunction and
-		-- CanBounceFunction are non-nil.
+		-- Bounce is only evaluated when pierce did NOT resolve this contact. A
+		-- surface cannot simultaneously be pierced through and bounced off — these
+		-- are physically and logically mutually exclusive. Enforcing the exclusion
+		-- here prevents both outcomes from being generated for a single contact
+		-- when both CanPierceFunction and CanBounceFunction are non-nil.
 		if not PierceWasResolved then
 			local CanBounceCallback = Behavior.CanBounceFunction
 
 			-- Yield-detection guard for CanBounceFunction, symmetric to the pierce
-			-- guard above. CanBounceFunction must not yield for the same reasons
-			-- as CanPierceFunction. The IsSubSegment check prevents false positives
-			-- during high-fidelity sub-segment calls.
-			local PreviousThread = Runtime.BounceCallbackThread
-			local HasHangingBounceCallback = PreviousThread ~= nil 
+			-- guard above. The same constraints apply: CanBounceFunction must not
+			-- yield, and the IsSubSegment flag suppresses the guard during high-
+			-- fidelity sub-segment calls where the callback thread field being set
+			-- between sub-segments is expected and not a sign of a yield.
+			local PreviousThread           = Runtime.BounceCallbackThread
+			local HasHangingBounceCallback = PreviousThread ~= nil
 				and PreviousThread ~= coroutine.running()
 			if not IsSubSegment and CanBounceCallback and HasHangingBounceCallback then
-				Terminate(Cast)
+				Terminate(Solver, Cast)
 				Logger:Error("SimulateCast: CanBounceFunction appears to have yielded — this is not allowed")
 				return
 			end
@@ -1889,17 +2237,18 @@ local function SimulateCast(Cast: HybridCast, Delta: number, IsSubSegment: boole
 			local CanBounce = CanBounceCallback and CanBounceCallback(LinkedContext, RaycastResult, CurrentVelocity)
 			Runtime.BounceCallbackThread = nil
 
-			-- All four bounce conditions must be met. BouncesThisFrame is a
-			-- per-real-frame counter (reset at the start of _StepProjectile, not
-			-- per sub-segment), so MaxBouncesPerFrame is a true per-frame cap across
-			-- all sub-segments combined. This prevents a bullet from consuming its
-			-- entire MaxBounces budget in a single frame of rapid sub-segment
-			-- processing, which would look wrong and could exhaust the bounce budget
-			-- before the bullet has visually moved very far.
+			-- All four bounce conditions must be satisfied simultaneously.
+			-- BouncesThisFrame is a per-real-frame counter reset at the top of
+			-- _StepProjectile, not per sub-segment. MaxBouncesPerFrame therefore
+			-- caps the total bounces across all sub-segments for a given frame step.
+			-- Without this cap, a bullet entering a tight corner could process its
+			-- entire MaxBounces budget in a single high-fidelity frame via rapid
+			-- sub-segment bounces, visually appearing to freeze instantly rather
+			-- than bouncing over several frames.
 			local IsAboveBounceSpeedThreshold = CurrentVelocity.Magnitude >= Behavior.BounceSpeedThreshold
-			local IsBelowMaxBounceCount = Runtime.BounceCount < Behavior.MaxBounces
-			local IsBelowMaxBouncesThisFrame = Runtime.BouncesThisFrame < Behavior.MaxBouncesPerFrame
-			local BounceConditionsMet = CanBounce
+			local IsBelowMaxBounceCount       = Runtime.BounceCount < Behavior.MaxBounces
+			local IsBelowMaxBouncesThisFrame  = Runtime.BouncesThisFrame < Behavior.MaxBouncesPerFrame
+			local BounceConditionsMet         = CanBounce
 				and IsAboveBounceSpeedThreshold
 				and IsBelowMaxBounceCount
 				and IsBelowMaxBouncesThisFrame
@@ -1910,16 +2259,16 @@ local function SimulateCast(Cast: HybridCast, Delta: number, IsSubSegment: boole
 				local IsTrapped = IsCornerTrap(Cast, RaycastResult.Normal, RaycastResult.Position)
 
 				if not IsTrapped then
-					-- Compute the reflected velocity. This gives the direction and
-					-- speed the bullet should have immediately after leaving the surface,
-					-- with energy loss already applied.
+					-- Compute the reflected and energy-attenuated velocity for the
+					-- post-bounce arc. ResolveBounce applies the reflection formula and
+					-- the base + material restitution coefficients in a single call.
 					local PostBounceVelocity = ResolveBounce(Cast, RaycastResult, CurrentVelocity)
 
-					-- Offset the new trajectory origin by NUDGE along the surface normal.
-					-- This prevents the very next raycast (at sub-segment or next frame
-					-- start) from originating on the surface plane and immediately
-					-- re-detecting it, which would produce an unwanted double-bounce at
-					-- distance zero.
+					-- Offset the new trajectory origin along the surface normal by NUDGE.
+					-- This ensures the first raycast on the new arc (whether sub-segment
+					-- or next frame) does not originate exactly on the surface plane and
+					-- re-detect it at distance ~0, which would produce a spurious
+					-- immediate re-bounce at the same point.
 					local PostBounceOrigin = RaycastResult.Position + RaycastResult.Normal * NUDGE
 
 					if Behavior.VisualizeCasts then
@@ -1928,31 +2277,34 @@ local function SimulateCast(Cast: HybridCast, Delta: number, IsSubSegment: boole
 						Visualizer.Velocity(RaycastResult.Position, PostBounceVelocity)
 					end
 
-					-- Create a new trajectory segment for the post-bounce path. The new
-					-- segment starts at the current TotalRuntime with PostBounceVelocity
-					-- as its initial velocity. Acceleration is inherited from the active
-					-- trajectory so gravity continues to apply on the new arc.
+					-- Open a new trajectory segment for the post-bounce path. The segment
+					-- starts at the current TotalRuntime so subsequent ElapsedTime
+					-- computations are anchored to this bounce moment, not to the
+					-- original fire time. Acceleration is inherited from the pre-bounce
+					-- trajectory so gravity continues to act on the new arc unchanged.
 					local NewTrajectory = {
-						StartTime = Runtime.TotalRuntime,
-						EndTime = -1,
-						Origin = PostBounceOrigin,
+						StartTime       = Runtime.TotalRuntime,
+						EndTime         = -1,
+						Origin          = PostBounceOrigin,
 						InitialVelocity = PostBounceVelocity,
-						Acceleration = ActiveTrajectory.Acceleration,
+						Acceleration    = ActiveTrajectory.Acceleration,
 					}
 					table.insert(Runtime.Trajectories, NewTrajectory)
-					Runtime.ActiveTrajectory = NewTrajectory
+					Runtime.ActiveTrajectory   = NewTrajectory
 
-					-- Signal ResimulateHighFidelity to stop processing sub-segments
-					-- on the old trajectory. The remaining sub-segments for this frame
-					-- would compute positions on the pre-bounce arc, which is now
-					-- inactive. The next frame will start from the new trajectory.
+					-- Signal ResimulateHighFidelity to abandon the sub-segment loop for
+					-- the current frame. Any remaining sub-segments would be stepping
+					-- positions on the old (now-closed) pre-bounce trajectory, producing
+					-- raycasts in the wrong region of space. The next frame will start
+					-- from the new post-bounce trajectory.
 					Runtime.CancelResimulation = true
 
-					-- Update bounce metadata for corner-trap detection on the next
-					-- bounce. We check for a degenerate normal before storing because
-					-- a zero-length normal stored in LastBounceNormal would corrupt the
-					-- dot-product guard in IsCornerTrap, producing false-positive traps
-					-- on every subsequent bounce.
+					-- Update the bounce metadata that IsCornerTrap reads on the next
+					-- bounce. A degenerate surface normal (length near zero, which can
+					-- occur with certain Roblox collision meshes) is guarded against
+					-- before storing because a zero-length LastBounceNormal would make
+					-- Guard 2's dot product always equal 0.0, permanently disabling that
+					-- guard for the remainder of the cast's lifetime.
 					if RaycastResult.Normal:Dot(RaycastResult.Normal) > 1e-6 then
 						Runtime.LastBounceNormal   = RaycastResult.Normal
 						Runtime.LastBouncePosition = RaycastResult.Position
@@ -1962,13 +2314,14 @@ local function SimulateCast(Cast: HybridCast, Delta: number, IsSubSegment: boole
 					end
 					Runtime.BouncesThisFrame += 1
 
-					FireOnBounce(Cast, RaycastResult, PostBounceVelocity)
+					FireOnBounce(Solver, Cast, RaycastResult, PostBounceVelocity)
 					BounceWasResolved = true
-					return 
+					return
 				else
-					-- Corner trap confirmed: log and fall through to the terminal hit
-					-- path below. Terminating here avoids consuming further bounce count
-					-- in a loop that would never produce forward progress.
+					-- Corner trap confirmed. Log and fall through to terminal hit
+					-- processing below. Terminating here prevents the bullet from
+					-- consuming remaining bounce budget in an infinite reflection loop
+					-- inside a pocket of concave geometry.
 					if Behavior.VisualizeCasts then
 						Visualizer.CornerTrap(RaycastResult.Position)
 					end
@@ -1977,182 +2330,196 @@ local function SimulateCast(Cast: HybridCast, Delta: number, IsSubSegment: boole
 			end
 
 			-- ─── Terminal Hit ─────────────────────────────────────────────────
-            --[[
-                Reaches here when the hit qualifies for neither pierce nor bounce:
-                  - CanPierceFunction returned false (or is nil).
-                  - CanBounceFunction returned false (or is nil), speed was below
-                    threshold, bounce count was exhausted, or a corner trap was detected.
-                This is a definitive impact. The bullet stops here.
-            ]]
+
+			--[[
+			    Execution reaches here when the contact qualifies for neither pierce
+			    nor bounce:
+			      - CanPierceFunction returned false, was nil, or speed/angle
+			        thresholds were not met.
+			      - CanBounceFunction returned false, was nil, speed/count thresholds
+			        were not met, or a corner trap was detected and fell through.
+			    This is a definitive, permanent impact. The bullet stops at this surface.
+			]]
 			if not BounceWasResolved then
-				FireOnHit(Cast, RaycastResult, CurrentVelocity)
-				FireOnTerminated(Cast)
-				Terminate(Cast)
+				FireOnHit(Solver, Cast, RaycastResult, CurrentVelocity)
+				FireOnTerminated(Solver, Cast)
+				Terminate(Solver, Cast)
 				return
 			end
 		end
 	end
 
 	-- ─── Distance Termination ────────────────────────────────────────────────
-    --[[
-        The bullet has travelled at least MaxDistance studs since it was fired.
-        We fire OnHit with a nil RaycastResult to distinguish this expiry from
-        a physical surface impact. Consumers check `result == nil` to decide
-        whether to play an impact effect or simply let the bullet disappear.
-        This event fires after OnTravel for this step, so trail and position
-        consumers are always up to date before the cast ends.
-    ]]
+
+	--[[
+	    The bullet has accumulated at least MaxDistance studs of travel since it
+	    was fired. This path fires OnHit with a nil RaycastResult, which is the
+	    module's convention for distinguishing silent range expiry from a physical
+	    surface impact. Consumers check `Result ~= nil` to decide whether to
+	    spawn impact VFX or simply let the bullet disappear. This check runs
+	    after OnTravel for this step, ensuring position consumers always receive
+	    a complete per-frame update before the cast is removed.
+	]]
 	if Runtime.DistanceCovered >= Behavior.MaxDistance then
 		if Behavior.VisualizeCasts then
-			Visualizer.Hit(CFrameNew(CurrentTargetPosition), "terminal")	
+			Visualizer.Hit(CFrameNew(CurrentTargetPosition), "terminal")
 		end
-
-		FireOnHit(Cast, nil, CurrentVelocity)
-		FireOnTerminated(Cast)
-		Terminate(Cast)
+		FireOnHit(Solver, Cast, nil, CurrentVelocity)
+		FireOnTerminated(Solver, Cast)
+		Terminate(Solver, Cast)
 		return
 	end
 
 	-- ─── Minimum Speed Termination ───────────────────────────────────────────
-    --[[
-        The bullet's speed has fallen below MinSpeed. This typically occurs after
-        many bounces with a Restitution < 1.0 have bled away kinetic energy, or
-        when very strong gravity decelerates a low-speed projectile. Like distance
-        expiry, this fires OnHit with a nil result so consumers can distinguish
-        this case from a physical collision. Without this check, a bullet at
-        near-zero speed would simulate indefinitely, never reaching MaxDistance
-        or hitting a surface — a live leak in the _ActiveCasts array.
-    ]]
+
+	--[[
+	    The bullet's speed has fallen below MinSpeed. This typically follows many
+	    inelastic bounces (Restitution < 1.0 bleeds kinetic energy on each contact)
+	    or heavy deceleration from opposing gravity. Like distance expiry, this
+	    fires OnHit with a nil RaycastResult. Without this check, a bullet that
+	    has decelerated to near-zero speed would simulate indefinitely — it would
+	    never travel far enough to reach MaxDistance and would never hit a surface
+	    because each frame's raycast would cover only a tiny fraction of a stud.
+	    This would produce a permanent leak in the _ActiveCasts array.
+	]]
+
 	local IsBelowMinSpeed = CurrentVelocity.Magnitude < Behavior.MinSpeed
 	if IsBelowMinSpeed then
-		FireOnHit(Cast, nil, CurrentVelocity)
-		FireOnTerminated(Cast)
-		Terminate(Cast)
+		FireOnHit(Solver, Cast, nil, CurrentVelocity)
+		FireOnTerminated(Solver, Cast)
+		Terminate(Solver, Cast)
 		return
 	end
 end
 
 -- ─── High-Fidelity Resimulation ──────────────────────────────────────────────
 
---[[
-    Forward declaration required because ResimulateHighFidelity and SimulateCast
-    form a mutual recursion:
-        ResimulateHighFidelity subdivides a frame and calls SimulateCast for
-        each sub-segment.
-        SimulateCast is the top-level per-frame function that calls
-        ResimulateHighFidelity when the frame displacement exceeds the segment size.
-    Luau requires a variable to be declared before any function body references
-    it. SimulateCast is assigned its body below after ResimulateHighFidelity,
-    but ResimulateHighFidelity's body calls SimulateCast. The forward declaration
-    here creates the upvalue slot that ResimulateHighFidelity can close over;
-    the assignment of SimulateCast later fills that slot before either function
-    is ever called at runtime.
-]]
 --[=[
     ResimulateHighFidelity
 
     Description:
-        Subdivides a single frame's worth of bullet travel into multiple smaller
-        time slices and simulates each one individually through SimulateCast. The
-        purpose is to prevent thin-surface tunnelling: a bullet moving 20 studs
-        per frame with a segment size of 0.5 produces 40 sub-segment raycasts,
-        each starting from an analytically exact position. Even a surface only 1
-        stud thick will be intersected by at least two of those raycasts — making
-        it virtually impossible to miss without sub-segment counts in the hundreds.
+        Subdivides a single frame's bullet travel into multiple smaller time slices
+        and simulates each one individually through SimulateCast. The goal is to
+        eliminate thin-surface tunnelling that would occur with a single per-frame
+        raycast at high bullet speeds.
 
-        Without sub-segmentation, a single long raycast from frame start to frame
-        end could skip entirely over a thin wall if the bullet's speed is high
-        enough relative to the wall's thickness. At 300 studs/second and 60Hz,
-        each frame covers 5 studs — enough to jump through any surface thinner
-        than that undetected.
+        ── Why Sub-Segmentation Is Necessary ────────────────────────────────────
 
-        Adaptive Segment Sizing:
-            The function measures its own wall-clock time after the full loop and
-            adjusts CurrentSegmentSize up or down to stay near the
-            HighFidelityFrameBudget millisecond target. If the loop took longer
-            than the budget, the segment size is multiplied by AdaptiveScaleFactor
-            (segments get larger, fewer raycasts, cheaper). If the loop used less
-            than half the budget, the segment size is divided by AdaptiveScaleFactor
-            (segments get smaller, more raycasts, higher fidelity). This creates a
-            self-tuning system that gracefully degrades under load rather than
-            uniformly dropping fidelity for all bullets.
+        Without sub-segmentation, each frame produces exactly one raycast spanning
+        from the frame-start position to the frame-end position. At 300 studs/second
+        and 60Hz, each frame covers 5 studs per raycast. Any surface thinner than
+        5 studs (e.g. a plywood wall, a sheet metal door) could be skipped entirely
+        if the bullet's frame-start and frame-end positions happen to land on opposite
+        sides. Sub-segmentation subdivides the 5-stud step into 10 × 0.5-stud steps,
+        each generating its own raycast. A surface only 1 stud thick will be
+        intersected by at least two of these raycasts, making tunnelling practically
+        impossible without absurdly small segment sizes.
 
-        Cascade Protection:
-            IsActivelyResimulating prevents a re-entrant call to
-            ResimulateHighFidelity from within a signal handler. Such re-entry
-            would be a programming error (a signal handler should not trigger
-            another round of resimulation on the same cast), and without this
-            guard it would cause infinite recursion. The flag is cleared on both
-            normal return and early termination.
+        ── Adaptive Segment Sizing ───────────────────────────────────────────────
 
-        Global Frame Budget:
-            FrameBudget.RemainingMicroseconds is decremented by each sub-segment's
-            measured wall time. Once the budget is exhausted, the loop breaks early
-            and remaining sub-segments are skipped. This ensures that a single fast
-            bullet with a small segment size cannot consume the entire game thread's
-            frame time, even if its own HighFidelityFrameBudget has not been reached.
+        After the sub-segment loop completes, the total elapsed wall-clock time is
+        compared against HighFidelityFrameBudget:
+
+            Over budget (elapsed > budget):
+                The loop consumed too much time. Increase CurrentSegmentSize by
+                AdaptiveScaleFactor so future frames produce fewer sub-segments
+                and fewer raycasts. This trades fidelity for performance.
+
+            Under half budget (elapsed < budget * 0.5):
+                The loop has significant spare time. Decrease CurrentSegmentSize
+                by AdaptiveScaleFactor so future frames produce more sub-segments
+                and more raycasts. This trades performance for improved hit detection.
+
+            Within budget (between half and full budget):
+                Leave CurrentSegmentSize unchanged. This dead-band prevents the
+                adaptive system from oscillating — without it, every frame would
+                alternately coarsen and refine due to minor timing noise from other
+                work happening on the same thread.
+
+        This self-tuning system gracefully degrades under CPU load by widening
+        segments rather than uniformly dropping fidelity for all bullets simultaneously.
+
+        ── Cascade Protection ────────────────────────────────────────────────────
+
+        Runtime.IsActivelyResimulating is set to true at the start of this function
+        and cleared on all return paths. If this function is called while it is
+        already set (meaning a signal handler inside a SimulateCast call triggered
+        another round of resimulation), the cascade is detected and the cast is
+        terminated rather than allowing infinite recursion.
+
+        ── Per-Instance Frame Budget ─────────────────────────────────────────────
+
+        Solver._FrameBudget.RemainingMicroseconds is decremented after each
+        sub-segment by that sub-segment's measured wall time. Once it reaches zero,
+        the loop breaks and remaining sub-segments are skipped for this frame.
+        Because the budget is per-instance, two concurrent solver instances each
+        receive the full GLOBAL_FRAME_BUDGET_MS independently.
 
     Parameters:
-        Cast: HybridCast
-            The cast to resimulate.
+        Solver: Vetra
+            The solver instance. Required for SimulateCast and frame budget access.
+
+        Cast: VetraCast
+            The cast to resimulate for this frame.
 
         ActiveTrajectory: Type.CastTrajectory
-            The trajectory segment active at the start of this frame. Passed
-            explicitly because SimulateCast calls inside the loop may modify
-            Runtime.ActiveTrajectory (e.g. on a bounce), and we need the original
-            value for the pre-frame position computation in _StepProjectile.
+            The trajectory segment that was active at the start of this frame.
 
         ElapsedAtFrameStart: number
-            Time elapsed in the active trajectory at the start of this frame,
-            used by _StepProjectile to compute the pre-frame position for the
-            total displacement calculation.
+            Elapsed time within the active trajectory at the start of this frame,
+            before any time was advanced by the tentative TotalRuntime pre-advance
+            in _StepProjectile.
 
         FrameDelta: number
-            Total frame time in seconds. Divided evenly across all sub-segments.
+            Total frame time in seconds. All sub-segments share this total:
+            SubSegmentDelta = FrameDelta / SubSegmentCount. Their deltas sum
+            exactly to FrameDelta, preserving correct total TotalRuntime advance.
 
         FrameDisplacement: number
-            Total displacement magnitude for the frame. Used to determine how
-            many sub-segments are needed (FrameDisplacement / CurrentSegmentSize).
+            Total displacement magnitude for the frame (frame-end position minus
+            frame-start position). Used to compute SubSegmentCount:
+            floor(FrameDisplacement / CurrentSegmentSize).
 
     Returns:
         boolean
-            True if the cast was terminated during resimulation (hit, distance
-            expiry, speed expiry, corner trap). False if the cast survived the frame.
-
-    Notes:
-        CancelResimulation is reset to false at the end of this function regardless
-        of how the loop terminated. This ensures it does not persist into the next
-        frame and incorrectly suppress normal resimulation.
+            True if the cast was terminated during resimulation. False if the
+            cast is still alive after all sub-segments complete.
 ]=]
 local function ResimulateHighFidelity(
-	Cast: HybridCast,
+	Solver: Vetra,
+	Cast: VetraCast,
 	ActiveTrajectory: Type.CastTrajectory,
 	ElapsedAtFrameStart: number,
 	FrameDelta: number,
 	FrameDisplacement: number
 ): boolean
 
-	-- Cascade protection: IsActivelyResimulating being true here indicates a
-	-- signal handler or coroutine inside the previous SimulateCast call triggered
-	-- another frame step on this cast before the current one finished. This is
-	-- a logic error in consumer code. We terminate the cast and log an error
-	-- rather than allowing a stack overflow.
+	-- Cascade protection. If IsActivelyResimulating is already true when this
+	-- function is entered, it means a signal handler fired from inside a previous
+	-- SimulateCast call triggered another _StepProjectile step on the same cast
+	-- before the current one completed. This is a programming error in consumer
+	-- code (signal handlers must not trigger simulation steps). Terminating the
+	-- cast and logging an error is safer than allowing stack overflow via
+	-- unbounded recursion.
 	if Cast.Runtime.IsActivelyResimulating then
-		Terminate(Cast)
+		Terminate(Solver, Cast)
 		Logger:Error("ResimulateHighFidelity: cascade resimulation detected — possible signal handler re-entry")
 		return false
 	end
 
 	Cast.Runtime.IsActivelyResimulating = true
-	Cast.Runtime.CancelResimulation = false
+	Cast.Runtime.CancelResimulation     = false
 
-	local Behavior = Cast.Behavior
+	local Behavior    = Cast.Behavior
+	local FrameBudget = Solver._FrameBudget
 
-	-- Compute the number of sub-segments by dividing total frame displacement by
-	-- the current adaptive segment size. MathFloor truncates to an integer
-	-- (we can't do a fractional raycast). MathClamp ensures at least 1 sub-segment
-	-- (even if displacement < CurrentSegmentSize) and at most MAX_SUBSEGMENTS to
-	-- prevent a degenerate case from consuming unbounded raycasts.
+	-- Compute the number of sub-segments by dividing the total frame displacement
+	-- by the current adaptive segment size. MathFloor truncates to an integer
+	-- because fractional raycasts are undefined. MathClamp ensures at least 1
+	-- sub-segment (so a cast always advances at least once, even if displacement
+	-- is smaller than CurrentSegmentSize) and at most MAX_SUBSEGMENTS (so an
+	-- extremely fast bullet with a tiny segment size cannot issue thousands of
+	-- raycasts in one frame).
 	local SubSegmentCount = MathClamp(
 		MathFloor(FrameDisplacement / Cast.Runtime.CurrentSegmentSize),
 		1,
@@ -2160,177 +2527,118 @@ local function ResimulateHighFidelity(
 	)
 
 	if SubSegmentCount >= MAX_SUBSEGMENTS then
-		-- The bullet is moving so fast relative to the segment size that it hit
-		-- the hard cap. Aggressively double the normal adaptive increase to correct
-		-- the situation in the next frame rather than gradually converging. Normal
-		-- AdaptiveScaleFactor correction alone would take multiple frames to reach
-		-- a safe segment size, during which every frame would hit the cap.
-		Cast.Runtime.CurrentSegmentSize = Cast.Runtime.CurrentSegmentSize 
-			* Behavior.AdaptiveScaleFactor * 2 
+		-- The bullet is moving so fast relative to the current segment size that
+		-- it hit the hard cap. Apply an aggressive 2x correction (double the normal
+		-- AdaptiveScaleFactor increase) to reach a safe segment size quickly.
+		-- Using the normal adaptive correction alone would take multiple frames to
+		-- converge, hitting the cap on each intermediate frame and producing repeated
+		-- warning spam and wasted raycast budget.
+		Cast.Runtime.CurrentSegmentSize = Cast.Runtime.CurrentSegmentSize
+			* Behavior.AdaptiveScaleFactor * 2
 		Logger:Warn(string.format(
 			"ResimulateHighFidelity: SubSegmentCount capped at %d — consider increasing HighFidelitySegmentSize",
 			MAX_SUBSEGMENTS
-			))
+		))
 	end
-	-- Each sub-segment receives an equal fraction of the total frame time.
-	-- This ensures the sum of all sub-segment deltas equals FrameDelta exactly,
-	-- preserving the correct total TotalRuntime advance across the frame.
-	local SubSegmentDelta = FrameDelta / SubSegmentCount
 
-	local HitOccurred = false
-	local ResimStartTime = OsClock()
+	-- Each sub-segment receives an equal share of the total frame time. This
+	-- ensures the cumulative TotalRuntime advance across all sub-segments equals
+	-- exactly FrameDelta, maintaining correct absolute timing for the entire cast.
+	local SubSegmentDelta = FrameDelta / SubSegmentCount
+	local HitOccurred     = false
+	local ResimStartTime  = OsClock()
 
 	for SegmentIndex = 1, SubSegmentCount do
-		-- CancelResimulation is set by SimulateCast when a bounce occurs inside
-		-- a sub-segment. A bounce creates a new ActiveTrajectory, so all remaining
-		-- sub-segments would be computing positions on the old (now-inactive) arc.
-		-- Stopping here ensures we don't advance the bullet along a trajectory it
-		-- has already left. The next frame will pick up from the new trajectory.
-		if Cast.Runtime.CancelResimulation then
-			break
-		end
+		-- CancelResimulation is set by SimulateCast when a bounce creates a new
+		-- ActiveTrajectory segment. All remaining sub-segments in this loop would
+		-- compute positions on the now-closed pre-bounce trajectory. Stopping here
+		-- ensures no raycasts are performed on an arc the bullet has already left.
+		-- The next frame will pick up correctly from the new post-bounce trajectory.
+		if Cast.Runtime.CancelResimulation then break end
 
-		-- IsSubSegment = true tells SimulateCast this call is from a high-fidelity
-		-- context, not the top-level frame loop. This suppresses the yield-detection
-		-- guard that checks IsActivelyPiercing/IsBouncing: those flags being set
-		-- between sub-segments is expected behaviour, not evidence of a yield.
+		-- IsSubSegment = true suppresses the yield-detection guards inside
+		-- SimulateCast. Within this loop, the callback thread fields being set
+		-- from the previous sub-segment is normal expected behaviour, not evidence
+		-- of a suspended callback from a previous frame.
 		local SegmentStart = OsClock()
-		SimulateCast(Cast, SubSegmentDelta, true)
-		-- Deduct this sub-segment's wall time from the global frame budget. Once
-		-- the budget reaches zero, further sub-segments on any cast are skipped
-		-- for the remainder of this frame step. This prevents a single multi-part
-		-- hit scenario (e.g. a grenade fragment bouncing in a tight space) from
-		-- consuming the entire frame time.
+		SimulateCast(Solver, Cast, SubSegmentDelta, true)
+
+		-- Deduct this sub-segment's measured wall time from the instance's frame
+		-- budget. When the budget reaches zero, all remaining sub-segments for
+		-- this cast (and all other casts on this solver) are skipped for the rest
+		-- of the frame. This prevents a single complex multi-bounce scenario from
+		-- consuming the entire frame's raycast allocation.
 		FrameBudget.RemainingMicroseconds -= (OsClock() - SegmentStart) * 1e6
 
-		-- If SimulateCast terminated the cast (hit, distance, speed), record that
-		-- and stop. Processing further sub-segments on a dead cast would be a
-		-- use-after-free: the cast is removed from _ActiveCasts but we still hold
-		-- a local reference to it.
+		-- If SimulateCast terminated the cast (hit, distance expiry, speed expiry),
+		-- stop immediately. Continuing to step a terminated cast is a use-after-free:
+		-- Cast has been removed from _ActiveCasts but we still hold a local reference.
+		-- The cast's internal state is no longer valid for simulation use.
 		if not Cast.Alive then
 			HitOccurred = true
 			break
 		end
 
 		if FrameBudget.RemainingMicroseconds <= 0 then
-			-- Global frame budget exhausted. Stop all sub-segments for this cast.
-			-- Other casts in the same frame have already been denied further
-			-- sub-segments as well (the budget is shared across all casts).
+			-- Instance frame budget exhausted. Stop processing sub-segments for this
+			-- cast this frame. The bullet will resume from its current position on
+			-- the next frame with a fresh budget.
 			break
 		end
 	end
+
 	Cast.Runtime.CancelResimulation = false
+
 	-- ─── Adaptive Segment Size Adjustment ────────────────────────────────────
-    --[[
-        Adaptive segment sizing uses the total wall-clock time of this
-        resimulation loop to decide whether to coarsen or refine the next frame's
-        sub-segments. The goal is to stay near HighFidelityFrameBudget milliseconds
-        per cast per frame:
 
-        Over budget: The loop took longer than the budget. Increase segment size
-        so future frames produce fewer raycasts. The upper cap of 999 is
-        effectively unlimited — it prevents math.min from receiving a second
-        argument that is smaller than the product, which would incorrectly shrink
-        the segment size.
+	--[[
+	    Compare the total resimulation wall time against HighFidelityFrameBudget
+	    to decide whether to coarsen or refine segments for the next frame.
 
-        Under half budget: The loop has significant headroom. Decrease segment size
-        to improve hit detection fidelity. MinSegmentSize provides a hard floor
-        to prevent the segment size from shrinking to near-zero, which would produce
-        an unbounded number of sub-segments.
+	    Over budget (elapsed > budget):
+	        Too expensive. Increase segment size (fewer raycasts next frame).
+	        The upper cap of 999 prevents math.min from inadvertently receiving a
+	        smaller second argument and shrinking the segment size — it is effectively
+	        an uncapped upper bound.
 
-        Within budget (between half and full): Leave the size unchanged. This
-        dead-band prevents oscillation where every frame alternately coarsens and
-        refines due to minor timing noise.
-    ]]
+	    Under half budget (elapsed < budget * 0.5):
+	        Spare capacity available. Decrease segment size (more raycasts next frame,
+	        better thin-surface detection). MinSegmentSize provides a hard floor to
+	        prevent the segment size from approaching zero and generating unbounded
+	        sub-segment counts.
+
+	    Within budget (between half and full budget):
+	        Leave the size unchanged. Without this dead-band, minor per-frame timing
+	        variance would cause the system to oscillate — coarsening one frame because
+	        elapsed was marginally over budget, refining the next because it was
+	        marginally under, coarsening again, and so on. The dead-band stabilises
+	        the adaptive system around the target operating point.
+	]]
 	local ResimElapsedMilliseconds = (OsClock() - ResimStartTime) * 1000
-	local IsOverBudget = ResimElapsedMilliseconds > Behavior.HighFidelityFrameBudget
-	local IsUnderHalfBudget = ResimElapsedMilliseconds < Behavior.HighFidelityFrameBudget * 0.5
+	local IsOverBudget             = ResimElapsedMilliseconds > Behavior.HighFidelityFrameBudget
+	local IsUnderHalfBudget        = ResimElapsedMilliseconds < Behavior.HighFidelityFrameBudget * 0.5
 
 	if IsOverBudget then
-		-- Too expensive this frame: coarsen segments to reduce raycast count next frame.
+		-- Too expensive this frame: widen segments to reduce raycast count next frame.
 		Cast.Runtime.CurrentSegmentSize = math.min(
 			Cast.Runtime.CurrentSegmentSize * Behavior.AdaptiveScaleFactor,
 			999
 		)
 	elseif IsUnderHalfBudget then
-		-- Headroom available: refine segments to improve hit detection accuracy.
+		-- Spare budget: narrow segments to improve hit detection resolution next frame.
 		Cast.Runtime.CurrentSegmentSize = math.max(
 			Cast.Runtime.CurrentSegmentSize / Behavior.AdaptiveScaleFactor,
 			Behavior.MinSegmentSize
 		)
 	end
 
-	-- Clear the flag unconditionally on all return paths. If it were left set
-	-- by an early break (e.g. budget exhaustion), the next frame's call to
-	-- ResimulateHighFidelity would immediately terminate the cast as a cascade.
+	-- Clear the flag unconditionally on all return paths — including early breaks
+	-- from budget exhaustion. If left set after an early break, the next frame's
+	-- call to ResimulateHighFidelity would see IsActivelyResimulating = true and
+	-- immediately terminate the cast as a spurious cascade detection.
 	Cast.Runtime.IsActivelyResimulating = false
 	return HitOccurred
 end
-
--- ─── Core Simulation ─────────────────────────────────────────────────────────
-
---[=[
-    SimulateCast
-
-    Description:
-        The core per-step simulation function. Advances a single cast forward by
-        Delta seconds using the analytic kinematic equations, performs a raycast
-        between the previous and current position, and responds to any surface
-        hit with the appropriate resolution: pierce, bounce, or terminal impact.
-
-        This function has two callers:
-            1. _StepProjectile: the top-level per-frame driver. Calls with
-               IsSubSegment = false and Delta = the full frame time (when not
-               using high-fidelity mode) or hands off to ResimulateHighFidelity
-               which calls SimulateCast with IsSubSegment = true.
-            2. ResimulateHighFidelity: calls SimulateCast repeatedly with small
-               Delta values (one sub-segment at a time) and IsSubSegment = true.
-
-        The IsSubSegment flag controls whether the yield-detection guards for
-        CanPierceFunction and CanBounceFunction are active. In a top-level call
-        (IsSubSegment = false), if PierceCallbackThread or BounceCallbackThread
-        are non-nil from a previous frame, it means those callbacks yielded and
-        never returned — a fatal error that warrants cast termination. In a
-        sub-segment call (IsSubSegment = true), those fields being set from the
-        previous sub-segment is expected and should not trigger the guard.
-
-        Hit resolution priority order:
-            1. Pierce — evaluated first because a bullet capable of piercing
-               should never simultaneously bounce. Treating them as sequential
-               and exclusive ensures a single surface interaction produces
-               exactly one physical outcome.
-            2. Bounce — only evaluated if pierce did not occur.
-            3. Terminal hit — reached if neither pierce nor bounce resolved the hit,
-               or if a bounce was blocked by a corner trap.
-
-        Distance and speed termination checks run after all hit processing.
-        They use non-nil result signals (OnHit with nil RaycastResult) to allow
-        consumers to distinguish expiry from physical impact in their handlers.
-
-    Parameters:
-        Cast: HybridCast
-            The cast to advance.
-
-        Delta: number
-            Time in seconds to advance the simulation. For top-level calls this
-            is the full frame delta; for sub-segment calls this is FrameDelta / N.
-
-        IsSubSegment: boolean
-            True when called from ResimulateHighFidelity. Controls whether the
-            callback yield-detection guards are active.
-
-    Notes:
-        The CancelResimulation flag is set inside this function when a bounce
-        occurs. It propagates to ResimulateHighFidelity's loop, which stops
-        processing further sub-segments once a bounce has redirected the bullet
-        onto a new trajectory arc.
-
-        Distance accumulates along the actual ray path (hit point to start point)
-        rather than the theoretical trajectory arc. This is a deliberate
-        simplification: arc length integration would require numerical methods,
-        and for the short per-frame distances involved the difference is negligible.
-]=]
-
 
 -- ─── Frame Loop ──────────────────────────────────────────────────────────────
 
@@ -2338,104 +2646,131 @@ end
     _StepProjectile
 
     Description:
-        The per-frame driver for all active projectile casts. Connected to the
-        appropriate RunService event at solver creation time and called every
-        frame with the elapsed frame time.
+        The per-frame driver for all active projectile casts owned by a given
+        solver instance. Connected once to the appropriate RunService event
+        (Heartbeat on the server, RenderStepped on the client) at Factory.new()
+        time. Called every frame with the elapsed frame delta.
 
-        The function resets the global frame budget at the start of each call so
-        high-fidelity sub-segment raycasts across all casts are bounded by
-        GLOBAL_FRAME_BUDGET_MS milliseconds total per frame, preventing any
-        combination of fast bullets from saturating the game thread.
+        At the start of each call, the instance's per-frame raycast budget is
+        reset so that the high-fidelity sub-segment allocation is fresh for every
+        frame. Because the budget lives on the instance, two concurrent solver
+        instances are each allocated the full GLOBAL_FRAME_BUDGET_MS independently
+        rather than sharing a single pool.
 
-        For each active, unpaused cast, the function either:
-            a) Calls SimulateCast directly (standard mode, one raycast per frame).
-            b) Computes the total frame displacement and calls ResimulateHighFidelity
-               to subdivide it into smaller steps (high-fidelity mode).
+        For each active, unpaused cast, the function chooses one of two simulation
+        paths:
 
-        High-fidelity mode requires a two-pass approach: first advance TotalRuntime
-        by FrameDelta to compute the frame-end position (needed for displacement
-        magnitude), then rewind TotalRuntime before calling ResimulateHighFidelity
-        so sub-segments can re-advance it correctly in small increments. Without
-        the rewind, TotalRuntime would be one full FrameDelta ahead before the
-        first sub-segment even begins, causing all sub-segment position computations
-        to be offset by one frame.
+            Standard mode (HighFidelitySegmentSize = 0 or CurrentSegmentSize = 0):
+                Calls SimulateCast directly with the full frame delta. Suitable for
+                slow-moving projectiles, distant or cosmetic bullets, or any cast
+                where tunnelling through thin surfaces is acceptable or the surfaces
+                in the scene are all thicker than the bullet's per-frame travel distance.
+
+            High-fidelity mode (HighFidelitySegmentSize > 0):
+                Computes the total frame displacement (tentatively advancing and then
+                rewinding TotalRuntime — see below), then calls ResimulateHighFidelity
+                to subdivide that displacement into smaller steps, each generating its
+                own raycast. This prevents thin-surface tunnelling at high bullet speeds.
+
+        ── Why High-Fidelity Mode Requires a Tentative Pre-advance ──────────────
+
+        ResimulateHighFidelity needs to know the total frame displacement BEFORE
+        advancing TotalRuntime so it can compute SubSegmentCount. To get the frame-end
+        position analytically, TotalRuntime must be temporarily advanced by FrameDelta.
+        After computing the displacement, TotalRuntime is rewound to its original value.
+        Without this rewind, TotalRuntime would already be FrameDelta ahead before
+        ResimulateHighFidelity begins its sub-segment loop. Each sub-segment then
+        advances it further, resulting in a total advance of FrameDelta + N*SubSegmentDelta
+        = 2*FrameDelta by the end of the frame — a systematic double-advance that would
+        place every subsequent position computation one full frame ahead of reality.
 
     Parameters:
+        Solver: Vetra
+            The solver instance whose casts are stepped. Each solver instance has
+            its own _StepProjectile connection that captures Solver by upvalue.
+            Casts from different instances are never mixed.
+
         FrameDelta: number
-            Duration of the current frame in seconds, supplied by the RunService
+            Duration of the current frame in seconds, provided by the RunService
             event callback.
 
     Notes:
-        ActiveCount is snapshotted before the iteration begins. Any cast created
-        during this frame (e.g. from an OnHit signal handler that calls Fire() to
-        spawn a fragment) will have been appended to _ActiveCasts after the snapshot,
-        so it will not be processed until the next frame. This is intentional: casts
-        born from events in frame N start simulating in frame N+1. Without this
-        snapshot, a new cast could be processed in the same frame it was created,
-        getting a partial frame of simulation inconsistent with its actual birth time.
+        ActiveCount is snapshotted before iteration begins. Any cast created during
+        this frame (e.g. spawned by an OnHit handler that calls Fire() for a fragment)
+        is appended to _ActiveCasts beyond index ActiveCount and will not be processed
+        until the next frame. Without this snapshot, a new cast added at index N+1
+        during the iteration over indices 1..N would be visited in the same frame it
+        was created, receiving a partial first-frame simulation with an inconsistent
+        initial delta.
 
-        The `not Cast or not Cast.Alive` guard handles the case where an earlier
-        iteration in the same frame terminated a cast that was later in the array.
-        Swap-remove moves the surviving cast to the terminated cast's slot, so the
-        array may have `nil` at indices that have not been visited yet if the removed
-        cast happened to be at the current end of the active range.
+        The `not Cast or not Cast.Alive` guard handles nil and dead entries that can
+        appear inside the snapshot range. A Cast can be nil if an earlier iteration's
+        swap-remove moved a beyond-range element into a within-range slot that has
+        not been visited yet. A cast can be dead if an earlier iteration's signal
+        handler called context:Terminate() on a later cast before its index was reached.
 ]=]
-local function _StepProjectile(FrameDelta: number)
-	-- Reset the shared frame budget at the start of each frame. All high-fidelity
-	-- sub-segment raycasts across every active cast draw from this pool. Once it
-	-- reaches zero, ResimulateHighFidelity exits early for any cast that still
-	-- has sub-segments remaining, preventing a large number of fast bullets from
-	-- consuming the entire frame time on raycasts alone.
+local function _StepProjectile(Solver: Vetra, FrameDelta: number)
+	-- Reset this instance's frame budget at the start of each frame. All high-
+	-- fidelity sub-segment raycasts across every cast on this solver draw from
+	-- this shared pool within the frame. Resetting here ensures the previous
+	-- frame's consumed budget does not carry over and prematurely exhaust the
+	-- current frame's allocation.
+	local FrameBudget = Solver._FrameBudget
 	FrameBudget.RemainingMicroseconds = GLOBAL_FRAME_BUDGET_MS * 1000
-	local ActiveCount = #_ActiveCasts
+
+	local ActiveCasts = Solver._ActiveCasts
+	local ActiveCount = #ActiveCasts
+
 	--[[
-		ActiveCount is snapshotted here, before any casts are stepped. This
-		ensures that casts registered during this frame (e.g. fragments spawned by
-		an OnHit handler) are not stepped in the same frame they were created.
-		Those casts exist at indices > ActiveCount and will be visited starting
-		with the next _StepProjectile call. This gives every cast a consistent
-		first-frame delta equal to exactly one full frame, not a partial frame
-		that depends on when during the iteration the cast was registered.
+	    Snapshot ActiveCount before the loop. Casts registered during this frame
+	    (appended to _ActiveCasts during signal handler execution in this very
+	    iteration) exist at indices > ActiveCount. They will not be reached by
+	    this loop and will be processed starting with the next frame. This gives
+	    every cast a consistent first-frame delta equal to exactly one full
+	    FrameDelta, not a fraction that depends on when during the frame the
+	    cast was registered.
 	]]
 	for CastIndex = 1, ActiveCount do
-		local Cast = _ActiveCasts[CastIndex]
+		local Cast = ActiveCasts[CastIndex]
 
-		-- Guard against nil (which can occur if an earlier termination's swap-remove
-		-- moved a cast into this slot from beyond ActiveCount) and against dead casts
-		-- (which can occur if a signal handler from an earlier cast in this iteration
-		-- called context:Terminate() on a later cast before its index was reached).
+		-- Guard against nil and dead casts. Nil can appear when an earlier
+		-- termination's swap-remove moved a beyond-range cast into a within-range
+		-- slot. Dead can appear when a signal handler from an earlier cast in this
+		-- iteration called context:Terminate() on a cast further in the array.
 		if not Cast or not Cast.Alive then continue end
 
-		-- Paused casts (e.g. a bullet held in mid-air during a cutscene or ability
-		-- animation) are skipped entirely. TotalRuntime does not advance for paused
-		-- casts, so resuming them later produces seamless continuation from where
-		-- they were paused.
+		-- Paused casts skip all simulation. TotalRuntime does not advance while
+		-- a cast is paused, so resuming it later produces seamless continuation
+		-- from the exact state it was in when paused — no position discontinuity
+		-- or velocity jump.
 		if Cast.Paused then continue end
 
-		local Runtime = Cast.Runtime
+		local Runtime  = Cast.Runtime
 		local Behavior = Cast.Behavior
 
-		-- Reset the per-frame bounce counter before simulating this cast. This
-		-- counter limits the total number of bounces that can occur across all
-		-- sub-segments within a single frame step. Without a per-frame cap, a bullet
-		-- entering tight geometry could bounce MaxBounces times in one frame and
-		-- exhaust its entire lifetime budget instantaneously, producing a visible
-		-- stutter where the bullet stops with no apparent cause.
+		-- Reset the per-frame bounce counter before simulating this cast. Without
+		-- this reset, a cast that bounced in a previous frame would carry over a
+		-- non-zero BouncesThisFrame into this frame, effectively reducing its
+		-- per-frame bounce budget by however many bounces occurred previously.
+		-- BouncesThisFrame must reflect only bounces occurring in the CURRENT
+		-- frame step.
 		Runtime.BouncesThisFrame = 0
 
-		-- High-fidelity mode is active when HighFidelitySegmentSize > 0 AND
-		-- CurrentSegmentSize > 0 (the adaptive algorithm has not reduced it to zero,
-		-- which should not happen given MinSegmentSize > 0 but is guarded anyway).
+		-- High-fidelity mode is active when HighFidelitySegmentSize is positive
+		-- AND CurrentSegmentSize is positive. CurrentSegmentSize should never
+		-- reach zero given MinSegmentSize > 0, but the guard prevents a potential
+		-- divide-by-zero in ResimulateHighFidelity's sub-segment count calculation
+		-- if the adaptive system somehow reduces it to zero.
 		local UseHighFidelity = Behavior.HighFidelitySegmentSize > 0
 			and Runtime.CurrentSegmentSize > 0
 
 		if UseHighFidelity then
-			local CurrentTrajectory = Runtime.ActiveTrajectory
+			local CurrentTrajectory   = Runtime.ActiveTrajectory
 			local ElapsedAtFrameStart = Runtime.TotalRuntime - CurrentTrajectory.StartTime
 
-			-- Compute the start position analytically from the current trajectory
-			-- state. This is the position the bullet occupies at the beginning of
-			-- this frame, before any time has been advanced.
+			-- Compute the bullet's world-space position at the start of this frame.
+			-- This is needed to measure total frame displacement after the tentative
+			-- pre-advance below.
 			local PositionAtFrameStart = PositionAtTime(
 				ElapsedAtFrameStart,
 				CurrentTrajectory.Origin,
@@ -2443,10 +2778,10 @@ local function _StepProjectile(FrameDelta: number)
 				CurrentTrajectory.Acceleration
 			)
 
-			-- Tentatively advance TotalRuntime by the full frame delta to compute
-			-- the frame-end position. This position is used only to compute the
-			-- total displacement magnitude for sub-segment count calculation —
-			-- it does not represent a real simulation step.
+			-- Tentatively advance TotalRuntime by the full frame delta. This allows
+			-- PositionAtTime to compute the frame-end position analytically, giving us
+			-- the total displacement magnitude needed for sub-segment count calculation.
+			-- This is NOT a real simulation step — it is a probe to compute a length.
 			Runtime.TotalRuntime += FrameDelta
 			local ElapsedAtFrameEnd = Runtime.TotalRuntime - CurrentTrajectory.StartTime
 
@@ -2459,182 +2794,216 @@ local function _StepProjectile(FrameDelta: number)
 
 			local TotalFrameDisplacement = (PositionAtFrameEnd - PositionAtFrameStart).Magnitude
 
-			-- CRITICAL: rewind TotalRuntime to the pre-advance value. If we left
-			-- TotalRuntime advanced by FrameDelta here, ResimulateHighFidelity's
-			-- sub-segments would each advance it further, resulting in TotalRuntime
-			-- being FrameDelta + (SubSegmentCount * SubSegmentDelta) = 2 * FrameDelta
-			-- ahead by the end of the frame — a systematic double-advance that would
-			-- cause all subsequent position computations to be one frame too far ahead.
+			-- CRITICAL: rewind TotalRuntime to its pre-advance value. If this rewind
+			-- were omitted, TotalRuntime would already be FrameDelta ahead before
+			-- ResimulateHighFidelity begins. Each sub-segment would then advance it
+			-- further, producing a total advance of 2*FrameDelta by the end of the
+			-- frame — a systematic error that compounds into incorrect position and
+			-- velocity values for the entire cast's remaining lifetime.
 			Runtime.TotalRuntime -= FrameDelta
 
 			ResimulateHighFidelity(
+				Solver,
 				Cast,
 				CurrentTrajectory,
 				ElapsedAtFrameStart,
 				FrameDelta,
 				TotalFrameDisplacement
 			)
-			-- Always clear CancelResimulation after the high-fidelity pass, even if
-			-- it was set by a bounce inside ResimulateHighFidelity. Without this reset,
-			-- a bounce in frame N would leave CancelResimulation = true at the start of
-			-- frame N+1, causing the first sub-segment of that frame to immediately break
-			-- the resimulation loop without advancing the bullet at all.
+
+			-- Clear CancelResimulation unconditionally after the high-fidelity pass.
+			-- A bounce that occurred inside ResimulateHighFidelity sets this flag
+			-- to stop the sub-segment loop. Without this clear, the flag would
+			-- persist into the next frame's _StepProjectile call. The first sub-
+			-- segment of the next frame would then see CancelResimulation = true,
+			-- break immediately, and advance the bullet by zero time — causing it
+			-- to stall until the flag was cleared by some other code path.
 			Cast.Runtime.CancelResimulation = false
 		else
-			-- Standard mode: one raycast for the full frame. Suitable for low-speed
-			-- bullets, distant or cosmetic projectiles, or any cast where tunnelling
-			-- through thin surfaces is not a concern.
-			SimulateCast(Cast, FrameDelta, false)
+			-- Standard mode: one raycast covering the full frame. No sub-segmentation.
+			-- Appropriate for low-speed projectiles or scenes where thin-surface
+			-- tunnelling is not a concern and per-frame raycast cost must be minimised.
+			SimulateCast(Solver, Cast, FrameDelta, false)
 		end
 	end
 end
 
--- ─── Module Definition ───────────────────────────────────────────────────────
+-- ─── Vetra Methods ────────────────────────────────────────────────────
 
-local HybridSolver = {}
-HybridSolver.__index = HybridSolver
-HybridSolver.__type = IDENTITY
+local Vetra = {}
+Vetra.__index = Vetra
+Vetra.__type  = IDENTITY
 
 -- ─── Fire ────────────────────────────────────────────────────────────────────
 
 --[=[
-    HybridSolver:Fire
+    Vetra:Fire
 
     Description:
         Creates, configures, and registers a new in-flight projectile cast.
-        This is the primary entry point for all projectile creation. After Fire()
-        returns, the cast is live and will be advanced every frame by
-        _StepProjectile until it hits something, expires, or is manually
+        This is the primary public entry point for all projectile creation.
+        After Fire() returns, the cast is live in the solver's _ActiveCasts
+        registry and will be advanced every frame by _StepProjectile until it
+        hits a surface, exceeds MaxDistance, falls below MinSpeed, or is manually
         terminated via context:Terminate().
 
-        Fire() performs several responsibilities in sequence:
-            1. Validates the BulletContext's required kinematic fields (Origin,
-               Direction, Speed). Any missing or invalid field aborts immediately
-               before any state is allocated, giving the caller a clear error at
-               the boundary rather than a confusing nil-dereference inside SimulateCast.
-            2. Resolves the effective Behavior by merging the caller's FireBehavior
-               with DEFAULT_BEHAVIOR field by field. Explicit per-field resolution
-               is preferred over setmetatable inheritance because the latter would
-               silently mask typos (a misspelled field name would fall through to
-               the default rather than being flagged).
-            3. Acquires a pooled RaycastParams from ParamsPooler. The pool clones
-               the caller's params so the pierce system's filter mutations never
-               affect the caller's original params object. OriginalFilter is
-               snapshot-frozen on the Behavior table for potential filter resets.
-            4. Constructs the full HybridCast with its initial trajectory segment.
-               The trajectory segment's Acceleration is the sum of the resolved
-               gravity and the extra Acceleration field, combined once here so
-               SimulateCast never needs to perform this addition at runtime.
-            5. Optionally creates a cosmetic bullet Instance via either
-               CosmeticBulletProvider (a function, takes priority) or
-               CosmeticBulletTemplate (a BasePart to clone). The provider is
-               timed to detect accidental yields.
-            6. Registers the cast in _ActiveCasts and establishes the bidirectional
-               HybridCast ↔ BulletContext mapping.
-            7. Injects a Terminate callback into Context.__solverData so
-               context:Terminate() can shut down the underlying cast without the
-               context needing a direct HybridCast reference.
+        ── Execution Sequence ────────────────────────────────────────────────────
+
+        1. Input validation:
+            The BulletContext's Origin, Direction, and Speed fields are checked
+            for validity (non-nil, finite, correct type) before any state is
+            allocated. Failing fast here with a descriptive warning is far
+            preferable to a nil-index error three call frames deep inside
+            SimulateCast — the caller receives an actionable message at the point
+            of the mistake rather than a confusing runtime crash.
+
+        2. Behavior resolution:
+            Each field of FireBehavior is resolved individually against
+            DEFAULT_BEHAVIOR using explicit `or` fallbacks. This is deliberately
+            verbose rather than using `setmetatable(fb, {__index = DEFAULT_BEHAVIOR})`
+            because metatable inheritance would silently accept misspelled field names:
+            a typo like `CanPirceFunction` would fall through to nil, causing the cast
+            to behave as if piercing were disabled with no diagnostic. Explicit per-field
+            resolution makes every field name a visible constant checked at the point
+            of use, and any unrecognised key will simply be ignored rather than silently
+            overriding a default.
+
+        3. RaycastParams pool acquisition:
+            A RaycastParams object is acquired from ParamsPooler. The pool clones
+            the caller's params so that filter mutations performed by the pierce
+            system (appending or removing instances from the filter list as the
+            bullet travels) never affect the caller's original params object. The
+            original filter list is also snapshot-frozen on the Behavior table as
+            OriginalFilter — this snapshot is used by Terminate() to reset the
+            pooled params back to their initial state before returning them to the
+            pool, so the next cast that acquires them receives a clean filter.
+
+        4. VetraCast construction:
+            The full VetraCast table is built, including the first trajectory
+            segment. The segment's Acceleration is the sum of resolved gravity and
+            resolved extra Acceleration, combined once here so SimulateCast never
+            needs to perform the addition at runtime.
+
+        5. Cosmetic bullet creation:
+            If CosmeticBulletProvider is set (a function), it is called to obtain
+            a live Instance for the visible bullet. If only CosmeticBulletTemplate
+            is set (a BasePart), it is cloned. The provider takes priority; if both
+            are provided, Template is silently ignored and a warning is logged. The
+            provider is timed against PROVIDER_TIMEOUT — any call exceeding that
+            threshold logs a warning because providers must not yield.
+
+        6. Registration and context linking:
+            The cast is inserted into Self._ActiveCasts via Register(). The
+            bidirectional cast↔context map is established on the solver instance's
+            weak maps.
+
+        7. Terminate closure injection:
+            A Terminate closure is injected into Context.__solverData. This closure
+            captures Self by upvalue so context:Terminate() always reaches the correct
+            solver instance regardless of how many instances exist at call time.
 
     Parameters:
+        Self: Vetra
+            The solver instance receiving this cast. All registry, map, and signal
+            operations use Self rather than any module-level state.
+
         Context: BulletContext
             The public-facing bullet object that weapon code interacts with. Must
-            have non-nil, finite Vector3 Origin and Direction fields and a finite
+            carry non-nil, finite Vector3 Origin and Direction fields and a finite
             number Speed. The context is passed as the first argument to every
-            signal emission so consumers can identify the bullet and access
-            its UserData.
+            signal emission so consumers can identify which bullet fired each event.
 
-        FireBehavior: HybridBehavior?
-            Optional table of behavior overrides. Any field omitted or nil falls
-            back to DEFAULT_BEHAVIOR. Passing nil for the entire argument applies
-            all defaults. The caller's table is never mutated — all resolved values
-            are stored in a new Behavior table on the HybridCast.
+        FireBehavior: VetraBehavior?
+            Optional partial behavior configuration. Any field that is nil or absent
+            falls back to DEFAULT_BEHAVIOR. Passing nil for the entire argument
+            applies all defaults. The caller's table is never mutated — all resolved
+            values are stored in a freshly constructed Behavior table on the VetraCast.
 
     Returns:
-        HybridCast | false
-            The newly created HybridCast on success, allowing the caller to
-            introspect initial state if needed. False if input validation failed.
+        VetraCast | nil
+            The newly created VetraCast on success. Nil if input validation failed,
+            allowing the caller to detect and handle a failed fire at the call site.
 
     Notes:
-        Gravity is handled separately from Acceleration to allow zero-gravity
-        scenarios. If Fb.Gravity has zero magnitude, DEFAULT_GRAVITY (workspace
-        gravity) is used instead with a logged warning. A zero-vector gravity
-        stored as the acceleration would cause VelocityAtTime to produce a constant
-        velocity trajectory with no arc, which is physically correct for zero
-        gravity but surprising if the caller accidentally passed a zero vector.
+        Gravity handling: if FireBehavior.Gravity is provided with a non-zero magnitude,
+        it is used as the gravity term. If Gravity has zero magnitude, the function falls
+        back to DEFAULT_GRAVITY (workspace gravity at module load time) and logs an info
+        message. This prevents a caller who accidentally passes Vector3.zero for gravity
+        from silently disabling arc trajectory on all bullets — they receive a log message
+        indicating the fallback occurred and can investigate their setup.
 
-        CosmeticBulletProvider and CosmeticBulletTemplate are mutually exclusive.
-        If both are provided, Template is ignored and a warning is logged. This
-        is a deliberate priority rule rather than an error, to avoid breaking
-        callers that set a default template on a shared Behavior table and then
-        override it with a provider for specific bullet types.
+        CosmeticBulletProvider vs CosmeticBulletTemplate priority: if both are supplied,
+        Template is ignored and a warning is logged. This is a deliberate priority rule
+        rather than an error — it avoids breaking callers who set a default template on
+        a shared Behavior table and then pass a provider for specific bullet types.
 ]=]
-function HybridSolver.Fire(Self: HybridSolver, Context: any, FireBehavior: HybridBehavior) : HybridCast
-	-- Validate the three required fields on the context. All three are consumed
-	-- directly to construct the initial trajectory segment: Origin → segment.Origin,
-	-- Direction.Unit * Speed → segment.InitialVelocity. If any is nil, NaN, or
-	-- infinity, the trajectory would be constructed with invalid values that would
-	-- silently propagate through all kinematic computations. Failing here prevents
-	-- that corruption and gives the caller an actionable error message.
+function Vetra.Fire(Self: Vetra, Context: any, FireBehavior: VetraBehavior): VetraCast
+	-- Validate the three required fields on the incoming context. All three are
+	-- consumed directly to construct the initial trajectory segment:
+	--     Origin → segment.Origin
+	--     Direction.Unit * Speed → segment.InitialVelocity
+	-- If any field is nil, NaN, or infinity, the trajectory would be initialised
+	-- with invalid values that propagate silently through all kinematic math.
+	-- Failing here gives the caller a clear error at the API boundary.
 	if not t.Vector3(Context.Origin) or not t.Vector3(Context.Direction) or not t.number(Context.Speed) then
 		Logger:Warn("Fire: Context must have Origin (Vector3), Direction (Vector3), and Speed (number)")
 		return nil
 	end
-	
-	FireBehavior = FireBehavior or {} :: HybridBehavior
+
+	FireBehavior = FireBehavior or {} :: VetraBehavior
+
 	-- ─── Behavior Resolution ─────────────────────────────────────────────────
-    --[[
-        Each field is resolved individually with an `or` fallback to DEFAULT_BEHAVIOR.
-        This is deliberately verbose rather than using metatable inheritance because
-        setmetatable(fb, {__index = DEFAULT_BEHAVIOR}) would silently accept misspelled
-        field names: `CanPirceFunction` would not be caught and would fall through to
-        nil, making the cast behave as if piercing were disabled with no diagnostic.
-        Explicit resolution makes every field name a visible constant that is checked
-        at the point of use.
 
-        Note: CanBounceFunction and CanPierceFunction are NOT given DEFAULT_BEHAVIOR
-        fallbacks because their default is intentionally nil — a bullet with no
-        callback configured should never bounce or pierce. Falling back to a non-nil
-        default would cause all bullets to start bouncing or piercing unexpectedly.
-    ]]
+	--[[
+	    Each field is resolved with an explicit `or DEFAULT_BEHAVIOR.FieldName`
+	    fallback. This approach is verbose but safe: any misspelled or unrecognised
+	    field in the caller's FireBehavior table is simply ignored — it will never
+	    accidentally overwrite a default because misspelled fields produce nil values
+	    that fall through to the explicit default. Metatable inheritance would have
+	    the opposite problem: it would silently accept typos as intentional keys,
+	    masking configuration errors that could be hard to diagnose in live play.
 
-	local ResolvedAcceleration 		= FireBehavior.Acceleration or DEFAULT_BEHAVIOR.Acceleration
-	local ResolvedMaxDistance 		= FireBehavior.MaxDistance or DEFAULT_BEHAVIOR.MaxDistance
-	local ResolvedRaycastParams	 	= FireBehavior.RaycastParams or DEFAULT_BEHAVIOR.RaycastParams
-	local ResolvedMinSpeed 			= FireBehavior.MinSpeed or DEFAULT_BEHAVIOR.MinSpeed
-	local ResolvedCanPierceFunction = FireBehavior.CanPierceFunction
-	local ResolvedMaxPierceCount    = FireBehavior.MaxPierceCount or DEFAULT_BEHAVIOR.MaxPierceCount
-	local ResolvedPierceSpeedThreshold = FireBehavior.PierceSpeedThreshold or DEFAULT_BEHAVIOR.PierceSpeedThreshold
-	local ResolvedPenetrationSpeedRetention = FireBehavior.PenetrationSpeedRetention or DEFAULT_BEHAVIOR.PenetrationSpeedRetention
-	local ResolvedPierceNormalBias = FireBehavior.PierceNormalBias or DEFAULT_BEHAVIOR.PierceNormalBias
-	local ResolvedCanBounceFunction = FireBehavior.CanBounceFunction
-	local ResolvedMaxBounces = FireBehavior.MaxBounces or DEFAULT_BEHAVIOR.MaxBounces
-	local ResolvedBounceSpeedThreshold = FireBehavior.BounceSpeedThreshold or DEFAULT_BEHAVIOR.BounceSpeedThreshold
-	local ResolvedRestitution = FireBehavior.Restitution or DEFAULT_BEHAVIOR.Restitution
-	local ResolvedMaterialRestitution = FireBehavior.MaterialRestitution or DEFAULT_BEHAVIOR.MaterialRestitution
-	local ResolvedNormalPerturbation = FireBehavior.NormalPerturbation or DEFAULT_BEHAVIOR.NormalPerturbation
-	local ResolvedHighFidelitySegmentSize = FireBehavior.HighFidelitySegmentSize or DEFAULT_BEHAVIOR.HighFidelitySegmentSize
-	local ResolvedHighFidelityFrameBudget = FireBehavior.HighFidelityFrameBudget or DEFAULT_BEHAVIOR.HighFidelityFrameBudget
-	local ResolvedAdaptiveScaleFactor = FireBehavior.AdaptiveScaleFactor or DEFAULT_BEHAVIOR.AdaptiveScaleFactor
-	local ResolvedMinSegmentSize = FireBehavior.MinSegmentSize or DEFAULT_BEHAVIOR.MinSegmentSize
-	local ResolvedMaxBouncesPerFrame = FireBehavior.MaxBouncesPerFrame or DEFAULT_BEHAVIOR.MaxBouncesPerFrame
-	local ResolvedCornerTimeThreshold = FireBehavior.CornerTimeThreshold or DEFAULT_BEHAVIOR.CornerTimeThreshold
-	local ResolvedCornerNormalDotThreshold = FireBehavior.CornerNormalDotThreshold or DEFAULT_BEHAVIOR.CornerNormalDotThreshold
+	    CanBounceFunction and CanPierceFunction are intentionally NOT given fallbacks
+	    from DEFAULT_BEHAVIOR — their default is nil. A cast with no pierce or bounce
+	    callback should never pierce or bounce. Providing a non-nil default would cause
+	    all bullets fired without explicit callbacks to start piercing or bouncing
+	    unexpectedly, which would be a severe and confusing regression.
+	]]
+
+	local ResolvedAcceleration                = FireBehavior.Acceleration or DEFAULT_BEHAVIOR.Acceleration
+	local ResolvedMaxDistance                 = FireBehavior.MaxDistance or DEFAULT_BEHAVIOR.MaxDistance
+	local ResolvedRaycastParams               = FireBehavior.RaycastParams or DEFAULT_BEHAVIOR.RaycastParams
+	local ResolvedMinSpeed                    = FireBehavior.MinSpeed or DEFAULT_BEHAVIOR.MinSpeed
+	local ResolvedCanPierceFunction           = FireBehavior.CanPierceFunction
+	local ResolvedMaxPierceCount              = FireBehavior.MaxPierceCount or DEFAULT_BEHAVIOR.MaxPierceCount
+	local ResolvedPierceSpeedThreshold        = FireBehavior.PierceSpeedThreshold or DEFAULT_BEHAVIOR.PierceSpeedThreshold
+	local ResolvedPenetrationSpeedRetention   = FireBehavior.PenetrationSpeedRetention or DEFAULT_BEHAVIOR.PenetrationSpeedRetention
+	local ResolvedPierceNormalBias            = FireBehavior.PierceNormalBias or DEFAULT_BEHAVIOR.PierceNormalBias
+	local ResolvedCanBounceFunction           = FireBehavior.CanBounceFunction
+	local ResolvedMaxBounces                  = FireBehavior.MaxBounces or DEFAULT_BEHAVIOR.MaxBounces
+	local ResolvedBounceSpeedThreshold        = FireBehavior.BounceSpeedThreshold or DEFAULT_BEHAVIOR.BounceSpeedThreshold
+	local ResolvedRestitution                 = FireBehavior.Restitution or DEFAULT_BEHAVIOR.Restitution
+	local ResolvedMaterialRestitution         = FireBehavior.MaterialRestitution or DEFAULT_BEHAVIOR.MaterialRestitution
+	local ResolvedNormalPerturbation          = FireBehavior.NormalPerturbation or DEFAULT_BEHAVIOR.NormalPerturbation
+	local ResolvedHighFidelitySegmentSize     = FireBehavior.HighFidelitySegmentSize or DEFAULT_BEHAVIOR.HighFidelitySegmentSize
+	local ResolvedHighFidelityFrameBudget     = FireBehavior.HighFidelityFrameBudget or DEFAULT_BEHAVIOR.HighFidelityFrameBudget
+	local ResolvedAdaptiveScaleFactor         = FireBehavior.AdaptiveScaleFactor or DEFAULT_BEHAVIOR.AdaptiveScaleFactor
+	local ResolvedMinSegmentSize              = FireBehavior.MinSegmentSize or DEFAULT_BEHAVIOR.MinSegmentSize
+	local ResolvedMaxBouncesPerFrame          = FireBehavior.MaxBouncesPerFrame or DEFAULT_BEHAVIOR.MaxBouncesPerFrame
+	local ResolvedCornerTimeThreshold         = FireBehavior.CornerTimeThreshold or DEFAULT_BEHAVIOR.CornerTimeThreshold
+	local ResolvedCornerNormalDotThreshold    = FireBehavior.CornerNormalDotThreshold or DEFAULT_BEHAVIOR.CornerNormalDotThreshold
 	local ResolvedCornerDisplacementThreshold = FireBehavior.CornerDisplacementThreshold or DEFAULT_BEHAVIOR.CornerDisplacementThreshold
-	local ResolvedCosmeticBulletTemplate = FireBehavior.CosmeticBulletTemplate
-	local ResolvedCosmeticBulletContainer = FireBehavior.CosmeticBulletContainer
-	local ResolvedCosmeticBulletProvider = FireBehavior.CosmeticBulletProvider
-	local ResolvedVisualizeCasts = FireBehavior.VisualizeCasts or DEFAULT_BEHAVIOR.VisualizeCasts
+	local ResolvedCosmeticBulletTemplate      = FireBehavior.CosmeticBulletTemplate
+	local ResolvedCosmeticBulletContainer     = FireBehavior.CosmeticBulletContainer
+	local ResolvedCosmeticBulletProvider      = FireBehavior.CosmeticBulletProvider
+	local ResolvedVisualizeCasts              = FireBehavior.VisualizeCasts or DEFAULT_BEHAVIOR.VisualizeCasts
 
-	-- Gravity is resolved separately from Acceleration because the two represent
-	-- physically distinct concepts: gravity is the ambient gravitational field
-	-- (constant for the cast's lifetime), while Acceleration is an extra
-	-- impulse (thrust, wind, etc.) that is layered on top.
-	-- The zero-magnitude guard prevents a degenerate gravity vector from being
-	-- stored. A zero-length gravity would cause no arc at all, which might be
-	-- intentional (space game) but is more likely an accidental nil coercion.
-	-- Falling back to workspace gravity in that case makes the bullet behave
-	-- as expected by default. The two are summed once here to produce a single
-	-- EffectiveAcceleration constant, avoiding a per-frame addition in SimulateCast.
+	-- Gravity is handled with a special fallback: if the caller's gravity vector
+	-- has zero magnitude, we fall back to DEFAULT_GRAVITY (workspace gravity) and
+	-- log an info message. A zero-magnitude gravity would produce a flat trajectory
+	-- with no arc — physically correct for zero-gravity but easily caused by an
+	-- accidental `Vector3.new(0, 0, 0)` that the caller did not intend. The log
+	-- message surfaces this so the caller can verify their intent.
 	local ResolvedGravity = DEFAULT_GRAVITY
 	if FireBehavior.Gravity then
 		if FireBehavior.Gravity.Magnitude > 0 then
@@ -2644,242 +3013,149 @@ function HybridSolver.Fire(Self: HybridSolver, Context: any, FireBehavior: Hybri
 		end
 	end
 
+	-- Combine gravity and extra acceleration into a single vector stored on the
+	-- trajectory. This pre-computation means SimulateCast never needs to add the
+	-- two terms at runtime — each frame avoids one Vector3 addition per active cast.
 	local EffectiveAcceleration = ResolvedGravity + ResolvedAcceleration
-	-- ─── HybridCast Construction ──────────────────────────────────────────────
-    --[[
-        HybridCast is the internal representation of an in-flight projectile.
-        It is intentionally kept separate from BulletContext (the public API)
-        to enforce a clean boundary: weapon code sees only BulletContext methods
-        and fields; the solver uses HybridCast directly. This prevents consumer
-        code from accidentally mutating internal simulation state (e.g. corrupting
-        TotalRuntime or ActiveTrajectory) which would produce silent physics errors
-        that are very difficult to debug.
 
-        The Runtime sub-table holds all state that changes every frame.
-        The Behavior sub-table holds all configuration that is constant for the
-        cast's lifetime (set at Fire() and never modified). This separation makes
-        it clear at a glance which fields are invariants and which are mutable,
-        and allows future serialisation of Behavior without including transient state.
-    ]]
+	-- ─── RaycastParams Pool ───────────────────────────────────────────────────
 
-	-- Acquire a pooled RaycastParams. The pool may return a clone of the provided
-	-- params to avoid the pierce system's filter mutations from affecting the
-	-- caller's original object. If the pool is exhausted, a warning is logged
-	-- and the original params are used directly as a fallback — this is safe but
-	-- means pierce filter mutations will affect the caller's params object.
+	-- Acquire a cloned RaycastParams from the pool. The pool clones the caller's
+	-- params so pierce filter mutations do not propagate back to the caller's
+	-- original object. If the pool is exhausted (returns nil), fall back to the
+	-- caller's params directly — this means filter mutations will affect the
+	-- original, which is a degraded mode but not a crash.
 	local AcquiredParams = ParamsPooler.Acquire(ResolvedRaycastParams)
 	if not AcquiredParams then
 		Logger:Warn("Fire: RaycastParams pool exhausted — falling back to direct params")
 		AcquiredParams = ResolvedRaycastParams
 	end
 
-	local HybridCast: HybridCast = {
-		Alive = true,
-		Paused = false,
-		-- StartTime records wall-clock time of creation for external diagnostics
-		-- (e.g. computing cast age for effects). It is NOT used in kinematic
-		-- calculations — those use TotalRuntime which starts at 0.
+	-- ─── VetraCast Construction ──────────────────────────────────────────────
+
+	local VetraCast: VetraCast = {
+		Alive     = true,
+		Paused    = false,
 		StartTime = OsClock(),
 
 		Runtime = {
-			-- TotalRuntime starts at 0 and advances by Delta on each SimulateCast
-			-- call. It is relative to the cast's birth, not wall-clock time, so
-			-- pausing works correctly (TotalRuntime pauses with the cast).
-			TotalRuntime = 0,
+			TotalRuntime    = 0,
 			DistanceCovered = 0,
-
-			-- Trajectories is the complete ordered history of trajectory segments.
-			-- Each element represents one arc (initial fire, or post-bounce arc).
-			-- The first element is always the initial firing arc, with StartTime = 0.
-			-- Subsequent elements are appended by SimulateCast on each bounce or by
-			-- ModifyTrajectory on mid-flight changes.
-			Trajectories = {
+			Trajectories    = {
 				{
-					StartTime = 0,
-					EndTime = -1,  -- -1 means this segment is still active
-					Origin = Context.Origin,
+					StartTime       = 0,
+					EndTime         = -1,
+					Origin          = Context.Origin,
+					-- Direction.Unit * Speed produces the initial velocity vector.
+					-- Using .Unit ensures the direction is normalised before scaling,
+					-- preventing callers from inadvertently encoding speed twice by
+					-- passing a non-unit Direction with a non-1.0 Speed.
 					InitialVelocity = Context.Direction.Unit * Context.Speed,
-					Acceleration = EffectiveAcceleration,
+					Acceleration    = EffectiveAcceleration,
 				}
 			},
-
-			-- ActiveTrajectory is the segment currently being simulated. It starts
-			-- as a reference to Trajectories[1] and is reassigned on each bounce.
-			-- Keeping a direct reference avoids indexing Trajectories[#Trajectories]
-			-- on every frame, which would be O(1) but slightly more expensive than
-			-- a direct field read.
-			ActiveTrajectory = nil,
-
-			-- Thread sentinels for CanBounceFunction and CanPierceFunction yield
-			-- detection. Storing the coroutine before the callback and clearing it
-			-- after allows SimulateCast to detect if the callback never returned
-			-- (i.e., yielded). See the yield-detection guard in SimulateCast for
-			-- detailed explanation.
+			ActiveTrajectory     = nil,
 			BounceCallbackThread = nil,
 			PierceCallbackThread = nil,
-
-			PierceCount = 0,
-			-- PiercedInstances records every instance that has been pierced by this
-			-- cast. This is used to prevent a sub-segment raycast from re-detecting
-			-- an instance that was pierced earlier in the same frame.
-			PiercedInstances = {},
-
-
-			BounceCount = 0,
-
-			--[[
-			    BouncesThisFrame counts the total bounces across ALL sub-segments
-			    within a single _StepProjectile call. It is reset at the top of
-			    each frame step, not between sub-segments. This makes
-			    MaxBouncesPerFrame a true per-real-frame limit regardless of how
-			    many high-fidelity sub-segments are processed.
-
-			    This is intentional: a cast running 20 sub-segments with
-			    MaxBouncesPerFrame = 2 will bounce at most twice across those 20
-			    sub-segments combined. If MaxBouncesPerFrame were per-sub-segment,
-			    a fast bullet could perform 20 * MaxBouncesPerFrame bounces per frame,
-			    exhausting its entire bounce budget in a single real-time frame and
-			    producing an instant, silent stop.
-			]]
-			BouncesThisFrame = 0,
-			-- LastBounceTime, LastBounceNormal, and LastBouncePosition are the three
-			-- fields used by IsCornerTrap to detect infinite-bounce configurations.
-			-- They are initialised to sentinel values: -math.huge for time (so the
-			-- first bounce never triggers the temporal guard) and ZERO_VECTOR for
-			-- normal/position (detected by ~= ZERO_VECTOR checks in IsCornerTrap).
-			LastBounceTime = -math.huge,
-			LastBounceNormal = ZERO_VECTOR,
-			LastBouncePosition = ZERO_VECTOR,
-
-			-- IsActivelyResimulating prevents ResimulateHighFidelity from being
-			-- called re-entrantly on the same cast. CancelResimulation signals the
-			-- sub-segment loop to stop when a bounce has changed the active trajectory.
+			PierceCount          = 0,
+			PiercedInstances     = {},
+			BounceCount          = 0,
+			BouncesThisFrame     = 0,
+			-- Initialised to -math.huge so Guard 1 in IsCornerTrap never fires on
+			-- the first bounce, regardless of when it occurs relative to module load.
+			LastBounceTime       = -math.huge,
+			-- Initialised to ZERO_VECTOR so IsCornerTrap's HasPreviousBounceNormal
+			-- and HasPreviousBouncePosition checks correctly identify the first
+			-- bounce as having no prior context to compare against.
+			LastBounceNormal     = ZERO_VECTOR,
+			LastBouncePosition   = ZERO_VECTOR,
 			IsActivelyResimulating = false,
-			CancelResimulation = false,
-
-			-- CurrentSegmentSize begins at HighFidelitySegmentSize and is
-			-- adjusted adaptively each frame by ResimulateHighFidelity. It is
-			-- stored on Runtime (not Behavior) because it changes over the cast's
-			-- lifetime in response to measured performance.
-			CurrentSegmentSize = ResolvedHighFidelitySegmentSize,
-
+			CancelResimulation   = false,
+			-- CurrentSegmentSize starts at HighFidelitySegmentSize. The adaptive
+			-- system will tune it up or down from this baseline over subsequent frames.
+			CurrentSegmentSize   = ResolvedHighFidelitySegmentSize,
 			CosmeticBulletObject = nil,
 		},
 
 		Behavior = {
-			-- EffectiveAcceleration is the pre-computed sum of gravity and extra
-			-- acceleration, stored here so SimulateCast never needs to compute the
-			-- sum at runtime. It is stored on Behavior (treated as invariant) because
-			-- neither gravity nor the extra acceleration change after Fire(). If
-			-- mid-flight acceleration changes are needed, they should be applied via
-			-- HybridCast:SetAcceleration(), which opens a new trajectory segment.
-			Acceleration = EffectiveAcceleration,
-			MaxDistance = ResolvedMaxDistance,
-			MinSpeed = ResolvedMinSpeed,
-			Gravity = ResolvedGravity,
-
-			-- AcquiredParams is the pooled (possibly cloned) RaycastParams instance.
-			-- All raycasts for this cast's lifetime use this object. The pierce system
-			-- mutates its FilterDescendantsInstances to exclude pierced instances.
-			RaycastParams = AcquiredParams,
-
-			-- OriginalFilter is a frozen deep clone of the filter list at Fire() time.
-			-- It is used in Terminate() to reset the pooled params before returning
-			-- them to the pool, ensuring no pierce-chain contamination carries over
-			-- to the next cast that acquires these params.
-			OriginalFilter = table.freeze(table.clone(
+			Acceleration              = EffectiveAcceleration,
+			MaxDistance               = ResolvedMaxDistance,
+			MinSpeed                  = ResolvedMinSpeed,
+			Gravity                   = ResolvedGravity,
+			RaycastParams             = AcquiredParams,
+			-- Freeze a snapshot of the original filter list at fire time. This
+			-- snapshot is used by Terminate() to reset the pooled params before
+			-- returning them to the pool, ensuring each acquired params object
+			-- starts with a clean filter. table.freeze prevents accidental mutation
+			-- of the snapshot through any reference held elsewhere.
+			OriginalFilter            = table.freeze(table.clone(
 				ResolvedRaycastParams.FilterDescendantsInstances or {}
-				)),
-
-			CanPierceFunction = ResolvedCanPierceFunction,
-			MaxPierceCount = ResolvedMaxPierceCount,
-			PierceSpeedThreshold = ResolvedPierceSpeedThreshold,
+			)),
+			CanPierceFunction         = ResolvedCanPierceFunction,
+			MaxPierceCount            = ResolvedMaxPierceCount,
+			PierceSpeedThreshold      = ResolvedPierceSpeedThreshold,
 			PenetrationSpeedRetention = ResolvedPenetrationSpeedRetention,
-			PierceNormalBias = ResolvedPierceNormalBias,
-
-			CanBounceFunction = ResolvedCanBounceFunction,
-			MaxBounces = ResolvedMaxBounces,
-			BounceSpeedThreshold = ResolvedBounceSpeedThreshold,
-			Restitution = ResolvedRestitution,
-			-- MaterialRestitution maps Enum.Material values to per-surface restitution
-			-- multipliers. Stored directly on Behavior for O(1) lookup in ResolveBounce.
-			MaterialRestitution = ResolvedMaterialRestitution,
-			NormalPerturbation = ResolvedNormalPerturbation,
-
-			HighFidelitySegmentSize = ResolvedHighFidelitySegmentSize,
-			HighFidelityFrameBudget = ResolvedHighFidelityFrameBudget,
-			AdaptiveScaleFactor = ResolvedAdaptiveScaleFactor,
-			MinSegmentSize = ResolvedMinSegmentSize,
-			MaxBouncesPerFrame = ResolvedMaxBouncesPerFrame,
-
-			CornerTimeThreshold = ResolvedCornerTimeThreshold,
-			CornerNormalDotThreshold = ResolvedCornerNormalDotThreshold,
+			PierceNormalBias          = ResolvedPierceNormalBias,
+			CanBounceFunction         = ResolvedCanBounceFunction,
+			MaxBounces                = ResolvedMaxBounces,
+			BounceSpeedThreshold      = ResolvedBounceSpeedThreshold,
+			Restitution               = ResolvedRestitution,
+			MaterialRestitution       = ResolvedMaterialRestitution,
+			NormalPerturbation        = ResolvedNormalPerturbation,
+			HighFidelitySegmentSize   = ResolvedHighFidelitySegmentSize,
+			HighFidelityFrameBudget   = ResolvedHighFidelityFrameBudget,
+			AdaptiveScaleFactor       = ResolvedAdaptiveScaleFactor,
+			MinSegmentSize            = ResolvedMinSegmentSize,
+			MaxBouncesPerFrame        = ResolvedMaxBouncesPerFrame,
+			CornerTimeThreshold       = ResolvedCornerTimeThreshold,
+			CornerNormalDotThreshold  = ResolvedCornerNormalDotThreshold,
 			CornerDisplacementThreshold = ResolvedCornerDisplacementThreshold,
-
-			VisualizeCasts = ResolvedVisualizeCasts,
+			VisualizeCasts            = ResolvedVisualizeCasts,
 		},
 
-		-- UserData is a free-form table for weapon code to attach cast-specific
-		-- metadata (e.g. shooter's UserId, weapon type, damage value, hit group
-		-- flags). It is surfaced on the BulletContext and passed unchanged via
-		-- every signal emission so consumers can route events without maintaining
-		-- a separate lookup table keyed on cast identity.
 		UserData = {},
 	}
 
-	-- Attach CAST_STATE_METHODS as the __index metatable so SetVelocity, GetPosition,
-	-- etc. are callable on the HybridCast. This is done after construction rather than
-	-- inline because the method table is shared across all casts — it must not be
-	-- stored per-instance. Using a metatable achieves method sharing at zero per-cast
-	-- memory cost.
-	setmetatable(HybridCast,{ __index = CAST_STATE_METHODS})
-	-- Wire the ActiveTrajectory pointer after the HybridCast table is fully constructed.
-	-- It cannot be set inline inside the Runtime sub-table literal because the
-	-- Trajectories table it points into does not exist yet at that point in the
-	-- constructor expression. Doing it here, after all sub-tables are created,
-	-- guarantees that Trajectories[1] is a valid, populated table.
-	HybridCast.Runtime.ActiveTrajectory = HybridCast.Runtime.Trajectories[1]
+	-- Install CAST_STATE_METHODS as the metatable __index so GetPosition,
+	-- SetVelocity, etc. are accessible directly on the VetraCast table without
+	-- being stored per-instance. The metatable is a lightweight indirection —
+	-- the actual method functions are shared across all cast instances.
+	setmetatable(VetraCast, { __index = CAST_STATE_METHODS })
+	-- ActiveTrajectory must point to the first element of Trajectories. Setting
+	-- this after table construction (rather than inline) avoids a forward reference
+	-- problem: the Trajectories array must exist before we can index it.
+	VetraCast.Runtime.ActiveTrajectory = VetraCast.Runtime.Trajectories[1]
 
 	-- ─── Cosmetic Bullet Setup ────────────────────────────────────────────────
 
-    --[[
-        Two mechanisms are supported for creating the cosmetic bullet object:
-
-        CosmeticBulletProvider (function): Called once during Fire() and must
-        return a BasePart or nil. This pattern allows object pooling (the function
-        can dequeue from a pool), procedural mesh generation, or any other creation
-        strategy. The provider is called synchronously and its execution time is
-        measured — anything above PROVIDER_TIMEOUT seconds triggers a warning,
-        since a yielding provider would stall the caller's thread.
-
-        CosmeticBulletTemplate (BasePart): A simpler alternative: the template is
-        cloned once and used directly. No pooling is possible with this approach,
-        but it requires less setup code for simple cases.
-
-        If both are provided, Provider takes priority and a warning is logged to
-        alert the caller that Template is being ignored. This prevents silent
-        surprises when a shared Behavior table has a default Template set and a
-        specific Fire() call also supplies a Provider.
-    ]]
 	if ResolvedCosmeticBulletProvider ~= nil then
 		if type(ResolvedCosmeticBulletProvider) ~= "function" then
 			Logger:Warn("Fire: CosmeticBulletProvider must be a function — ignoring")
 		else
 			if ResolvedCosmeticBulletTemplate then
+				-- Both provider and template were supplied. Template is ignored;
+				-- the provider takes priority. Warn rather than error because this
+				-- is a recoverable configuration — the bullet will still be created
+				-- correctly via the provider. Callers who set a default template on
+				-- a shared Behavior table and override it with a provider for specific
+				-- types will hit this warning spuriously; they can silence it by not
+				-- setting CosmeticBulletTemplate when they intend to use a provider.
 				Logger:Warn("Fire: CosmeticBulletTemplate is ignored when CosmeticBulletProvider is set")
 			end
 
-			-- Measure wall-clock time around the provider call. Providers must not
-			-- yield; any call exceeding PROVIDER_TIMEOUT is almost certainly doing so.
-			local ProviderStartTime = OsClock()
+			-- Time the provider call. The provider must be synchronous — it runs
+			-- on the main game thread during Fire(), and any yield would suspend
+			-- the entire weapon script. A result exceeding PROVIDER_TIMEOUT almost
+			-- certainly indicates an accidental yield or a very slow Instance search.
+			local ProviderStartTime         = OsClock()
 			local ProviderSuccess, ProviderResult = pcall(ResolvedCosmeticBulletProvider)
-			local ProviderElapsedSeconds = OsClock() - ProviderStartTime
+			local ProviderElapsedSeconds    = OsClock() - ProviderStartTime
 
 			if ProviderElapsedSeconds > PROVIDER_TIMEOUT then
 				Logger:Warn(string.format(
 					"Fire: CosmeticBulletProvider took %.2fs — avoid yielding inside it",
 					ProviderElapsedSeconds
-					))
+				))
 			end
 
 			if not ProviderSuccess then
@@ -2887,226 +3163,206 @@ function HybridSolver.Fire(Self: HybridSolver, Context: any, FireBehavior: Hybri
 			elseif not ProviderResult then
 				Logger:Warn("Fire: CosmeticBulletProvider returned nil — no cosmetic bullet created")
 			else
-				-- Parent the bullet to the configured container (or workspace if nil).
-				-- Setting Parent here rather than inside the provider gives the solver
-				-- control over when the object becomes visible — immediately before
-				-- simulation begins, not at some earlier point inside the provider.
 				ProviderResult.Parent = ResolvedCosmeticBulletContainer
-				HybridCast.Runtime.CosmeticBulletObject = ProviderResult
+				VetraCast.Runtime.CosmeticBulletObject = ProviderResult
 			end
 		end
 	elseif ResolvedCosmeticBulletTemplate then
-		-- Clone the template. This is a full deep-copy including all descendant
-		-- parts and scripts — callers should use a simple BasePart as the template
-		-- to keep clone cost low. The clone is parented immediately.
+		-- Simple clone path: duplicate the template and parent it to the container.
+		-- The clone is stored on Runtime so SimulateCast can orient it each frame
+		-- and Terminate() can destroy it when the cast ends.
 		local ClonedBullet = ResolvedCosmeticBulletTemplate:Clone()
 		ClonedBullet.Parent = ResolvedCosmeticBulletContainer
-		HybridCast.Runtime.CosmeticBulletObject = ClonedBullet
+		VetraCast.Runtime.CosmeticBulletObject = ClonedBullet
 	end
 
 	-- ─── Registration & Context Linking ──────────────────────────────────────
 
-	-- Register in the active array so _StepProjectile picks up this cast starting
-	-- from the next frame. Registering last (after all state is fully constructed)
-	-- ensures the cast is never partially visible to the frame loop.
-	Register(HybridCast)
+	-- Register the cast in this solver's _ActiveCasts array. Using Self ensures
+	-- the cast is placed in this instance's registry, not any other solver's.
+	Register(Self, VetraCast)
 
-	-- Establish the bidirectional weak map between the internal HybridCast and the
-	-- public BulletContext. Both directions are set atomically (no intermediate
-	-- state where one is set and the other is not) to prevent a race where a
-	-- signal fires between the two assignments and fails to find its reverse mapping.
-	CastToBulletContext[HybridCast] = Context
-	BulletContextToCast[Context] = HybridCast
+	-- Establish the bidirectional cast↔context weak map entries on this instance.
+	-- Both directions are needed: the solver looks up Context from Cast when firing
+	-- signals (CastToBulletContext), and Terminate() looks up Cast from Context
+	-- when context:Terminate() is called (BulletContextToCast).
+	Self._CastToBulletContext[VetraCast] = Context
+	Self._BulletContextToCast[Context]    = VetraCast
 
-	-- Inject a Terminate closure into the context's __solverData table. This is
-	-- the mechanism by which context:Terminate() reaches the internal HybridCast
-	-- without the context holding a direct reference to the internal solver table.
-	-- The closure captures HybridCast by upvalue, so it is always valid for the
-	-- lifetime of the context object.
+	-- Inject the Terminate closure into the BulletContext's __solverData. This
+	-- gives context:Terminate() a direct path back to this solver's Terminate()
+	-- function without exposing the internal VetraCast table or the solver
+	-- instance to weapon code. The closure captures Self and VetraCast by
+	-- upvalue — they are bound correctly even if multiple solver instances exist.
 	if Context.__solverData and type(Context.__solverData) == "table" then
 		Context.__solverData.Terminate = function()
-			Terminate(HybridCast)
+			Terminate(Self, VetraCast)
 		end
 	end
 
-	return HybridCast
+	return VetraCast
 end
 
--- ─── Public API ──────────────────────────────────────────────────────────────
+-- ─── GetSignals ───────────────────────────────────────────────────────────────
 
---[=[
-    HybridSolver:GetSignals
+--[[
+    Returns this solver instance's Signals table. Because signals are per-instance,
+    a handler connected to Self.Signals.OnHit will only receive events from casts
+    registered on this specific solver — never from casts on a different solver
+    instance. Consumers should call GetSignals() once at setup time and cache the
+    returned table rather than calling it on every signal connection.
+]]
 
-    Description:
-        Returns the module-level Signals table, giving consumers access to the
-        five event signals: OnHit, OnTravel, OnPierce, OnBounce, and OnTerminated.
-
-        Because signals are module-level rather than per-cast, consumers call this
-        once during initialisation (e.g. in a weapon module's :Init method) and
-        the connected handlers receive events from every cast managed by this solver.
-        The BulletContext argument on each signal allows handlers to dispatch by
-        cast identity, accessing context.UserData to retrieve cast-specific metadata
-        such as the shooter's identity or weapon type.
-
-        Returning the table by reference (not a copy) means consumers see the same
-        Signal objects that the solver fires. There is no performance cost to calling
-        GetSignals() on every frame — it is a simple field read.
-
-    Returns:
-        { OnHit, OnTravel, OnPierce, OnBounce, OnTerminated }
-            The shared Signals table. See the Signals declaration comments for
-            detailed per-signal contracts, argument types, and usage notes.
-]=]
-function HybridSolver.GetSignals(Self: HybridSolver)
-	return Signals
+function Vetra.GetSignals(Self: Vetra)
+	return Self.Signals
 end
 
 -- ─── Factory ─────────────────────────────────────────────────────────────────
 
---[[
-    The Factory table is what consumers receive when they require this module.
-    Calling Factory.new() creates a HybridSolver instance and starts the
-    per-frame simulation loop.
-
-    Why a factory pattern rather than a singleton?
-        The frame loop connection is deferred to Factory.new() rather than
-        established at module load time. This means the simulation loop does not
-        start until a consumer explicitly creates a solver — avoiding an unnecessary
-        RunService connection in any game mode or context that requires this module
-        but does not actually fire projectiles (e.g. a menu screen that requires
-        the module for type checking only).
-
-    Why a metatable-based instance rather than returning HybridSolver directly?
-        The returned instance is a new empty table with HybridSolver as its
-        __index. This keeps the public API surface clean (consumers see only the
-        methods defined on HybridSolver) while all state is managed at module scope.
-        Multiple calls to Factory.new() return distinct instance tables that all
-        share the same underlying module-level state — which is correct because
-        there is only one _ActiveCasts registry and one set of Signals.
-]]
 local Factory = {}
-Factory.__type = IDENTITY
-
--- Re-export BehaviorBuilder so consumers can do:
---     local HybridSolver = require(path.to.HybridSolver)
---     local Behavior = HybridSolver.BehaviorBuilder.Sniper():Build()
--- rather than requiring BehaviorBuilder separately and keeping two module
--- paths in sync across every weapon script.
+Factory.__type        = IDENTITY
 Factory.BehaviorBuilder = BehaviorBuilder
 
 --[=[
     Factory.new
 
     Description:
-        Creates a HybridSolver instance and connects the per-frame simulation loop
-        to the appropriate RunService event (Heartbeat on server, RenderStepped
-        on client). Must be called before any :Fire() calls.
+        Creates and returns a fully isolated Vetra instance. All mutable
+        simulation state is stored on the returned instance table rather than at
+        module scope, making each instance completely independent:
 
-        The _FrameLoopActive guard prevents the frame loop from being connected
-        more than once. Multiple connections would cause every active cast to be
-        simulated multiple times per frame — a hard-to-diagnose bug where bullets
-        move at integer multiples of their intended speed. The guard logs a warning
-        and returns a valid (though redundant) solver instance rather than throwing,
-        so production code that accidentally calls new() twice does not crash.
+            _ActiveCasts:
+                Flat integer array of all live VetraCast objects for this solver.
+                Used by _StepProjectile for per-frame iteration and by Register/Remove
+                for O(1) cast lifecycle management.
+
+            _CastToBulletContext:
+                Weak-key map from VetraCast → BulletContext. Used by every FireOn*
+                helper to retrieve the context to pass to signal consumers. Weak keys
+                allow GC to reclaim terminated cast objects without explicit cleanup.
+
+            _BulletContextToCast:
+                Weak-key map from BulletContext → VetraCast. Used by the Terminate
+                closure injected into context.__solverData so context:Terminate()
+                can reach the internal cast without exposing it publicly.
+
+            _FrameBudget:
+                Per-instance high-fidelity raycast time allocation. Reset at the
+                start of each _StepProjectile call and consumed by sub-segment
+                raycasts in ResimulateHighFidelity. Each instance receives the full
+                GLOBAL_FRAME_BUDGET_MS independently.
+
+            Signals:
+                Per-instance set of Signal objects (OnHit, OnTravel, OnPierce,
+                OnBounce, OnTerminated). Connections made on one instance's signals
+                never receive events from another instance's casts.
+
+        A RunService frame event connection is established for this instance
+        at creation time. The connection lambda captures SolverInstance by upvalue
+        so _StepProjectile always receives the correct instance. Multiple calls to
+        Factory.new() produce multiple independent connections — this is correct
+        and expected because each instance owns its own cast population.
 
     Returns:
-        HybridSolver
-            The solver instance. Call :Fire() on it to create projectiles and
-            :GetSignals() to connect event handlers.
+        Vetra
+            A new, fully isolated solver instance ready to accept Fire() calls.
+            Multiple instances can exist concurrently without any shared state.
 ]=]
-local _FrameLoopActive = false
 
-function Factory.new(): HybridSolver
-	if _FrameLoopActive then
-		-- Warn rather than error: a duplicate new() call is a bug but not a
-		-- crash-level failure. The returned instance still works correctly —
-		-- it shares the same module-level state as the original instance.
-		Logger:Warn("Factory.new: called more than once — returning existing solver instance")
-		return setmetatable({}, { __index = HybridSolver })
-	end
+function Factory.new(): Vetra
+	local SolverInstance = setmetatable({
+		_ActiveCasts = {},
 
-	_FrameLoopActive = true
-	-- Connect the simulation loop once. All subsequent projectile simulation is
-	-- driven by this single connection — no per-cast connections are ever created.
-	-- The lambda wrapper passes FrameDelta as a named parameter to _StepProjectile
-	-- for readability and to avoid using the implicit vararg inside _StepProjectile.
-	_FrameEvent:Connect(function(FrameDelta: number)
-		_StepProjectile(FrameDelta)
+		-- Both maps use weak keys (__mode = "k") so that terminated cast objects
+		-- and invalidated BulletContext objects can be garbage collected without
+		-- requiring an explicit removal step. The GC will collect them automatically
+		-- once all strong references are gone, even if these weak-key entries remain.
+		_CastToBulletContext = setmetatable({}, { __mode = "k" }),
+		_BulletContextToCast = setmetatable({}, { __mode = "k" }),
+
+		-- Per-instance frame budget. Starts at zero; reset to the full allocation
+		-- at the start of each _StepProjectile call. Two concurrent solvers each
+		-- receive GLOBAL_FRAME_BUDGET_MS independently because they maintain
+		-- separate _FrameBudget tables.
+		_FrameBudget = { RemainingMicroseconds = 0 },
+
+		-- Fresh Signal objects for this instance. Every signal consumer connects
+		-- to these and receives only events from casts on this solver.
+		Signals = {
+			OnHit        = VeSignal.new(),
+			OnTravel     = VeSignal.new(),
+			OnPierce     = VeSignal.new(),
+			OnBounce     = VeSignal.new(),
+			OnTerminated = VeSignal.new(),
+		},
+	}, { __index = Vetra })
+
+	-- Determine the correct RunService event for this environment and connect
+	-- the per-frame simulation loop. The lambda captures SolverInstance by
+	-- upvalue — it is the only solver this connection will ever step.
+	-- Server uses Heartbeat (post-physics, authoritative positions).
+	-- Client uses RenderStepped (pre-render, correct cosmetic timing).
+	local FrameEvent = IS_SERVER and RunService.Heartbeat or RunService.RenderStepped
+	FrameEvent:Connect(function(FrameDelta: number)
+		_StepProjectile(SolverInstance, FrameDelta)
 	end)
 
-	return setmetatable({}, { __index = HybridSolver })
+	return SolverInstance
 end
--- ─── Type Exports ────────────────────────────────────────────────────────────
-export type HybridCast = Type.HybridCast & typeof(CAST_STATE_METHODS)
 
-export type HybridBehavior = {
-	-- ─── Physics ─────────────────────────────────────────────────────────────
+-- ─── Type Exports ────────────────────────────────────────────────────────────
+
+export type VetraCast = Type.VetraCast & typeof(CAST_STATE_METHODS)
+
+export type VetraBehavior = {
 	Acceleration                 : Vector3?,
 	MaxDistance                  : number?,
 	RaycastParams                : RaycastParams?,
 	Gravity                      : Vector3?,
 	MinSpeed                     : number?,
-
-	-- ─── Pierce ──────────────────────────────────────────────────────────────
 	CanPierceFunction            : ((Context: BulletContext.BulletContext, Result: RaycastResult, Velocity: Vector3) -> boolean)?,
 	MaxPierceCount               : number?,
 	PierceSpeedThreshold         : number?,
 	PenetrationSpeedRetention    : number?,
 	PierceNormalBias             : number?,
-
-	-- ─── Bounce ──────────────────────────────────────────────────────────────
 	CanBounceFunction            : ((Context: BulletContext.BulletContext, Result: RaycastResult, Velocity: Vector3) -> boolean)?,
 	MaxBounces                   : number?,
 	BounceSpeedThreshold         : number?,
 	Restitution                  : number?,
 	MaterialRestitution          : { [Enum.Material]: number }?,
 	NormalPerturbation           : number?,
-
-	-- ─── High Fidelity ───────────────────────────────────────────────────────
 	HighFidelitySegmentSize      : number?,
 	HighFidelityFrameBudget      : number?,
 	AdaptiveScaleFactor          : number?,
 	MinSegmentSize               : number?,
 	MaxBouncesPerFrame           : number?,
-
-	-- ─── Corner Trap ─────────────────────────────────────────────────────────
 	CornerTimeThreshold          : number?,
 	CornerNormalDotThreshold     : number?,
 	CornerDisplacementThreshold  : number?,
-
-	-- ─── Cosmetic ────────────────────────────────────────────────────────────
 	CosmeticBulletTemplate       : BasePart?,
 	CosmeticBulletContainer      : Instance?,
 	CosmeticBulletProvider       : (() -> Instance?)?,
-
-	-- ─── Debug ───────────────────────────────────────────────────────────────
 	VisualizeCasts               : boolean?,
 }
 
-export type HybridSolver = typeof(setmetatable({}, { __index = HybridSolver }))
+export type Vetra = typeof(setmetatable({}, { __index = Vetra }))
 
 -- ─── Module Return ───────────────────────────────────────────────────────────
 
 --[[
-    The module returns Factory wrapped in a protective metatable.
-
-    __index: Logs a warning when an undefined key is accessed on the Factory.
-    This catches typos at runtime — e.g. `HybridSolver.Frie(...)` would silently
-    return nil and produce a confusing "attempt to call nil value" error deep inside
-    weapon code. With this guard, the error is surfaced immediately at the access
-    site with a clear message identifying the invalid key name.
-
-    __newindex: Prevents external code from adding new keys to the Factory table.
-    Module tables returned by require() are shared across all consumers — any code
-    that writes a field onto the Factory table would mutate it for all consumers
-    simultaneously. This guard converts that silent global mutation into an explicit
-    error, preventing accidental cross-consumer interference via module-level state.
+    The module returns Factory rather than Vetra directly. Consumers call
+    Factory.new() to obtain solver instances and access Factory.BehaviorBuilder
+    for the fluent configuration builder. The protective metatable prevents
+    accidental reads from nil keys (which would silently return nil and produce
+    a confusing error later) and writes to the Factory table (which would corrupt
+    the module's public interface). Both violations are logged immediately at the
+    point of occurrence.
 ]]
 return setmetatable(Factory, {
 	__index = function(_, Key)
-		Logger:Warn(string.format("HybridSolver: attempt to index nil key '%s'", tostring(Key)))
+		Logger:Warn(string.format("Vetra: attempt to index nil key '%s'", tostring(Key)))
 	end,
 	__newindex = function(_, Key)
-		Logger:Error(string.format("HybridSolver: attempt to write to protected key '%s'", tostring(Key)))
+		Logger:Error(string.format("Vetra: attempt to write to protected key '%s'", tostring(Key)))
 	end,
 })

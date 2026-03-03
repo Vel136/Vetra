@@ -1,6 +1,6 @@
 -- Visualizer.lua
 --[[
-    Debug visualization for HybridSolver.
+    Debug visualization for Vetra.
 
     Renders cast segments, impact points, velocity vectors, surface normals,
     and corner trap markers as temporary Handle adornments in the world.
@@ -21,12 +21,12 @@
         reference. Parenting the adornments to a child Folder of Terrain rather
         than directly to Terrain also keeps the hierarchy navigable.
 
-    Why is this a separate module rather than inline in HybridSolver?
-        HybridSolver is loaded in production. Any visualizer code that lives
+    Why is this a separate module rather than inline in Vetra?
+        Vetra is loaded in production. Any visualizer code that lives
         inside it — even behind an `if VisualizeCasts` guard — still occupies
         bytecode space and increases the module's memory footprint. Keeping
         the visualizer in its own module means it can be required conditionally
-        or excluded from production bundles entirely without touching HybridSolver.
+        or excluded from production bundles entirely without touching Vetra.
 
     ⚠️  Every method allocates a new Instance. In production, if VisualizeCasts
         is accidentally left true, this becomes an unbounded memory leak at the
@@ -41,7 +41,7 @@ local RunService = game:GetService("RunService")
 
 -- ─── Constants ───────────────────────────────────────────────────────────────
 
-local FOLDER_NAME = "HybridSolverVisualization"
+local FOLDER_NAME = "VetraSolverVisualization"
 
 --[[
     Server and client render different segment colors so you can immediately
@@ -75,7 +75,7 @@ local COLOR_HIT_PIERCE   = Color3.new(1, 0.2, 0.2)
     invocation. Caching them as upvalue locals avoids a global table lookup
     on each call. For a module that is only active during debug sessions this
     is not a meaningful performance concern — the caching is done for
-    consistency with HybridSolver's conventions rather than necessity.
+    consistency with Vetra's conventions rather than necessity.
 ]]
 local InstanceNew      = Instance.new
 local WorkspaceTerrain = workspace.Terrain
@@ -88,7 +88,7 @@ local Visualizer = {}
 
 --[[
     The visualization folder is created lazily rather than at module load time.
-    HybridSolver requires this module unconditionally, but in production all
+    Vetra requires this module unconditionally, but in production all
     Visualizer calls are gated behind VisualizeCasts = false and never actually
     execute. Creating the folder at require() time would leave a permanent empty
     folder in every production server's workspace.Terrain, which is wasteful and
@@ -129,7 +129,7 @@ end
     Adornments are scheduled for automatic destruction via Debris rather than
     being cleaned up explicitly by the caller. The alternative — returning the
     adornment and requiring callers to destroy it — would mean every Visualizer
-    call site in HybridSolver needs to track and clean up the returned handle.
+    call site in Vetra needs to track and clean up the returned handle.
     That would add bookkeeping to the hot simulation path and risk leaks whenever
     a new call site is added without remembering to clean up.
 

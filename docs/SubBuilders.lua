@@ -402,7 +402,7 @@ function CornerTrapBuilder:Done(): BehaviorBuilder end
 local CosmeticBuilder = {}
 
 --[=[
-	A `BasePart` that is cloned once per [HybridSolver:Fire] call and used as the
+	A `BasePart` that is cloned once per [Vetra:Fire] call and used as the
 	visible bullet. The clone is destroyed automatically on termination.
 
 	Mutually exclusive with `:Provider()` — Provider takes priority.
@@ -425,7 +425,7 @@ function CosmeticBuilder:Template(value: BasePart): CosmeticBuilder end
 function CosmeticBuilder:Container(value: Instance): CosmeticBuilder end
 
 --[=[
-	A function called once per [HybridSolver:Fire] that returns the cosmetic bullet
+	A function called once per [Vetra:Fire] that returns the cosmetic bullet
 	`Instance`. Use this for object pooling or procedural creation.
 
 	Must be **synchronous** — yielding will log a warning. Takes priority over

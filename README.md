@@ -1,20 +1,20 @@
-# HybridSolver
+# Vetra
 
 Analytic-trajectory projectile simulation for Roblox with pierce, bounce, high-fidelity raycasting, and fluent typed behavior configuration.
 
 ## Installation
 
-Drop the `HybridSolver` folder into `ReplicatedStorage` and require it from your weapon scripts.
+Drop the `Vetra` folder into `ReplicatedStorage` and require it from your weapon scripts.
 
 ## Quick Start
 ```lua
-local HybridSolver = require(ReplicatedStorage.HybridSolver)
-local BulletContext = require(ReplicatedStorage.HybridSolver.BulletContext)
+local Vetra = require(ReplicatedStorage.Vetra)
+local BulletContext = require(ReplicatedStorage.Vetra.BulletContext)
 
-local Solver = HybridSolver.new()
+local Solver = Vetra.new()
 local Signals = Solver:GetSignals()
 
-local Behavior = HybridSolver.BehaviorBuilder.new()
+local Behavior = Vetra.BehaviorBuilder.new()
     :Physics()
         :MaxDistance(500)
         :MinSpeed(5)
@@ -43,7 +43,7 @@ Solver:Fire(context, Behavior)
 
 ## Modules
 
-- **HybridSolver** — core simulation engine
+- **Vetra** — core simulation engine
 - **BehaviorBuilder** — fluent typed configuration builder
 - **BulletContext** — public-facing projectile state API
 

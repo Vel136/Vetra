@@ -1,20 +1,22 @@
+![Vetra](banner.svg)
+
 # Getting Started
 
-HybridSolver is an analytic-trajectory projectile simulation module for Roblox.
+Vetra is an analytic-trajectory projectile simulation module for Roblox.
 It supports pierce, bounce, high-fidelity sub-segment raycasting, and fluent typed behavior configuration via `BehaviorBuilder`.
 
 ## Installation
 
-Drop the `HybridSolver` folder into `ReplicatedStorage` and require it from your weapon scripts.
+Drop the `Vetra` folder into `ReplicatedStorage` and require it from your weapon scripts.
 
 ## Basic Setup
 
 ```lua
-local HybridSolver  = require(ReplicatedStorage.HybridSolver)
-local BulletContext = require(ReplicatedStorage.HybridSolver.BulletContext)
+local Vetra  = require(ReplicatedStorage.Vetra)
+local BulletContext = require(ReplicatedStorage.Vetra.BulletContext)
 
 -- Create the solver once (connects the frame loop)
-local Solver  = HybridSolver.new()
+local Solver  = Vetra.new()
 local Signals = Solver:GetSignals()
 
 -- Connect to signals once at initialisation
@@ -35,7 +37,7 @@ end)
 
 ```lua
 -- Build a behavior (do this once per weapon type, not per shot)
-local Behavior = HybridSolver.BehaviorBuilder.new()
+local Behavior = Vetra.BehaviorBuilder.new()
     :Physics()
         :MaxDistance(500)
         :MinSpeed(5)
@@ -65,19 +67,19 @@ Solver:Fire(context, Behavior)
 
 ```lua
 -- Sniper: long range, pierce-capable, high fidelity
-local SniperBehavior = HybridSolver.BehaviorBuilder.Sniper():Build()
+local SniperBehavior = Vetra.BehaviorBuilder.Sniper():Build()
 
 -- Grenade: low speed, bouncy, gravity-affected
-local GrenadeBehavior = HybridSolver.BehaviorBuilder.Grenade():Build()
+local GrenadeBehavior = Vetra.BehaviorBuilder.Grenade():Build()
 
 -- Pistol: standard range, single pierce
-local PistolBehavior = HybridSolver.BehaviorBuilder.Pistol():Build()
+local PistolBehavior = Vetra.BehaviorBuilder.Pistol():Build()
 ```
 
 You can chain additional overrides on any preset before calling `:Build()`:
 
 ```lua
-local Behavior = HybridSolver.BehaviorBuilder.Sniper()
+local Behavior = Vetra.BehaviorBuilder.Sniper()
     :Physics()
         :MaxDistance(2000)
     :Done()
@@ -111,7 +113,7 @@ Set `VisualizeCasts = true` in your behavior (or use `:Debug():Visualize(true):D
 cast segments, normals, bounce vectors, and corner trap markers in the world. Has zero runtime cost when disabled.
 
 ```lua
-local Behavior = HybridSolver.BehaviorBuilder.new()
+local Behavior = Vetra.BehaviorBuilder.new()
     :Debug()
         :Visualize(true)
     :Done()

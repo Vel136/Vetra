@@ -1,25 +1,25 @@
 --[=[
-	@class HybridCast
+	@class VetraCast
 
 	The internal representation of one in-flight projectile. Returned by
-	[HybridSolver:Fire] for callers that need to introspect initial state.
+	[Vetra:Fire] for callers that need to introspect initial state.
 
 	:::warning
-	Weapon scripts should interact with [BulletContext] rather than `HybridCast`
-	directly. `HybridCast` exposes internal solver state — mutating it directly
+	Weapon scripts should interact with [BulletContext] rather than `VetraCast`
+	directly. `VetraCast` exposes internal solver state — mutating it directly
 	can produce physics errors that are difficult to debug.
 
 	The methods below (`GetPosition`, `SetVelocity`, etc.) are safe to call and are
 	the intended way to read or modify a bullet mid-flight from within signal handlers.
 	:::
 ]=]
-local HybridCast = {}
+local VetraCast = {}
 
 -- ─── Properties ──────────────────────────────────────────────────────────────
 
 --[=[
 	@prop Alive boolean
-	@within HybridCast
+	@within VetraCast
 	@readonly
 
 	`true` while the cast is being simulated. Set to `false` as the very first
@@ -28,7 +28,7 @@ local HybridCast = {}
 
 --[=[
 	@prop Paused boolean
-	@within HybridCast
+	@within VetraCast
 
 	When `true`, `_StepProjectile` skips this cast entirely. `TotalRuntime` does
 	not advance, producing seamless resumption from the paused position when set
@@ -37,7 +37,7 @@ local HybridCast = {}
 
 --[=[
 	@prop UserData {[any]: any}
-	@within HybridCast
+	@within VetraCast
 
 	Free-form table for weapon-specific metadata. Shared with the linked
 	[BulletContext] and passed unchanged on every signal emission.
@@ -52,7 +52,7 @@ local HybridCast = {}
 
 	@return Vector3
 ]=]
-function HybridCast:GetPosition(): Vector3 end
+function VetraCast:GetPosition(): Vector3 end
 
 --[=[
 	Returns the bullet's current velocity vector. The magnitude of this vector
@@ -60,7 +60,7 @@ function HybridCast:GetPosition(): Vector3 end
 
 	@return Vector3
 ]=]
-function HybridCast:GetVelocity(): Vector3 end
+function VetraCast:GetVelocity(): Vector3 end
 
 --[=[
 	Returns the constant acceleration vector for the active trajectory segment.
@@ -69,7 +69,7 @@ function HybridCast:GetVelocity(): Vector3 end
 
 	@return Vector3
 ]=]
-function HybridCast:GetAcceleration(): Vector3 end
+function VetraCast:GetAcceleration(): Vector3 end
 
 -- ─── State Setters ───────────────────────────────────────────────────────────
 
@@ -80,20 +80,20 @@ function HybridCast:GetAcceleration(): Vector3 end
 
 	@param position Vector3
 ]=]
-function HybridCast:SetPosition(position: Vector3) end
+function VetraCast:SetPosition(position: Vector3) end
 
 --[=[
 	Changes the bullet's velocity to the given vector. Opens a new trajectory
 	segment if needed.
 
 	:::tip
-	Call [HybridCast:ResetBounceState] after a sharp velocity change to prevent
+	Call [VetraCast:ResetBounceState] after a sharp velocity change to prevent
 	the corner-trap detector from triggering on the new trajectory.
 	:::
 
 	@param velocity Vector3
 ]=]
-function HybridCast:SetVelocity(velocity: Vector3) end
+function VetraCast:SetVelocity(velocity: Vector3) end
 
 --[=[
 	Replaces the bullet's constant acceleration for future simulation. Because
@@ -102,7 +102,7 @@ function HybridCast:SetVelocity(velocity: Vector3) end
 
 	@param acceleration Vector3
 ]=]
-function HybridCast:SetAcceleration(acceleration: Vector3) end
+function VetraCast:SetAcceleration(acceleration: Vector3) end
 
 --[=[
 	Translates the bullet by an offset in world space. Equivalent to
@@ -110,7 +110,7 @@ function HybridCast:SetAcceleration(acceleration: Vector3) end
 
 	@param offset Vector3
 ]=]
-function HybridCast:AddPosition(offset: Vector3) end
+function VetraCast:AddPosition(offset: Vector3) end
 
 --[=[
 	Adds a delta to the bullet's current velocity. Useful for impulse effects
@@ -118,7 +118,7 @@ function HybridCast:AddPosition(offset: Vector3) end
 
 	@param delta Vector3
 ]=]
-function HybridCast:AddVelocity(delta: Vector3) end
+function VetraCast:AddVelocity(delta: Vector3) end
 
 --[=[
 	Adds a delta to the bullet's constant acceleration. Useful for variable wind
@@ -126,7 +126,7 @@ function HybridCast:AddVelocity(delta: Vector3) end
 
 	@param delta Vector3
 ]=]
-function HybridCast:AddAcceleration(delta: Vector3) end
+function VetraCast:AddAcceleration(delta: Vector3) end
 
 -- ─── Utilities ───────────────────────────────────────────────────────────────
 
@@ -139,6 +139,6 @@ function HybridCast:AddAcceleration(delta: Vector3) end
 	otherwise the corner-trap detector may falsely terminate the cast on the
 	next bounce.
 ]=]
-function HybridCast:ResetBounceState() end
+function VetraCast:ResetBounceState() end
 
-return HybridCast
+return VetraCast

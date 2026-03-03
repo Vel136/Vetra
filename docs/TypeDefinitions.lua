@@ -1,11 +1,11 @@
 --[=[
 	@class TypeDefinitions
 
-	Shared Luau type definitions used across HybridSolver.
+	Shared Luau type definitions used across Vetra.
 
 	These are imported for type annotations only — there is no runtime cost.
 	You generally do not need to require this module directly; the types are
-	re-exported from [HybridSolver] where needed.
+	re-exported from [Vetra] where needed.
 ]=]
 
 -- ─── CastTrajectory ──────────────────────────────────────────────────────────
@@ -17,7 +17,7 @@
 	Represents one continuous parabolic arc of a projectile's flight path.
 
 	A new segment is appended to `Runtime.Trajectories` on every bounce or
-	mid-flight kinematic change via the `Set*` / `Add*` methods on [HybridCast].
+	mid-flight kinematic change via the `Set*` / `Add*` methods on [VetraCast].
 	`EndTime` of `-1` indicates the segment is still active.
 
 	.StartTime number -- `Runtime.TotalRuntime` when this segment began.
@@ -62,10 +62,10 @@
 	.SolverData any? -- Internal — used by the solver to attach lifecycle hooks.
 ]=]
 
--- ─── HybridBehavior ──────────────────────────────────────────────────────────
+-- ─── VetraBehavior ──────────────────────────────────────────────────────────
 
 --[=[
-	@interface HybridBehavior
+	@interface VetraBehavior
 	@within TypeDefinitions
 
 	Complete configuration for a projectile cast. All fields are optional —

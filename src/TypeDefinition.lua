@@ -259,15 +259,15 @@ export type CastBehavior = {
 	VisualizeCasts             : boolean,
 }
 
--- ─── HybridCast ───────────────────────────────────────────────────────────────
+-- ─── VetraCast ───────────────────────────────────────────────────────────────
 
 --[[
     The complete internal representation of one in-flight projectile.
     This is the type that _ActiveCasts stores and _StepProjectile iterates.
-    It is intentionally kept internal to HybridSolver — consumers interact
-    with BulletContext, not HybridCast directly.
+    It is intentionally kept internal to Vetra — consumers interact
+    with BulletContext, not VetraCast directly.
 ]]
-export type HybridCast = {
+export type VetraCast = {
 	-- ─── Lifecycle ───────────────────────────────────────────────────────────
 
 	-- True while the cast is alive and being simulated. Set to false as the very

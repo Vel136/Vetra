@@ -1,9 +1,9 @@
 --[=[
-	@class HybridSolver
+	@class Vetra
 
 	Analytic-trajectory projectile simulation engine for Roblox.
 
-	HybridSolver manages all active in-flight projectiles. Every frame it advances
+	Vetra manages all active in-flight projectiles. Every frame it advances
 	each cast using the exact kinematic formula `P(t) = Origin + V₀t + ½At²`,
 	raycasts between the previous and current position, and resolves hits as
 	pierce, bounce, or terminal impact.
@@ -13,16 +13,16 @@
 	which bullet fired the event and dispatch accordingly.
 
 	```lua
-	local HybridSolver = require(path.to.HybridSolver)
+	local Vetra = require(path.to.Vetra)
 
-	local Solver  = HybridSolver.new()
+	local Solver  = Vetra.new()
 	local Signals = Solver:GetSignals()
 
 	Signals.OnHit:Connect(function(context, result, velocity)
 	    -- handle impact
 	end)
 
-	local Behavior = HybridSolver.BehaviorBuilder.Sniper():Build()
+	local Behavior = Vetra.BehaviorBuilder.Sniper():Build()
 
 	local context = BulletContext.new({
 	    Origin    = muzzlePosition,
@@ -33,18 +33,18 @@
 	Solver:Fire(context, Behavior)
 	```
 ]=]
-local HybridSolver = {}
+local Vetra = {}
 
 --[=[
 	@prop BehaviorBuilder BehaviorBuilder
-	@within HybridSolver
+	@within Vetra
 
 	Re-export of the [BehaviorBuilder] module so consumers only need to require
-	HybridSolver and can access the builder via `HybridSolver.BehaviorBuilder`.
+	Vetra and can access the builder via `Vetra.BehaviorBuilder`.
 ]=]
 
 --[=[
-	Creates a new HybridSolver instance and connects the per-frame simulation
+	Creates a new Vetra instance and connects the per-frame simulation
 	loop to the appropriate RunService event (Heartbeat on server, RenderStepped
 	on client).
 
@@ -54,9 +54,9 @@ local HybridSolver = {}
 	the frame loop is not connected a second time.
 	:::
 
-	@return HybridSolver
+	@return Vetra
 ]=]
-function HybridSolver.new(): HybridSolver end
+function Vetra.new(): Vetra end
 
 --[=[
 	Creates and registers a new in-flight projectile cast.
@@ -70,10 +70,10 @@ function HybridSolver.new(): HybridSolver end
 	`context:Terminate()`.
 
 	@param context BulletContext -- The public bullet object weapon code interacts with.
-	@param behavior HybridBehavior? -- Optional behavior overrides. Omitted fields use defaults.
-	@return HybridCast -- The internal cast object, or nil if validation failed.
+	@param behavior VetraBehavior? -- Optional behavior overrides. Omitted fields use defaults.
+	@return VetraCast -- The internal cast object, or nil if validation failed.
 ]=]
-function HybridSolver:Fire(context: BulletContext, behavior: HybridBehavior?): HybridCast end
+function Vetra:Fire(context: BulletContext, behavior: VetraBehavior?): VetraCast end
 
 --[=[
 	Returns the module-level Signals table.
@@ -116,6 +116,6 @@ function HybridSolver:Fire(context: BulletContext, behavior: HybridBehavior?): H
 
 	@return { OnHit: Signal, OnTravel: Signal, OnPierce: Signal, OnBounce: Signal, OnTerminated: Signal }
 ]=]
-function HybridSolver:GetSignals() end
+function Vetra:GetSignals() end
 
-return HybridSolver
+return Vetra

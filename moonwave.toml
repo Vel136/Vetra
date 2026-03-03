@@ -1,20 +1,20 @@
 [moonwave]
-sourceDir = ["src"]
+sourceDir = ["docs"]
 
 [docusaurus]
-title = "HybridSolver"
+title = "Vetra"
 tagline = "Analytic-trajectory projectile simulation for Roblox"
-url = "https://Vel136.github.io"
-baseUrl = "/HybridSolver/"
+url = "https://hybridsolver-docs.netlify.app"
+baseUrl = "/"
 
 [home]
 enabled = true
-bannerImage = "/banner.svg"
+bannerImage = "https://Vel136.github.io/Vetra/banner.svg"
 includeReadme = true
 
 [[classOrder]]
 section = "Core"
-classes = ["HybridSolver", "BulletContext", "HybridCast"]
+classes = ["Vetra", "BulletContext", "VetraCast"]
 
 [[classOrder]]
 section = "Configuration"
@@ -25,20 +25,34 @@ section = "Types"
 classes = ["TypeDefinitions"]
 
 [navbar]
-title = "HybridSolver"
+title = "Vetra"
 
-[[navbar.items]]
-label = "Docs"
-docId = "intro"
-type = "doc"
-position = "left"
+[footer]
+style = "dark"
+copyright = "Copyright © 2026 VeDevelopment"
 
-[[navbar.items]]
-label = "API"
-to = "api"
-position = "left"
+[[footer.links]]
+title = "Community"
 
-[[navbar.items]]
-label = "GitHub"
-href = "https://github.com/Vel136/HybridSolver"
-position = "right"
+[[footer.links.items]]
+label = "Discord Server"
+href = "https://discord.gg/XMYMRKcd3g"
+
+[[footer.links.items]]
+label = "Discord (Direct)"
+href = "https://discord.com/users/897026279243669504"
+
+[[footer.links]]
+title = "Social"
+
+[[footer.links.items]]
+label = "Instagram"
+href = "https://www.instagram.com/vedevelopment/"
+
+[[footer.links.items]]
+label = "X (Twitter)"
+href = "https://x.com/vedevelopment_"
+
+[[footer.links.items]]
+label = "TikTok"
+href = "https://www.tiktok.com/@vedevelopment"

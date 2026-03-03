@@ -11,7 +11,7 @@
 
 -- ─── BehaviorBuilder ─────────────────────────────────────────────────────────
 --[[
-    BehaviorBuilder — Fluent typed configuration builder for HybridSolver.
+    BehaviorBuilder — Fluent typed configuration builder for Vetra.
 
     Instead of constructing raw behavior tables by hand:
 
@@ -42,13 +42,13 @@
         1. Every method is typed — passing a string where a number is expected
            is a compile-time error in strict mode, not a silent runtime bug.
         2. Grouped namespaces (Physics, Bounce, Pierce, HighFidelity, Cosmetic,
-           Debug) mirror the logical sections of HybridBehavior, making it clear
+           Debug) mirror the logical sections of VetraBehavior, making it clear
            which fields belong together.
         3. :Done() returns the parent builder so groups are self-contained
            and composable. You never have to mentally track which table you
            are currently configuring.
         4. :Build() performs a final validation pass and returns a frozen
-           HybridBehavior table. Frozen so consumers cannot mutate it after
+           VetraBehavior table. Frozen so consumers cannot mutate it after
            the fact and produce inconsistent state mid-flight.
         5. Builders are reusable — call :Build() multiple times to produce
            independent behavior tables from the same configured builder.
@@ -89,7 +89,7 @@ local Logger = LogService.new(IDENTITY, true)
 
 -- ─── Type Definitions ────────────────────────────────────────────────────────
 
--- Mirror of HybridBehavior from HybridSolver for self-contained typing.
+-- Mirror of VetraBehavior from Vetra for self-contained typing.
 -- These are all optional at the builder level — :Build() merges with defaults.
 type BulletContext = any
 type PierceFilter  = (Context: BulletContext, Result: RaycastResult, Velocity: Vector3) -> boolean
@@ -136,7 +136,7 @@ type BuiltBehavior = {
 
 -- ─── Defaults ────────────────────────────────────────────────────────────────
 --[[
-    Canonical defaults mirroring HybridSolver's DEFAULT_BEHAVIOR.
+    Canonical defaults mirroring Vetra's DEFAULT_BEHAVIOR.
     Gravity is stored as a downward vector (negative Y) to match DEFAULT_GRAVITY.
     BehaviorBuilder uses this convention consistently — no sign ambiguity.
 ]]
@@ -861,7 +861,7 @@ end
     BehaviorBuilder:Build()
 
     Validates the current configuration and returns a frozen BuiltBehavior table
-    ready to pass to HybridSolver:Fire().
+    ready to pass to Vetra:Fire().
 
     Validation errors are all collected and logged together so the caller sees
     every problem at once rather than fixing them one at a time. If any errors

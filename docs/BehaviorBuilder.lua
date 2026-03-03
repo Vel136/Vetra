@@ -1,10 +1,10 @@
 --[=[
 	@class BehaviorBuilder
 
-	Fluent typed configuration builder for [HybridSolver].
+	Fluent typed configuration builder for [Vetra].
 
 	Instead of constructing raw behavior tables by hand, chain namespace methods
-	and call `:Build()` to produce a validated, frozen `HybridBehavior`.
+	and call `:Build()` to produce a validated, frozen `VetraBehavior`.
 
 	```lua
 	local Behavior = BehaviorBuilder.new()
@@ -128,8 +128,8 @@ function BehaviorBuilder:Cosmetic(): CosmeticBuilder end
 function BehaviorBuilder:Debug(): DebugBuilder end
 
 --[=[
-	Validates the current configuration and returns a frozen `HybridBehavior`
-	table ready to pass to [HybridSolver:Fire].
+	Validates the current configuration and returns a frozen `VetraBehavior`
+	table ready to pass to [Vetra:Fire].
 
 	All validation errors are collected and logged together so every problem is
 	reported at once. Returns `nil` if any validation error is found.
@@ -137,9 +137,9 @@ function BehaviorBuilder:Debug(): DebugBuilder end
 	Does **not** consume the builder — call `:Build()` multiple times to produce
 	independent frozen tables from the same configuration.
 
-	@return HybridBehavior? -- Frozen behavior table, or nil if validation failed.
+	@return VetraBehavior? -- Frozen behavior table, or nil if validation failed.
 ]=]
-function BehaviorBuilder:Build(): HybridBehavior? end
+function BehaviorBuilder:Build(): VetraBehavior? end
 
 -- ─── Presets ─────────────────────────────────────────────────────────────────
 
