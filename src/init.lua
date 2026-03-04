@@ -1677,7 +1677,7 @@ local function ResolveBounce(Cast: VetraCast, HitResult: RaycastResult, Incoming
 	-- MaterialRestitution is also NOT applied here for the same reason — all energy
 	-- scaling is owned by SimulateCast in a single location so the math is auditable
 	-- in one place and cannot diverge between the two functions.
-	return IncomingVelocity - 2 * IncomingVelocity:Dot(EffectiveNormal) * EffectiveNormal
+	return IncomingVelocity - 2 * IncomingVelocity:Dot(SurfaceNormal) * SurfaceNormal
 end
 
 -- ─── Pierce Resolution ───────────────────────────────────────────────────────
@@ -1745,11 +1745,6 @@ end
             The hit result that initiated the chain — the first surface that
             CanPierceFunction approved in SimulateCast.
 
-        PierceOrigin: Vector3
-            World-space origin of the triggering raycast. Not used directly
-            inside the chain loop but included for completeness in case
-            chain-start logic is added in the future.
-
         RayDirection: Vector3
             Direction vector of the original raycast. All subsequent pierce raycasts
             in the chain use this same direction, maintaining the bullet's straight
@@ -1780,7 +1775,6 @@ local function ResolvePierce(
 	Solver: Vetra,
 	Cast: VetraCast,
 	InitialPierceResult: RaycastResult,
-	PierceOrigin: Vector3,
 	RayDirection: Vector3,
 	CurrentVelocity: Vector3
 ): (boolean, RaycastResult?, Vector3?)
@@ -1841,7 +1835,7 @@ local function ResolvePierce(
 	local EffectiveMaxPierceCount = Behavior.MaxPierceCount
 	if PrePierceData.MaxPierceOverride ~= nil then
 		local Override = PrePierceData.MaxPierceOverride
-		if type(Override) == "number" and Override >= 1 and Override <= Behavior.MaxPierceCount then
+		if t.number(Override) and Override >= 1 and Override <= Behavior.MaxPierceCount then
 			EffectiveMaxPierceCount = math.floor(Override)
 		else
 			Logger:Warn(string.format(
@@ -1872,6 +1866,9 @@ local function ResolvePierce(
 	local FoundSolidHit        = false
 
 	while true do
+		if CurrentVelocity.Magnitude < Behavior.PierceSpeedThreshold then
+			break
+		end
 		local PiercedInstance = CurrentPierceResult.Instance
 
 		-- Record the pierced instance in PiercedInstances. SimulateCast consults
@@ -1939,7 +1936,7 @@ local function ResolvePierce(
 			CurrentVelocity = MidPierceData.ExitVelocity
 		else
 			local Retention = MidPierceData.SpeedRetention
-			if type(Retention) == "number" and Retention >= 0 and Retention <= 1 then
+			if t.number(Retention) and Retention >= 0 and Retention <= 1 then
 				-- Valid consumer override. Scale speed by the provided retention
 				-- coefficient while preserving the direction unit vector unchanged.
 				CurrentVelocity = CurrentVelocity.Unit * (CurrentVelocity.Magnitude * Retention)
@@ -2309,7 +2306,6 @@ local function SimulateCast(Solver: Vetra, Cast: VetraCast, Delta: number, IsSub
 				Solver,
 				Cast,
 				RaycastResult,
-				LastPosition,
 				RayDirection,
 				CurrentVelocity
 			)
@@ -2381,7 +2377,7 @@ local function SimulateCast(Solver: Vetra, Cast: VetraCast, Delta: number, IsSub
 				and IsBelowMaxBounceCount
 				and IsBelowMaxBouncesThisFrame
 
-			local BounceWasResolved = false
+		
 
 			if BounceConditionsMet then
 				-- OnPreBounce fires before reflection is computed. Consumers can override
@@ -2393,7 +2389,6 @@ local function SimulateCast(Solver: Vetra, Cast: VetraCast, Delta: number, IsSub
 				--                     before the reflection formula runs.
 				-- An invalid (NaN/inf) IncomingVelocity override is silently ignored
 				-- and CurrentVelocity is used as a fallback.
-				local PreBounceData = FireOnPreBounce(Solver, Cast, RaycastResult, CurrentVelocity)
 				local PreBounceData = FireOnPreBounce(Solver, Cast, RaycastResult, CurrentVelocity)
 
 				-- Use consumer-overridden normal if provided, otherwise fall back to geometric normal.
@@ -2432,9 +2427,8 @@ local function SimulateCast(Solver: Vetra, Cast: VetraCast, Delta: number, IsSub
 					end
 					
 					local MaterialMultiplier = (Behavior.MaterialRestitution and Behavior.MaterialRestitution[RaycastResult.Material]) or 1.0
-					local BaseRestitution = (type(MidBounceData.Restitution) == "number")
-					and MidBounceData.Restitution
-					or Behavior.Restitution
+					local BaseRestitution = t.number(MidBounceData.Restitution) and MidBounceData.Restitution or Behavior.Restitution
+					
 					FinalVelocity = FinalVelocity * (BaseRestitution * MaterialMultiplier)
 
 					local Perturbation = type(MidBounceData.NormalPerturbation) == "number"
@@ -2513,7 +2507,6 @@ local function SimulateCast(Solver: Vetra, Cast: VetraCast, Delta: number, IsSub
 					end
 
 					FireOnBounce(Solver, Cast, RaycastResult, FinalVelocity)
-        			BounceWasResolved = true
 					return
 				else
 					-- Corner trap confirmed. Log and fall through to terminal hit
@@ -2538,12 +2531,11 @@ local function SimulateCast(Solver: Vetra, Cast: VetraCast, Delta: number, IsSub
 			        were not met, or a corner trap was detected and fell through.
 			    This is a definitive, permanent impact. The bullet stops at this surface.
 			]]
-			if not BounceWasResolved then
-				FireOnHit(Solver, Cast, RaycastResult, CurrentVelocity)
-				FireOnTerminated(Solver, Cast)
-				Terminate(Solver, Cast)
-				return
-			end
+
+			FireOnHit(Solver, Cast, RaycastResult, CurrentVelocity)
+			FireOnTerminated(Solver, Cast)
+			Terminate(Solver, Cast)
+			return
 		end
 	end
 
