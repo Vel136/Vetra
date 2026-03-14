@@ -3,65 +3,70 @@
 <head>
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.7.0">
-<title data-rh="true">BulletContext | Vetra</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://vetra-docs.netlify.app/api/BulletContext"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="BulletContext | Vetra"><meta data-rh="true" name="description" content="The public-facing object that weapon code interacts with for every in-flight projectile.
+<title data-rh="true">BulletContext | Vetra</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://vetra-docs.netlify.app/api/BulletContext"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="BulletContext | Vetra"><meta data-rh="true" name="description" content="The public-facing object that weapon code interacts with for every
+in-flight projectile.
 
-Create one before firing, pass it to [HybridSolver:Fire], then use the module-level
-signals to react to events. The context is passed as the first argument on every signal
-so you can identify the bullet and read its current state.
-
-```lua
-local context = BulletContext.new({
-    Origin    = muzzlePosition,
-    Direction = direction,
-    Speed     = 200,
-    SolverData = {},
-})
-
-Solver:Fire(context, Behavior)
-```
-
-:::tip UserData
-Attach weapon-specific metadata (shooter UserId, damage value, hit-group flags, etc.)
-via `context.UserData` before calling `Fire`. This table is passed unchanged on every
-signal emission.
-:::"><meta data-rh="true" property="og:description" content="The public-facing object that weapon code interacts with for every in-flight projectile.
-
-Create one before firing, pass it to [HybridSolver:Fire], then use the module-level
-signals to react to events. The context is passed as the first argument on every signal
-so you can identify the bullet and read its current state.
+Create one before firing, pass it to [Vetra:Fire], then use the
+solver&#x27;s signals to react to events. The context is passed as the
+first argument on every signal so you can identify the bullet and
+read its current state.
 
 ```lua
 local context = BulletContext.new({
     Origin    = muzzlePosition,
     Direction = direction,
     Speed     = 200,
-    SolverData = {},
 })
 
 Solver:Fire(context, Behavior)
 ```
 
 :::tip UserData
-Attach weapon-specific metadata (shooter UserId, damage value, hit-group flags, etc.)
-via `context.UserData` before calling `Fire`. This table is passed unchanged on every
-signal emission.
-:::"><link data-rh="true" rel="canonical" href="https://vetra-docs.netlify.app/api/BulletContext"><link data-rh="true" rel="alternate" href="https://vetra-docs.netlify.app/api/BulletContext" hreflang="en"><link data-rh="true" rel="alternate" href="https://vetra-docs.netlify.app/api/BulletContext" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.809f880b.css">
-<script src="/assets/js/runtime~main.0205adfc.js" defer="defer"></script>
-<script src="/assets/js/main.6344d29f.js" defer="defer"></script>
+Attach weapon-specific metadata (shooter UserId, damage value, hit-group
+flags, etc.) via `context.UserData` before calling `Fire`. This table is
+passed unchanged on every signal emission.
+:::"><meta data-rh="true" property="og:description" content="The public-facing object that weapon code interacts with for every
+in-flight projectile.
+
+Create one before firing, pass it to [Vetra:Fire], then use the
+solver&#x27;s signals to react to events. The context is passed as the
+first argument on every signal so you can identify the bullet and
+read its current state.
+
+```lua
+local context = BulletContext.new({
+    Origin    = muzzlePosition,
+    Direction = direction,
+    Speed     = 200,
+})
+
+Solver:Fire(context, Behavior)
+```
+
+:::tip UserData
+Attach weapon-specific metadata (shooter UserId, damage value, hit-group
+flags, etc.) via `context.UserData` before calling `Fire`. This table is
+passed unchanged on every signal emission.
+:::"><link data-rh="true" rel="canonical" href="https://vetra-docs.netlify.app/api/BulletContext"><link data-rh="true" rel="alternate" href="https://vetra-docs.netlify.app/api/BulletContext" hreflang="en"><link data-rh="true" rel="alternate" href="https://vetra-docs.netlify.app/api/BulletContext" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f0e219d2.css">
+<script src="/assets/js/runtime~main.caa7b844.js" defer="defer"></script>
+<script src="/assets/js/main.2340574e.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
-<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,t("light"))}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><b class="navbar__title text--truncate">Vetra</b></a><a class="navbar__item navbar__link" href="/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Vel136/HybridSolver" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/api/Vetra">Core</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/Vetra">​Vetra</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/api/BulletContext">​Bullet​Context</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/VetraCast">​Vetra​Cast</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/api/BehaviorBuilder">Configuration</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/api/TypeDefinitions">Types</a></div></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Bullet</span><span style="display:inline-block">Context</span></h1><div class="luaClassTags_EipM"></div><div>
-<p>The public-facing object that weapon code interacts with for every in-flight projectile.</p>
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,t("light"))}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><b class="navbar__title text--truncate">Vetra</b></a><a class="navbar__item navbar__link" href="/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Vel136/Vetra" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/api/Vetra">Core</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/Vetra">​Vetra</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/api/BulletContext">​Bullet​Context</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/VetraCast">​Vetra​Cast</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/api/BehaviorBuilder">Configuration</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/api/VetraNet">Network</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/api/TypeDefinitions">Types</a></div></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Bullet</span><span style="display:inline-block">Context</span></h1><div class="luaClassTags_EipM"></div><div>
 <p>
-  Create one before firing, pass it to [HybridSolver:Fire], then use the module-level
-  signals to react to events. The context is passed as the first argument on every signal
-  so you can identify the bullet and read its current state.
+  The public-facing object that weapon code interacts with for every
+  in-flight projectile.
+</p>
+<p>
+  Create one before firing, pass it to <a href="/api/Vetra#Fire">Vetra:Fire</a>, then use the
+  solver's signals to react to events. The context is passed as the
+  first argument on every signal so you can identify the bullet and
+  read its current state.
 </p>
 <pre class="language-lua"><code class="language-lua"><span class="token keyword">local</span> context <span class="token operator">=</span> BulletContext<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
     Origin    <span class="token operator">=</span> muzzlePosition<span class="token punctuation">,</span>
     Direction <span class="token operator">=</span> direction<span class="token punctuation">,</span>
     Speed     <span class="token operator">=</span> <span class="token number">200</span><span class="token punctuation">,</span>
-    SolverData <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
 <span class="token punctuation">}</span><span class="token punctuation">)</span>
 
 Solver<span class="token punctuation">:</span><span class="token function">Fire</span><span class="token punctuation">(</span>context<span class="token punctuation">,</span> Behavior<span class="token punctuation">)</span>
@@ -78,97 +83,127 @@ Solver<span class="token punctuation">:</span><span class="token function">Fire<
         </div>
         <div class="admonition-content">
           <p>
-            Attach weapon-specific metadata (shooter UserId, damage value, hit-group flags, etc.)
-            via <code>context.UserData</code> before calling <code>Fire</code>. This table is passed unchanged on every
-            signal emission.
+            Attach weapon-specific metadata (shooter UserId, damage value, hit-group
+            flags, etc.) via <code>context.UserData</code> before calling <code>Fire</code>. This table is
+            passed unchanged on every signal emission.
           </p>
         </div>
       </div>
     
   
 
-</div></header><h2 class="anchor anchorWithStickyNavbar_LWe7" id="properties">Properties<a href="#properties" class="hash-link" aria-label="Direct link to Properties" title="Direct link to Properties">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Id"><code style="text-decoration:none">Id</code><a href="#Id" class="hash-link" aria-label="Direct link to Id" title="Direct link to Id">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BulletContext.lua#L39"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->Id<!-- -->:<!-- --> </code> <code class="blue_P4bS">number</code></div><div>
+</div></header><h2 class="anchor anchorWithStickyNavbar_LWe7" id="properties">Properties<a href="#properties" class="hash-link" aria-label="Direct link to Properties" title="Direct link to Properties">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Id"><code style="text-decoration:none">Id</code><a href="#Id" class="hash-link" aria-label="Direct link to Id" title="Direct link to Id">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L41"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->Id<!-- -->:<!-- --> </code> <code class="blue_P4bS">number</code></div><div>
 <p>
   Auto-incrementing unique identifier assigned at construction time.
-  Use this to distinguish bullets in signal handlers without storing separate references.
+  Use this to distinguish bullets in signal handlers without storing
+  separate references.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Origin"><code style="text-decoration:none">Origin</code><a href="#Origin" class="hash-link" aria-label="Direct link to Origin" title="Direct link to Origin">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BulletContext.lua#L47"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->Origin<!-- -->:<!-- --> </code> <code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Origin"><code style="text-decoration:none">Origin</code><a href="#Origin" class="hash-link" aria-label="Direct link to Origin" title="Direct link to Origin">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L49"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->Origin<!-- -->:<!-- --> </code> <code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
 <p>World-space muzzle position at the moment the bullet was fired. Never changes.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Direction"><code style="text-decoration:none">Direction</code><a href="#Direction" class="hash-link" aria-label="Direct link to Direction" title="Direct link to Direction">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BulletContext.lua#L55"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->Direction<!-- -->:<!-- --> </code> <code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Direction"><code style="text-decoration:none">Direction</code><a href="#Direction" class="hash-link" aria-label="Direct link to Direction" title="Direct link to Direction">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L57"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->Direction<!-- -->:<!-- --> </code> <code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
 <p>Unit direction vector the bullet was fired along. Never changes.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Speed"><code style="text-decoration:none">Speed</code><a href="#Speed" class="hash-link" aria-label="Direct link to Speed" title="Direct link to Speed">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BulletContext.lua#L64"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->Speed<!-- -->:<!-- --> </code> <code class="blue_P4bS">number</code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Speed"><code style="text-decoration:none">Speed</code><a href="#Speed" class="hash-link" aria-label="Direct link to Speed" title="Direct link to Speed">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L67"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->Speed<!-- -->:<!-- --> </code> <code class="blue_P4bS">number</code></div><div>
 <p>
-  Initial speed in studs per second. The bullet's actual speed decreases over
-  time due to bounces (restitution) and pierces (speed retention).
+  Initial speed in studs per second. The bullet's actual speed decreases
+  over time due to drag, bounces (restitution), and pierces (speed retention).
+  Read the magnitude of <code>Velocity</code> for the current speed.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="StartTime"><code style="text-decoration:none">StartTime</code><a href="#StartTime" class="hash-link" aria-label="Direct link to StartTime" title="Direct link to StartTime">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BulletContext.lua#L73"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->StartTime<!-- -->:<!-- --> </code> <code class="blue_P4bS">number</code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="StartTime"><code style="text-decoration:none">StartTime</code><a href="#StartTime" class="hash-link" aria-label="Direct link to StartTime" title="Direct link to StartTime">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L76"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->StartTime<!-- -->:<!-- --> </code> <code class="blue_P4bS">number</code></div><div>
 <p>
-  <code>os.clock()</code> timestamp at construction. Use with <a href="/api/BulletContext#GetLifetime">BulletContext:GetLifetime</a> to
-  compute bullet age without storing the time yourself.
+  <code>os.clock()</code> timestamp at construction. Use with <a href="/api/BulletContext#GetLifetime">BulletContext:GetLifetime</a>
+  to compute bullet age without storing the time yourself.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Position"><code style="text-decoration:none">Position</code><a href="#Position" class="hash-link" aria-label="Direct link to Position" title="Direct link to Position">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BulletContext.lua#L82"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->Position<!-- -->:<!-- --> </code> <code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Position"><code style="text-decoration:none">Position</code><a href="#Position" class="hash-link" aria-label="Direct link to Position" title="Direct link to Position">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L85"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->Position<!-- -->:<!-- --> </code> <code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
 <p>
-  Current world-space position. Updated every frame by the solver. <code>nil</code> until the
-  first simulation step.
+  Current world-space position. Updated every frame by the solver.
+  <code>nil</code> until the first simulation step.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Velocity"><code style="text-decoration:none">Velocity</code><a href="#Velocity" class="hash-link" aria-label="Direct link to Velocity" title="Direct link to Velocity">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BulletContext.lua#L91"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->Velocity<!-- -->:<!-- --> </code> <code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Velocity"><code style="text-decoration:none">Velocity</code><a href="#Velocity" class="hash-link" aria-label="Direct link to Velocity" title="Direct link to Velocity">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L94"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->Velocity<!-- -->:<!-- --> </code> <code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
 <p>
-  Current velocity vector in studs per second. Updated every frame by the solver.
-  The magnitude of this vector is the current speed.
+  Current velocity vector in studs per second. Updated every frame by the
+  solver. The magnitude of this vector is the current speed.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Alive"><code style="text-decoration:none">Alive</code><a href="#Alive" class="hash-link" aria-label="Direct link to Alive" title="Direct link to Alive">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BulletContext.lua#L100"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->Alive<!-- -->:<!-- --> </code> <code class="blue_P4bS">boolean</code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Alive"><code style="text-decoration:none">Alive</code><a href="#Alive" class="hash-link" aria-label="Direct link to Alive" title="Direct link to Alive">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L104"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->Alive<!-- -->:<!-- --> </code> <code class="blue_P4bS">boolean</code></div><div>
 <p>
-  <code>true</code> while the cast is being simulated. Set to <code>false</code> by <a href="/api/BulletContext#Terminate">BulletContext:Terminate</a>
-  or automatically by the solver on hit, distance expiry, or speed expiry.
+  <code>true</code> while the cast is being simulated. Set to <code>false</code> by
+  <a href="/api/BulletContext#Terminate">BulletContext:Terminate</a> or automatically by the solver on hit,
+  distance expiry, speed expiry, or corner-trap detection.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Length"><code style="text-decoration:none">Length</code><a href="#Length" class="hash-link" aria-label="Direct link to Length" title="Direct link to Length">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BulletContext.lua#L108"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->Length<!-- -->:<!-- --> </code> <code class="blue_P4bS">number</code></div><div>
-<p>Cumulative distance the bullet has travelled along its actual ray path, in studs.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="UserData"><code style="text-decoration:none">UserData</code><a href="#UserData" class="hash-link" aria-label="Direct link to UserData" title="Direct link to UserData">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BulletContext.lua#L122"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->UserData<!-- -->:<!-- --> </code> <code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">any</code><code>]</code></span><code>: </code><code class="blue_P4bS">any</code><code class="purple_ieR2">}</code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Length"><code style="text-decoration:none">Length</code><a href="#Length" class="hash-link" aria-label="Direct link to Length" title="Direct link to Length">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L115"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->Length<!-- -->:<!-- --> </code> <code class="blue_P4bS">number</code></div><div>
 <p>
-  Free-form table for attaching cast-specific metadata (shooter UserId, weapon type,
-  damage value, etc.). Surfaced on every signal emission — read it in your handlers
-  to route events without maintaining a parallel lookup.
+  True accumulated path distance in studs — the sum of every frame
+  displacement since firing. This diverges from straight-line
+  <code>(Position - Origin).Magnitude</code> for bullets that bounce or follow
+  homing curves. See also <a href="/api/BulletContext#GetDistanceTraveled">BulletContext:GetDistanceTraveled</a>.
 </p>
-<pre class="language-lua"><code class="language-lua">context<span class="token punctuation">.</span>UserData<span class="token punctuation">.</span>Damage   <span class="token operator">=</span> <span class="token number">45</span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="SimulationTime"><code style="text-decoration:none">SimulationTime</code><a href="#SimulationTime" class="hash-link" aria-label="Direct link to SimulationTime" title="Direct link to SimulationTime">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L125"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->SimulationTime<!-- -->:<!-- --> </code> <code class="blue_P4bS">number</code></div><div>
+<p>
+  Total seconds this bullet has been simulated, as tracked by the solver.
+  Updated every frame. Use <a href="/api/BulletContext#GetLifetime">BulletContext:GetLifetime</a> to read this.
+  Does not advance while the cast is paused.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="CosmeticBulletObject"><code style="text-decoration:none">CosmeticBulletObject</code><a href="#CosmeticBulletObject" class="hash-link" aria-label="Direct link to CosmeticBulletObject" title="Direct link to CosmeticBulletObject">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L135"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->CosmeticBulletObject<!-- -->:<!-- --> </code> <code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Instance" target="_blank" rel="noopener noreferrer">Instance?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
+<p>
+  Set by the solver after the cosmetic bullet is created. Readable from
+  signal handlers (<code>OnSegmentOpen</code>, <code>OnBounce</code>, etc.) via the context argument.
+  <code>nil</code> when no cosmetic is configured or after the bullet terminates.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="UserData"><code style="text-decoration:none">UserData</code><a href="#UserData" class="hash-link" aria-label="Direct link to UserData" title="Direct link to UserData">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L154"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.<!-- -->UserData<!-- -->:<!-- --> </code> <code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">any</code><code>]</code></span><code>: </code><code class="blue_P4bS">any</code><code class="purple_ieR2">}</code></div><div>
+<p>
+  Free-form table for attaching cast-specific metadata (shooter UserId,
+  weapon type, damage value, etc.). Surfaced on every signal emission —
+  read it in your handlers to route events without maintaining a parallel lookup.
+</p>
+<pre class="language-lua"><code class="language-lua">context<span class="token punctuation">.</span>UserData<span class="token punctuation">.</span>Damage    <span class="token operator">=</span> <span class="token number">45</span>
 context<span class="token punctuation">.</span>UserData<span class="token punctuation">.</span>ShooterId <span class="token operator">=</span> Players<span class="token punctuation">.</span>LocalPlayer<span class="token punctuation">.</span>UserId
+
+Signals<span class="token punctuation">.</span>OnHit<span class="token punctuation">:</span><span class="token function">Connect</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>context<span class="token punctuation">,</span> result<span class="token punctuation">,</span> velocity<span class="token punctuation">)</span>
+    <span class="token keyword">local</span> damage    <span class="token operator">=</span> context<span class="token punctuation">.</span>UserData<span class="token punctuation">.</span>Damage
+    <span class="token keyword">local</span> shooterId <span class="token operator">=</span> context<span class="token punctuation">.</span>UserData<span class="token punctuation">.</span>ShooterId
+<span class="token keyword">end</span><span class="token punctuation">)</span>
 </code></pre>
-</div><h2 class="anchor anchorWithStickyNavbar_LWe7" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="new"><code style="text-decoration:none">new</code><a href="#new" class="hash-link" aria-label="Direct link to new" title="Direct link to new">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BulletContext.lua#L134"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.</code><code class="green_DgR4">new</code><code>(</code><code>config<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/TypeDefinitions#BulletContextConfig">BulletContextConfig</a></code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/BulletContext">BulletContext</a></code></div><div>
+</div><h2 class="anchor anchorWithStickyNavbar_LWe7" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="new"><code style="text-decoration:none">new</code><a href="#new" class="hash-link" aria-label="Direct link to new" title="Direct link to new">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L166"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->.</code><code class="green_DgR4">new</code><code>(</code><code>config<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/TypeDefinitions#BulletContextConfig">BulletContextConfig</a></code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/BulletContext">BulletContext</a></code></div><div>
 <p>Creates a new BulletContext.</p>
 <p>
-  <code>Origin</code>, <code>Direction</code>, and <code>Speed</code> are required. <code>Callbacks</code> and <code>SolverData</code>
-  are optional and primarily used internally.
+  <code>Origin</code>, <code>Direction</code>, and <code>Speed</code> are required. <code>SolverData</code> is reserved
+  for internal solver use — do not supply it from weapon code.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="IsAlive"><code style="text-decoration:none">IsAlive</code><a href="#IsAlive" class="hash-link" aria-label="Direct link to IsAlive" title="Direct link to IsAlive">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BulletContext.lua#L143"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->:</code><code class="green_DgR4">IsAlive</code><code>(</code><code>) → </code><code class="blue_P4bS">boolean</code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="IsAlive"><code style="text-decoration:none">IsAlive</code><a href="#IsAlive" class="hash-link" aria-label="Direct link to IsAlive" title="Direct link to IsAlive">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L175"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->:</code><code class="green_DgR4">IsAlive</code><code>(</code><code>) → </code><code class="blue_P4bS">boolean</code></div><div>
 <p>Returns whether the bullet is still alive and being simulated.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="GetLifetime"><code style="text-decoration:none">GetLifetime</code><a href="#GetLifetime" class="hash-link" aria-label="Direct link to GetLifetime" title="Direct link to GetLifetime">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BulletContext.lua#L150"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->:</code><code class="green_DgR4">GetLifetime</code><code>(</code><code>) → </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
-<p>Age in seconds.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="GetLifetime"><code style="text-decoration:none">GetLifetime</code><a href="#GetLifetime" class="hash-link" aria-label="Direct link to GetLifetime" title="Direct link to GetLifetime">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L185"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->:</code><code class="green_DgR4">GetLifetime</code><code>(</code><code>) → </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Simulated age in seconds.</p>
 </span></span></div><div>
-<p>Returns how many seconds have elapsed since the bullet was created.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="GetDistanceTraveled"><code style="text-decoration:none">GetDistanceTraveled</code><a href="#GetDistanceTraveled" class="hash-link" aria-label="Direct link to GetDistanceTraveled" title="Direct link to GetDistanceTraveled">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BulletContext.lua#L159"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->:</code><code class="green_DgR4">GetDistanceTraveled</code><code>(</code><code>) → </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
-<p>Distance in studs, or 0 if no position is recorded yet.</p>
-</span></span></div><div>
+<p>Returns how many seconds this bullet has been simulated.</p>
 <p>
-  Returns the straight-line distance from <a href="/api/BulletContext#Origin">BulletContext.Origin</a> to the current
-  <a href="/api/BulletContext#Position">BulletContext.Position</a>. Note: this is not the same as <a href="/api/BulletContext#Length">BulletContext.Length</a>,
-  which accumulates the actual curved path length.
+  Tracks <code>SimulationTime</code> accumulated by the solver — not real-world clock
+  time. Does not advance while the cast is paused.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="GetSnapshot"><code style="text-decoration:none">GetSnapshot</code><a href="#GetSnapshot" class="hash-link" aria-label="Direct link to GetSnapshot" title="Direct link to GetSnapshot">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BulletContext.lua#L169"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->:</code><code class="green_DgR4">GetSnapshot</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/TypeDefinitions#BulletSnapshot">BulletSnapshot</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="GetDistanceTraveled"><code style="text-decoration:none">GetDistanceTraveled</code><a href="#GetDistanceTraveled" class="hash-link" aria-label="Direct link to GetDistanceTraveled" title="Direct link to GetDistanceTraveled">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L196"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->:</code><code class="green_DgR4">GetDistanceTraveled</code><code>(</code><code>) → </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>Path length in studs.</p>
+</span></span></div><div>
+<p>Returns the true accumulated path length of the bullet in studs.</p>
+<p>
+  Unlike <code>(Position - Origin).Magnitude</code>, this correctly accounts for
+  bounces and homing curves by accumulating the actual frame-by-frame
+  displacement. Equivalent to reading <code>context.Length</code>.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="GetSnapshot"><code style="text-decoration:none">GetSnapshot</code><a href="#GetSnapshot" class="hash-link" aria-label="Direct link to GetSnapshot" title="Direct link to GetSnapshot">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L206"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->:</code><code class="green_DgR4">GetSnapshot</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/TypeDefinitions#BulletSnapshot">BulletSnapshot</a></code></div><div>
 <p>Returns a read-only snapshot of the bullet's current state.</p>
 <p>
-  Useful for logging, replication, or passing state to systems that should
-  not hold a live reference to the context.
+  Useful for logging, replication, or passing state to systems that
+  should not hold a live reference to the context.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Terminate"><code style="text-decoration:none">Terminate</code><a href="#Terminate" class="hash-link" aria-label="Direct link to Terminate" title="Direct link to Terminate">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/BulletContext.lua#L177"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->:</code><code class="green_DgR4">Terminate</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Terminate"><code style="text-decoration:none">Terminate</code><a href="#Terminate" class="hash-link" aria-label="Direct link to Terminate" title="Direct link to Terminate">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BulletContext.lua#L214"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BulletContext<!-- -->:</code><code class="green_DgR4">Terminate</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
 <p>
-  Terminates the bullet immediately, notifying the solver to clean up resources,
-  destroy the cosmetic object, and fire <code>OnTerminated</code>.
+  Terminates the bullet immediately, notifying the solver to clean up
+  resources, destroy the cosmetic object, and fire <code>OnTerminated</code>.
 </p>
 <p>Calling <code>Terminate</code> on an already-dead bullet is a no-op.</p>
 </div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
     &quot;functions&quot;: [
         {
             &quot;name&quot;: &quot;new&quot;,
-            &quot;desc&quot;: &quot;Creates a new BulletContext.\n\n`Origin`, `Direction`, and `Speed` are required. `Callbacks` and `SolverData`\nare optional and primarily used internally.&quot;,
+            &quot;desc&quot;: &quot;Creates a new BulletContext.\n\n`Origin`, `Direction`, and `Speed` are required. `SolverData` is reserved\nfor internal solver use — do not supply it from weapon code.&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;config&quot;,
@@ -184,7 +219,7 @@ context<span class="token punctuation">.</span>UserData<span class="token punctu
             ],
             &quot;function_type&quot;: &quot;static&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 134,
+                &quot;line&quot;: 166,
                 &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
             }
         },
@@ -200,45 +235,45 @@ context<span class="token punctuation">.</span>UserData<span class="token punctu
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 143,
+                &quot;line&quot;: 175,
                 &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;GetLifetime&quot;,
-            &quot;desc&quot;: &quot;Returns how many seconds have elapsed since the bullet was created.&quot;,
+            &quot;desc&quot;: &quot;Returns how many seconds this bullet has been simulated.\n\nTracks `SimulationTime` accumulated by the solver — not real-world clock\ntime. Does not advance while the cast is paused.&quot;,
             &quot;params&quot;: [],
             &quot;returns&quot;: [
                 {
-                    &quot;desc&quot;: &quot;Age in seconds.&quot;,
+                    &quot;desc&quot;: &quot;Simulated age in seconds.&quot;,
                     &quot;lua_type&quot;: &quot;number&quot;
                 }
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 150,
+                &quot;line&quot;: 185,
                 &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;GetDistanceTraveled&quot;,
-            &quot;desc&quot;: &quot;Returns the straight-line distance from [BulletContext.Origin] to the current\n[BulletContext.Position]. Note: this is not the same as [BulletContext.Length],\nwhich accumulates the actual curved path length.&quot;,
+            &quot;desc&quot;: &quot;Returns the true accumulated path length of the bullet in studs.\n\nUnlike `(Position - Origin).Magnitude`, this correctly accounts for\nbounces and homing curves by accumulating the actual frame-by-frame\ndisplacement. Equivalent to reading `context.Length`.&quot;,
             &quot;params&quot;: [],
             &quot;returns&quot;: [
                 {
-                    &quot;desc&quot;: &quot;Distance in studs, or 0 if no position is recorded yet.&quot;,
+                    &quot;desc&quot;: &quot;Path length in studs.&quot;,
                     &quot;lua_type&quot;: &quot;number&quot;
                 }
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 159,
+                &quot;line&quot;: 196,
                 &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;GetSnapshot&quot;,
-            &quot;desc&quot;: &quot;Returns a read-only snapshot of the bullet&#x27;s current state.\n\nUseful for logging, replication, or passing state to systems that should\nnot hold a live reference to the context.&quot;,
+            &quot;desc&quot;: &quot;Returns a read-only snapshot of the bullet&#x27;s current state.\n\nUseful for logging, replication, or passing state to systems that\nshould not hold a live reference to the context.&quot;,
             &quot;params&quot;: [],
             &quot;returns&quot;: [
                 {
@@ -248,18 +283,18 @@ context<span class="token punctuation">.</span>UserData<span class="token punctu
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 169,
+                &quot;line&quot;: 206,
                 &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;Terminate&quot;,
-            &quot;desc&quot;: &quot;Terminates the bullet immediately, notifying the solver to clean up resources,\ndestroy the cosmetic object, and fire `OnTerminated`.\n\nCalling `Terminate` on an already-dead bullet is a no-op.&quot;,
+            &quot;desc&quot;: &quot;Terminates the bullet immediately, notifying the solver to clean up\nresources, destroy the cosmetic object, and fire `OnTerminated`.\n\nCalling `Terminate` on an already-dead bullet is a no-op.&quot;,
             &quot;params&quot;: [],
             &quot;returns&quot;: [],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 177,
+                &quot;line&quot;: 214,
                 &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
             }
         }
@@ -267,11 +302,11 @@ context<span class="token punctuation">.</span>UserData<span class="token punctu
     &quot;properties&quot;: [
         {
             &quot;name&quot;: &quot;Id&quot;,
-            &quot;desc&quot;: &quot;Auto-incrementing unique identifier assigned at construction time.\nUse this to distinguish bullets in signal handlers without storing separate references.&quot;,
+            &quot;desc&quot;: &quot;Auto-incrementing unique identifier assigned at construction time.\nUse this to distinguish bullets in signal handlers without storing\nseparate references.&quot;,
             &quot;lua_type&quot;: &quot;number&quot;,
             &quot;readonly&quot;: true,
             &quot;source&quot;: {
-                &quot;line&quot;: 39,
+                &quot;line&quot;: 41,
                 &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
             }
         },
@@ -281,7 +316,7 @@ context<span class="token punctuation">.</span>UserData<span class="token punctu
             &quot;lua_type&quot;: &quot;Vector3&quot;,
             &quot;readonly&quot;: true,
             &quot;source&quot;: {
-                &quot;line&quot;: 47,
+                &quot;line&quot;: 49,
                 &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
             }
         },
@@ -291,87 +326,107 @@ context<span class="token punctuation">.</span>UserData<span class="token punctu
             &quot;lua_type&quot;: &quot;Vector3&quot;,
             &quot;readonly&quot;: true,
             &quot;source&quot;: {
-                &quot;line&quot;: 55,
+                &quot;line&quot;: 57,
                 &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;Speed&quot;,
-            &quot;desc&quot;: &quot;Initial speed in studs per second. The bullet&#x27;s actual speed decreases over\ntime due to bounces (restitution) and pierces (speed retention).&quot;,
+            &quot;desc&quot;: &quot;Initial speed in studs per second. The bullet&#x27;s actual speed decreases\nover time due to drag, bounces (restitution), and pierces (speed retention).\nRead the magnitude of `Velocity` for the current speed.&quot;,
             &quot;lua_type&quot;: &quot;number&quot;,
             &quot;readonly&quot;: true,
             &quot;source&quot;: {
-                &quot;line&quot;: 64,
+                &quot;line&quot;: 67,
                 &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;StartTime&quot;,
-            &quot;desc&quot;: &quot;`os.clock()` timestamp at construction. Use with [BulletContext:GetLifetime] to\ncompute bullet age without storing the time yourself.&quot;,
+            &quot;desc&quot;: &quot;`os.clock()` timestamp at construction. Use with [BulletContext:GetLifetime]\nto compute bullet age without storing the time yourself.&quot;,
             &quot;lua_type&quot;: &quot;number&quot;,
             &quot;readonly&quot;: true,
             &quot;source&quot;: {
-                &quot;line&quot;: 73,
+                &quot;line&quot;: 76,
                 &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;Position&quot;,
-            &quot;desc&quot;: &quot;Current world-space position. Updated every frame by the solver. `nil` until the\nfirst simulation step.&quot;,
+            &quot;desc&quot;: &quot;Current world-space position. Updated every frame by the solver.\n`nil` until the first simulation step.&quot;,
             &quot;lua_type&quot;: &quot;Vector3?&quot;,
             &quot;readonly&quot;: true,
             &quot;source&quot;: {
-                &quot;line&quot;: 82,
+                &quot;line&quot;: 85,
                 &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;Velocity&quot;,
-            &quot;desc&quot;: &quot;Current velocity vector in studs per second. Updated every frame by the solver.\nThe magnitude of this vector is the current speed.&quot;,
+            &quot;desc&quot;: &quot;Current velocity vector in studs per second. Updated every frame by the\nsolver. The magnitude of this vector is the current speed.&quot;,
             &quot;lua_type&quot;: &quot;Vector3&quot;,
             &quot;readonly&quot;: true,
             &quot;source&quot;: {
-                &quot;line&quot;: 91,
+                &quot;line&quot;: 94,
                 &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;Alive&quot;,
-            &quot;desc&quot;: &quot;`true` while the cast is being simulated. Set to `false` by [BulletContext:Terminate]\nor automatically by the solver on hit, distance expiry, or speed expiry.&quot;,
+            &quot;desc&quot;: &quot;`true` while the cast is being simulated. Set to `false` by\n[BulletContext:Terminate] or automatically by the solver on hit,\ndistance expiry, speed expiry, or corner-trap detection.&quot;,
             &quot;lua_type&quot;: &quot;boolean&quot;,
             &quot;readonly&quot;: true,
             &quot;source&quot;: {
-                &quot;line&quot;: 100,
+                &quot;line&quot;: 104,
                 &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;Length&quot;,
-            &quot;desc&quot;: &quot;Cumulative distance the bullet has travelled along its actual ray path, in studs.&quot;,
+            &quot;desc&quot;: &quot;True accumulated path distance in studs — the sum of every frame\ndisplacement since firing. This diverges from straight-line\n`(Position - Origin).Magnitude` for bullets that bounce or follow\nhoming curves. See also [BulletContext:GetDistanceTraveled].&quot;,
             &quot;lua_type&quot;: &quot;number&quot;,
             &quot;readonly&quot;: true,
             &quot;source&quot;: {
-                &quot;line&quot;: 108,
+                &quot;line&quot;: 115,
+                &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SimulationTime&quot;,
+            &quot;desc&quot;: &quot;Total seconds this bullet has been simulated, as tracked by the solver.\nUpdated every frame. Use [BulletContext:GetLifetime] to read this.\nDoes not advance while the cast is paused.&quot;,
+            &quot;lua_type&quot;: &quot;number&quot;,
+            &quot;readonly&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 125,
+                &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;CosmeticBulletObject&quot;,
+            &quot;desc&quot;: &quot;Set by the solver after the cosmetic bullet is created. Readable from\nsignal handlers (`OnSegmentOpen`, `OnBounce`, etc.) via the context argument.\n`nil` when no cosmetic is configured or after the bullet terminates.&quot;,
+            &quot;lua_type&quot;: &quot;Instance?&quot;,
+            &quot;readonly&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 135,
                 &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;UserData&quot;,
-            &quot;desc&quot;: &quot;Free-form table for attaching cast-specific metadata (shooter UserId, weapon type,\ndamage value, etc.). Surfaced on every signal emission — read it in your handlers\nto route events without maintaining a parallel lookup.\n\n```lua\ncontext.UserData.Damage   = 45\ncontext.UserData.ShooterId = Players.LocalPlayer.UserId\n```&quot;,
+            &quot;desc&quot;: &quot;Free-form table for attaching cast-specific metadata (shooter UserId,\nweapon type, damage value, etc.). Surfaced on every signal emission —\nread it in your handlers to route events without maintaining a parallel lookup.\n\n```lua\ncontext.UserData.Damage    = 45\ncontext.UserData.ShooterId = Players.LocalPlayer.UserId\n\nSignals.OnHit:Connect(function(context, result, velocity)\n    local damage    = context.UserData.Damage\n    local shooterId = context.UserData.ShooterId\nend)\n```&quot;,
             &quot;lua_type&quot;: &quot;{[any]: any}&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 122,
+                &quot;line&quot;: 154,
                 &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
             }
         }
     ],
     &quot;types&quot;: [],
     &quot;name&quot;: &quot;BulletContext&quot;,
-    &quot;desc&quot;: &quot;The public-facing object that weapon code interacts with for every in-flight projectile.\n\nCreate one before firing, pass it to [HybridSolver:Fire], then use the module-level\nsignals to react to events. The context is passed as the first argument on every signal\nso you can identify the bullet and read its current state.\n\n```lua\nlocal context = BulletContext.new({\n    Origin    = muzzlePosition,\n    Direction = direction,\n    Speed     = 200,\n    SolverData = {},\n})\n\nSolver:Fire(context, Behavior)\n```\n\n:::tip UserData\nAttach weapon-specific metadata (shooter UserId, damage value, hit-group flags, etc.)\nvia `context.UserData` before calling `Fire`. This table is passed unchanged on every\nsignal emission.\n:::&quot;,
+    &quot;desc&quot;: &quot;The public-facing object that weapon code interacts with for every\nin-flight projectile.\n\nCreate one before firing, pass it to [Vetra:Fire], then use the\nsolver&#x27;s signals to react to events. The context is passed as the\nfirst argument on every signal so you can identify the bullet and\nread its current state.\n\n```lua\nlocal context = BulletContext.new({\n    Origin    = muzzlePosition,\n    Direction = direction,\n    Speed     = 200,\n})\n\nSolver:Fire(context, Behavior)\n```\n\n:::tip UserData\nAttach weapon-specific metadata (shooter UserId, damage value, hit-group\nflags, etc.) via `context.UserData` before calling `Fire`. This table is\npassed unchanged on every signal emission.\n:::&quot;,
     &quot;source&quot;: {
-        &quot;line&quot;: 27,
+        &quot;line&quot;: 28,
         &quot;path&quot;: &quot;docs/BulletContext.lua&quot;
     }
-}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#properties" class="table-of-contents__link toc-highlight">Properties</a><ul><li><a href="#Alive" class="table-of-contents__link toc-highlight">Alive</a></li><li><a href="#Direction" class="table-of-contents__link toc-highlight">Direction</a></li><li><a href="#Id" class="table-of-contents__link toc-highlight">Id</a></li><li><a href="#Length" class="table-of-contents__link toc-highlight">Length</a></li><li><a href="#Origin" class="table-of-contents__link toc-highlight">Origin</a></li><li><a href="#Position" class="table-of-contents__link toc-highlight">Position</a></li><li><a href="#Speed" class="table-of-contents__link toc-highlight">Speed</a></li><li><a href="#StartTime" class="table-of-contents__link toc-highlight">StartTime</a></li><li><a href="#UserData" class="table-of-contents__link toc-highlight">UserData</a></li><li><a href="#Velocity" class="table-of-contents__link toc-highlight">Velocity</a></li></ul></li><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#GetDistanceTraveled" class="table-of-contents__link toc-highlight">:GetDistanceTraveled</a></li><li><a href="#GetLifetime" class="table-of-contents__link toc-highlight">:GetLifetime</a></li><li><a href="#GetSnapshot" class="table-of-contents__link toc-highlight">:GetSnapshot</a></li><li><a href="#IsAlive" class="table-of-contents__link toc-highlight">:IsAlive</a></li><li><a href="#Terminate" class="table-of-contents__link toc-highlight">:Terminate</a></li><li><a href="#new" class="table-of-contents__link toc-highlight">.new</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://discord.gg/XMYMRKcd3g" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord Server<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://discord.com/users/897026279243669504" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord (Direct)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div><div class="col footer__col"><div class="footer__title">Social</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://www.instagram.com/vedevelopment/" target="_blank" rel="noopener noreferrer" class="footer__link-item">Instagram<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://x.com/vedevelopment_" target="_blank" rel="noopener noreferrer" class="footer__link-item">X (Twitter)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://www.tiktok.com/@vedevelopment" target="_blank" rel="noopener noreferrer" class="footer__link-item">TikTok<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 VeDevelopment</div></div></div></footer></div>
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#properties" class="table-of-contents__link toc-highlight">Properties</a><ul><li><a href="#Alive" class="table-of-contents__link toc-highlight">Alive</a></li><li><a href="#CosmeticBulletObject" class="table-of-contents__link toc-highlight">CosmeticBulletObject</a></li><li><a href="#Direction" class="table-of-contents__link toc-highlight">Direction</a></li><li><a href="#Id" class="table-of-contents__link toc-highlight">Id</a></li><li><a href="#Length" class="table-of-contents__link toc-highlight">Length</a></li><li><a href="#Origin" class="table-of-contents__link toc-highlight">Origin</a></li><li><a href="#Position" class="table-of-contents__link toc-highlight">Position</a></li><li><a href="#SimulationTime" class="table-of-contents__link toc-highlight">SimulationTime</a></li><li><a href="#Speed" class="table-of-contents__link toc-highlight">Speed</a></li><li><a href="#StartTime" class="table-of-contents__link toc-highlight">StartTime</a></li><li><a href="#UserData" class="table-of-contents__link toc-highlight">UserData</a></li><li><a href="#Velocity" class="table-of-contents__link toc-highlight">Velocity</a></li></ul></li><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#GetDistanceTraveled" class="table-of-contents__link toc-highlight">:GetDistanceTraveled</a></li><li><a href="#GetLifetime" class="table-of-contents__link toc-highlight">:GetLifetime</a></li><li><a href="#GetSnapshot" class="table-of-contents__link toc-highlight">:GetSnapshot</a></li><li><a href="#IsAlive" class="table-of-contents__link toc-highlight">:IsAlive</a></li><li><a href="#Terminate" class="table-of-contents__link toc-highlight">:Terminate</a></li><li><a href="#new" class="table-of-contents__link toc-highlight">.new</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://discord.gg/XMYMRKcd3g" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord Server<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://discord.com/users/897026279243669504" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord (Direct)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div><div class="col footer__col"><div class="footer__title">Social</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://www.instagram.com/vedevelopment/" target="_blank" rel="noopener noreferrer" class="footer__link-item">Instagram<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://x.com/vedevelopment_" target="_blank" rel="noopener noreferrer" class="footer__link-item">X (Twitter)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://www.tiktok.com/@vedevelopment" target="_blank" rel="noopener noreferrer" class="footer__link-item">TikTok<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 VeDevelopment</div></div></div></footer></div>
 </body>
 </html>

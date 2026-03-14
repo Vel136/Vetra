@@ -3,27 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.7.0">
-<title data-rh="true">TypeDefinitions | Vetra</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://vetra-docs.netlify.app/api/TypeDefinitions"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="TypeDefinitions | Vetra"><meta data-rh="true" name="description" content="Shared Luau type definitions used across Vetra.
+<title data-rh="true">TypeDefinitions | Vetra</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://vetra-docs.netlify.app/api/TypeDefinitions"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="TypeDefinitions | Vetra"><meta data-rh="true" name="description" content="Shared Luau type definitions used across Vetra and VetraNet.
 
 These are imported for type annotations only — there is no runtime cost.
-You generally do not need to require this module directly; the types are
-re-exported from [Vetra] where needed."><meta data-rh="true" property="og:description" content="Shared Luau type definitions used across Vetra.
+You generally do not need to require this module directly."><meta data-rh="true" property="og:description" content="Shared Luau type definitions used across Vetra and VetraNet.
 
 These are imported for type annotations only — there is no runtime cost.
-You generally do not need to require this module directly; the types are
-re-exported from [Vetra] where needed."><link data-rh="true" rel="canonical" href="https://vetra-docs.netlify.app/api/TypeDefinitions"><link data-rh="true" rel="alternate" href="https://vetra-docs.netlify.app/api/TypeDefinitions" hreflang="en"><link data-rh="true" rel="alternate" href="https://vetra-docs.netlify.app/api/TypeDefinitions" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.809f880b.css">
-<script src="/assets/js/runtime~main.0205adfc.js" defer="defer"></script>
-<script src="/assets/js/main.6344d29f.js" defer="defer"></script>
+You generally do not need to require this module directly."><link data-rh="true" rel="canonical" href="https://vetra-docs.netlify.app/api/TypeDefinitions"><link data-rh="true" rel="alternate" href="https://vetra-docs.netlify.app/api/TypeDefinitions" hreflang="en"><link data-rh="true" rel="alternate" href="https://vetra-docs.netlify.app/api/TypeDefinitions" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f0e219d2.css">
+<script src="/assets/js/runtime~main.caa7b844.js" defer="defer"></script>
+<script src="/assets/js/main.2340574e.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
-<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,t("light"))}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><b class="navbar__title text--truncate">Vetra</b></a><a class="navbar__item navbar__link" href="/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Vel136/HybridSolver" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/api/Vetra">Core</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/api/BehaviorBuilder">Configuration</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/api/TypeDefinitions">Types</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/api/TypeDefinitions">​Type​Definitions</a></li></ul></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Type</span><span style="display:inline-block">Definitions</span></h1><div class="luaClassTags_EipM"></div><div>
-<p>Shared Luau type definitions used across Vetra.</p>
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,t("light"))}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><b class="navbar__title text--truncate">Vetra</b></a><a class="navbar__item navbar__link" href="/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Vel136/Vetra" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/api/Vetra">Core</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/api/BehaviorBuilder">Configuration</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/api/VetraNet">Network</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/api/TypeDefinitions">Types</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/api/TypeDefinitions">​Type​Definitions</a></li></ul></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Type</span><span style="display:inline-block">Definitions</span></h1><div class="luaClassTags_EipM"></div><div>
+<p>Shared Luau type definitions used across Vetra and VetraNet.</p>
 <p>
   These are imported for type annotations only — there is no runtime cost.
-  You generally do not need to require this module directly; the types are
-  re-exported from <a href="/api/Vetra">Vetra</a> where needed.
+  You generally do not need to require this module directly.
 </p>
-</div></header><h2 class="anchor anchorWithStickyNavbar_LWe7" id="types">Types<a href="#types" class="hash-link" aria-label="Direct link to Types" title="Direct link to Types">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="CastTrajectory"><code style="text-decoration:none">CastTrajectory</code><a href="#CastTrajectory" class="hash-link" aria-label="Direct link to CastTrajectory" title="Direct link to CastTrajectory">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/TypeDefinitions.lua#L29"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>CastTrajectory<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>StartTime<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+</div></header><h2 class="anchor anchorWithStickyNavbar_LWe7" id="types">Types<a href="#types" class="hash-link" aria-label="Direct link to Types" title="Direct link to Types">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="CastTrajectory"><code style="text-decoration:none">CastTrajectory</code><a href="#CastTrajectory" class="hash-link" aria-label="Direct link to CastTrajectory" title="Direct link to CastTrajectory">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/TypeDefinitions.lua#L28"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>CastTrajectory<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>StartTime<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
 <p><code>Runtime.TotalRuntime</code> when this segment began.</p>
 </span></span></div><div><code>EndTime<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
 <p><code>Runtime.TotalRuntime</code> when closed; <code>-1</code> while active.</p>
@@ -32,7 +29,7 @@ re-exported from [Vetra] where needed."><link data-rh="true" rel="canonical" hre
 </span></span></div><div><code>InitialVelocity<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
 <p>Velocity at <code>StartTime</code> in studs/second.</p>
 </span></span></div><div><code>Acceleration<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
-<p>Constant acceleration for this arc (gravity + extra).</p>
+<p>Constant acceleration for this arc (gravity + extra + initial drag).</p>
 </span></span></div></div><code>}</code></div><div>
 <p>Represents one continuous parabolic arc of a projectile's flight path.</p>
 <p>
@@ -40,7 +37,7 @@ re-exported from [Vetra] where needed."><link data-rh="true" rel="canonical" hre
   mid-flight kinematic change via the <code>Set*</code> / <code>Add*</code> methods on <a href="/api/VetraCast">VetraCast</a>.
   <code>EndTime</code> of <code>-1</code> indicates the segment is still active.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="BulletSnapshot"><code style="text-decoration:none">BulletSnapshot</code><a href="#BulletSnapshot" class="hash-link" aria-label="Direct link to BulletSnapshot" title="Direct link to BulletSnapshot">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/TypeDefinitions.lua#L49"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>BulletSnapshot<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>Id<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="BulletSnapshot"><code style="text-decoration:none">BulletSnapshot</code><a href="#BulletSnapshot" class="hash-link" aria-label="Direct link to BulletSnapshot" title="Direct link to BulletSnapshot">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/TypeDefinitions.lua#L49"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>BulletSnapshot<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>Id<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
 <p>Unique identifier.</p>
 </span></span></div><div><code>Origin<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
 <p>Muzzle position at fire time.</p>
@@ -55,82 +52,179 @@ re-exported from [Vetra] where needed."><link data-rh="true" rel="canonical" hre
 </span></span></div><div><code>Alive<!-- -->: </code><code class="blue_P4bS">boolean</code><span class="inlineDescription_G7Er">-- <span>
 <p>Whether the cast is still being simulated.</p>
 </span></span></div><div><code>Lifetime<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
-<p>Seconds elapsed since creation.</p>
+<p>Seconds of simulated time elapsed since creation.</p>
+</span></span></div><div><code>PathLength<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
+<p>True accumulated path distance (bounces included).</p>
 </span></span></div><div><code>DistanceTraveled<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
-<p>Straight-line distance from Origin to Position.</p>
+<p>Alias for PathLength (API compatibility).</p>
 </span></span></div></div><code>}</code></div><div>
 <p>
   Read-only snapshot of a <a href="/api/BulletContext">BulletContext</a>'s state at a point in time.
   Returned by <a href="/api/BulletContext#GetSnapshot">BulletContext:GetSnapshot</a>.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="BulletContextConfig"><code style="text-decoration:none">BulletContextConfig</code><a href="#BulletContextConfig" class="hash-link" aria-label="Direct link to BulletContextConfig" title="Direct link to BulletContextConfig">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/TypeDefinitions.lua#L64"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>BulletContextConfig<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>Origin<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="BulletContextConfig"><code style="text-decoration:none">BulletContextConfig</code><a href="#BulletContextConfig" class="hash-link" aria-label="Direct link to BulletContextConfig" title="Direct link to BulletContextConfig">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/TypeDefinitions.lua#L63"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>BulletContextConfig<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>Origin<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
 <p>Required. World-space muzzle position.</p>
 </span></span></div><div><code>Direction<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
 <p>Required. Unit direction vector.</p>
 </span></span></div><div><code>Speed<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
 <p>Required. Initial speed in studs/second.</p>
-</span></span></div><div><code>Callbacks<!-- -->: </code><code class="blue_P4bS">BulletCallbacks?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Optional per-instance event callbacks.</p>
 </span></span></div><div><code>SolverData<!-- -->: </code><code class="blue_P4bS">any?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Internal — used by the solver to attach lifecycle hooks.</p>
+<p>Internal — used by the solver to attach lifecycle hooks. Do not set from weapon code.</p>
 </span></span></div></div><code>}</code></div><div>
 <p>Configuration table passed to <a href="/api/BulletContext#new">BulletContext.new</a>.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="VetraBehavior"><code style="text-decoration:none">VetraBehavior</code><a href="#VetraBehavior" class="hash-link" aria-label="Direct link to VetraBehavior" title="Direct link to VetraBehavior">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/HybridSolver/blob/master/docs/TypeDefinitions.lua#L119"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>VetraBehavior<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>Acceleration<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
-<p>Extra acceleration on top of gravity. Default: <code>Vector3.zero</code></p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="SpeedProfile"><code style="text-decoration:none">SpeedProfile</code><a href="#SpeedProfile" class="hash-link" aria-label="Direct link to SpeedProfile" title="Direct link to SpeedProfile">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/TypeDefinitions.lua#L82"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>SpeedProfile<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>DragCoefficient<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Drag coefficient override for this regime.</p>
+</span></span></div><div><code>DragModel<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/TypeDefinitions#DragModel">DragModel?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Drag model override for this regime.</p>
+</span></span></div><div><code>NormalPerturbation<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Bounce noise override for this regime.</p>
+</span></span></div><div><code>MaterialRestitution<!-- -->: </code><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">Enum.Material</code><code>]</code></span><code>: </code><code class="blue_P4bS">number</code><code class="purple_ieR2">}</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Per-material restitution overrides.</p>
+</span></span></div><div><code>Restitution<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Base restitution override for this regime.</p>
+</span></span></div></div><code>}</code></div><div>
+<p>
+  Per-speed-regime behavior overrides. Assigned to <code>SupersonicProfile</code> or
+  <code>SubsonicProfile</code> on a <code>VetraBehavior</code>. The solver blends in the matching
+  profile's values when the bullet crosses the speed of sound (343 studs/s).
+</p>
+<p>All fields are optional. Omitted fields continue using the base behavior values.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="VetraBehavior"><code style="text-decoration:none">VetraBehavior</code><a href="#VetraBehavior" class="hash-link" aria-label="Direct link to VetraBehavior" title="Direct link to VetraBehavior">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/TypeDefinitions.lua#L241"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>VetraBehavior<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>Acceleration<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Extra acceleration on top of gravity (e.g. rocket thrust). Default: <code>Vector3.zero</code></p>
 </span></span></div><div><code>MaxDistance<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
 <p>Max flight distance in studs. Default: <code>500</code></p>
+</span></span></div><div><code>MaxSpeed<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Speed ceiling; bullet terminates if exceeded. Default: <code>math.huge</code></p>
+</span></span></div><div><code>MinSpeed<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Termination speed threshold in studs/sec. Default: <code>1</code></p>
 </span></span></div><div><code>RaycastParams<!-- -->: </code><code class="blue_P4bS">RaycastParams?</code><span class="inlineDescription_G7Er">-- <span>
 <p>Raycast filter. Default: <code>RaycastParams.new()</code></p>
 </span></span></div><div><code>Gravity<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
-<p>Gravitational acceleration. Default: workspace gravity downward.</p>
-</span></span></div><div><code>MinSpeed<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Termination speed threshold in studs/sec. Default: <code>1</code></p>
-</span></span></div><div><code>CanPierceFunction<!-- -->: </code><code class="purple_ieR2">(</code><code class="green_DgR4">(</code><div class="inset_uKQm"><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/BulletContext">BulletContext</a></code><code class="green_DgR4">,</code></div><div class="inset_uKQm"><code class="blue_P4bS">RaycastResult</code><code class="green_DgR4">,</code></div><div class="inset_uKQm"><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><code class="green_DgR4">)</code><code class="green_DgR4"> → </code><code class="blue_P4bS">boolean</code><code class="purple_ieR2">)</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Pierce gate. Default: <code>nil</code></p>
+<p>Gravitational acceleration (negative Y = downward). Default: workspace gravity downward.</p>
+</span></span></div><div><code>CastFunction<!-- -->: </code><code class="purple_ieR2">(</code><code class="green_DgR4">(</code><div class="inset_uKQm"><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code class="green_DgR4">,</code></div><div class="inset_uKQm"><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code class="green_DgR4">,</code></div><div class="inset_uKQm"><code class="blue_P4bS">RaycastParams</code></div><code class="green_DgR4">)</code><code class="green_DgR4"> → </code><code class="blue_P4bS">RaycastResult?</code><code class="purple_ieR2">)</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Custom cast function (serial solver only). Default: <code>nil</code></p>
+</span></span></div><div><code>BulletMass<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Bullet mass for penetration and impact-force calculations. Default: <code>0</code></p>
+</span></span></div><div><code>DragCoefficient<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Drag coefficient. <code>0</code> = no drag. Default: <code>0</code></p>
+</span></span></div><div><code>DragModel<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/TypeDefinitions#DragModel">DragModel?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Drag model type. Default: <code>"Quadratic"</code></p>
+</span></span></div><div><code>DragSegmentInterval<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Seconds between drag + Magnus recalculation steps. Default: <code>0.05</code></p>
+</span></span></div><div><code>CustomMachTable<!-- -->: </code><code class="purple_ieR2">{</code><code class="green_DgR4">{</code><code class="blue_P4bS">number</code><code class="green_DgR4">}</code><code class="purple_ieR2">}</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Custom Mach→Cd table pairs when <code>DragModel = "Custom"</code>.</p>
+</span></span></div><div><code>WindResponse<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Multiplier on the solver's wind vector (<code>Vetra:SetWind</code>). <code>1.0</code> = full effect, <code>0.0</code> = immune. Default: <code>1.0</code></p>
+</span></span></div><div><code>SpeedThresholds<!-- -->: </code><code class="purple_ieR2">{</code><code class="blue_P4bS">number</code><code class="purple_ieR2">}</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Sorted list of speeds (studs/s) that fire <code>OnSpeedThresholdCrossed</code>. Default: <code>{}</code></p>
+</span></span></div><div><code>SupersonicProfile<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/TypeDefinitions#SpeedProfile">SpeedProfile?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Behavior overrides when bullet speed is >= 343 studs/s. Default: <code>nil</code></p>
+</span></span></div><div><code>SubsonicProfile<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/TypeDefinitions#SpeedProfile">SpeedProfile?</a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Behavior overrides when bullet speed is &#x3C; 343 studs/s. Default: <code>nil</code></p>
+</span></span></div><div><code>SpinVector<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Spin axis (direction) × angular velocity (magnitude, rad/s). <code>Vector3.zero</code> = disabled. Default: <code>Vector3.zero</code></p>
+</span></span></div><div><code>MagnusCoefficient<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Magnus lift coefficient. Typical range: 0.00005–0.001. <code>0</code> = disabled. Default: <code>0</code></p>
+</span></span></div><div><code>SpinDecayRate<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Rate at which <code>SpinVector</code> magnitude decreases per second. <code>0</code> = no decay. Default: <code>0</code></p>
+</span></span></div><div><code>GyroDriftRate<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Lateral drift acceleration magnitude in studs/s². <code>nil</code> = disabled. Default: <code>nil</code></p>
+</span></span></div><div><code>GyroDriftAxis<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
+<p>Reference axis for drift direction. <code>nil</code> = world UP (right-hand rifling). Default: <code>nil</code></p>
+</span></span></div><div><code>TumbleSpeedThreshold<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Speed below which tumbling begins. <code>nil</code> = disabled. Default: <code>nil</code></p>
+</span></span></div><div><code>TumbleDragMultiplier<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Drag multiplied by this factor while tumbling. Default: <code>3.0</code></p>
+</span></span></div><div><code>TumbleLateralStrength<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Chaotic lateral acceleration magnitude in studs/s². Default: <code>0</code></p>
+</span></span></div><div><code>TumbleOnPierce<!-- -->: </code><code class="blue_P4bS">boolean?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Begin tumbling on first pierce regardless of speed. Default: <code>false</code></p>
+</span></span></div><div><code>TumbleRecoverySpeed<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Speed above which tumbling ends. <code>nil</code> = tumble is permanent. Default: <code>nil</code></p>
+</span></span></div><div><code>HomingPositionProvider<!-- -->: </code><code class="purple_ieR2">(</code><code class="green_DgR4">(</code><div class="inset_uKQm"><code>pos<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code class="green_DgR4">,</code></div><div class="inset_uKQm"><code>vel<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><code class="green_DgR4">)</code><code class="green_DgR4"> → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code class="purple_ieR2">)</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Called every frame for target position. Return <code>nil</code> to disengage. Default: <code>nil</code></p>
+</span></span></div><div><code>CanHomeFunction<!-- -->: </code><code class="blue_P4bS">CanHomeCallback?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Gate callback; return <code>false</code> to disengage. Default: <code>nil</code></p>
+</span></span></div><div><code>HomingStrength<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Steering force in degrees/second. Default: <code>90</code></p>
+</span></span></div><div><code>HomingMaxDuration<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Max seconds of active homing before <code>OnHomingDisengaged</code> fires. Default: <code>3</code></p>
+</span></span></div><div><code>HomingAcquisitionRadius<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Min target distance in studs to engage. <code>0</code> = engage immediately on fire. Default: <code>0</code></p>
+</span></span></div><div><code>TrajectoryPositionProvider<!-- -->: </code><code class="purple_ieR2">(</code><code class="green_DgR4">(</code><code>elapsed<!-- -->: </code><code class="blue_P4bS">number</code><code class="green_DgR4">)</code><code class="green_DgR4"> → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code class="purple_ieR2">)</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Override bullet position each frame with a sampled curve. Return <code>nil</code> to end the override and terminate. Default: <code>nil</code></p>
+</span></span></div><div><code>CanPierceFunction<!-- -->: </code><code class="blue_P4bS">CanPierceCallback?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Pierce gate; return <code>true</code> to pierce. Default: <code>nil</code></p>
 </span></span></div><div><code>MaxPierceCount<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
 <p>Lifetime pierce limit. Default: <code>3</code></p>
 </span></span></div><div><code>PierceSpeedThreshold<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Min speed to attempt pierce. Default: <code>50</code></p>
+<p>Min speed to attempt pierce (studs/s). Default: <code>50</code></p>
 </span></span></div><div><code>PenetrationSpeedRetention<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
 <p>Speed fraction kept per pierce <code>[0,1]</code>. Default: <code>0.8</code></p>
 </span></span></div><div><code>PierceNormalBias<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Min approach angle for pierce <code>[0,1]</code>. Default: <code>1.0</code></p>
-</span></span></div><div><code>CanBounceFunction<!-- -->: </code><code class="purple_ieR2">(</code><code class="green_DgR4">(</code><div class="inset_uKQm"><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/BulletContext">BulletContext</a></code><code class="green_DgR4">,</code></div><div class="inset_uKQm"><code class="blue_P4bS">RaycastResult</code><code class="green_DgR4">,</code></div><div class="inset_uKQm"><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Vector3" target="_blank" rel="noopener noreferrer">Vector3<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><code class="green_DgR4">)</code><code class="green_DgR4"> → </code><code class="blue_P4bS">boolean</code><code class="purple_ieR2">)</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Bounce gate. Default: <code>nil</code></p>
+<p>Min approach angle for pierce <code>[0,1]</code>. <code>1.0</code> = all angles, <code>0.0</code> = perpendicular only. Default: <code>1.0</code></p>
+</span></span></div><div><code>PenetrationDepth<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Max wall thickness per pierce in studs. <code>0</code> = no per-pierce depth limit. Default: <code>0</code></p>
+</span></span></div><div><code>PenetrationForce<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Total momentum force budget for penetration. <code>0</code> = disabled. Default: <code>0</code></p>
+</span></span></div><div><code>PenetrationThicknessLimit<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Hard cap on wall thickness for the exit-point raycast in studs. Default: <code>500</code></p>
+</span></span></div><div><code>FragmentOnPierce<!-- -->: </code><code class="blue_P4bS">boolean?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Spawn fragment child bullets when a pierce occurs. Default: <code>false</code></p>
+</span></span></div><div><code>FragmentCount<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Number of fragments to spawn per pierce. Default: <code>3</code></p>
+</span></span></div><div><code>FragmentDeviation<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Angular half-angle spread of the fragment cone in degrees. Default: <code>15</code></p>
+</span></span></div><div><code>CanBounceFunction<!-- -->: </code><code class="blue_P4bS">CanBounceCallback?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Bounce gate; return <code>true</code> to bounce. Default: <code>nil</code></p>
 </span></span></div><div><code>MaxBounces<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
 <p>Lifetime bounce limit. Default: <code>5</code></p>
 </span></span></div><div><code>BounceSpeedThreshold<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Min speed to attempt bounce. Default: <code>20</code></p>
+<p>Min speed to attempt bounce (studs/s). Default: <code>20</code></p>
 </span></span></div><div><code>Restitution<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
 <p>Energy retention per bounce <code>[0,1]</code>. Default: <code>0.7</code></p>
 </span></span></div><div><code>MaterialRestitution<!-- -->: </code><code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">Enum.Material</code><code>]</code></span><code>: </code><code class="blue_P4bS">number</code><code class="purple_ieR2">}</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Per-material multipliers. Default: <code>{}</code></p>
+<p>Per-material multipliers, combined with <code>Restitution</code>. Default: <code>{}</code></p>
 </span></span></div><div><code>NormalPerturbation<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Random normal noise for rough surfaces. Default: <code>0.0</code></p>
+<p>Random surface-normal noise for rough surfaces. <code>0</code> = clean reflection. Default: <code>0.0</code></p>
+</span></span></div><div><code>ResetPierceOnBounce<!-- -->: </code><code class="blue_P4bS">boolean?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Reset pierce state after each confirmed bounce. Default: <code>false</code></p>
 </span></span></div><div><code>HighFidelitySegmentSize<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Sub-segment length in studs. Default: <code>0.5</code></p>
+<p>Sub-segment length in studs (starting value). Default: <code>0.5</code></p>
 </span></span></div><div><code>HighFidelityFrameBudget<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Ms budget per cast per frame. Default: <code>4</code></p>
+<p>Millisecond budget per cast per frame for sub-segment raycasts. Default: <code>4</code></p>
 </span></span></div><div><code>AdaptiveScaleFactor<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Adaptive scaling multiplier <code>> 1</code>. Default: <code>1.5</code></p>
+<p>Adaptive sizing multiplier, must be <code>> 1</code>. Default: <code>1.5</code></p>
 </span></span></div><div><code>MinSegmentSize<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Hard floor for adaptive sizing. Default: <code>0.1</code></p>
+<p>Hard floor for adaptive segment size (studs). Default: <code>0.1</code></p>
 </span></span></div><div><code>MaxBouncesPerFrame<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Per-frame bounce cap. Default: <code>10</code></p>
+<p>Per-frame bounce cap across all sub-segments. Default: <code>10</code></p>
 </span></span></div><div><code>CornerTimeThreshold<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Min seconds between bounces. Default: <code>0.002</code></p>
-</span></span></div><div><code>CornerNormalDotThreshold<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Normal opposition threshold <code>[-1,0]</code>. Default: <code>-0.85</code></p>
+<p>Min seconds between bounces (Pass 1). Default: <code>0.002</code></p>
+</span></span></div><div><code>CornerPositionHistorySize<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Bounce position history size, positive integer (Pass 3 &#x26; 4). Default: <code>4</code></p>
 </span></span></div><div><code>CornerDisplacementThreshold<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Min bounce separation in studs. Default: <code>0.5</code></p>
+<p>Min bounce separation in studs (Pass 3). Default: <code>0.5</code></p>
+</span></span></div><div><code>CornerEMAAlpha<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>EMA smoothing factor for velocity direction <code>(0,1)</code> (Pass 2). Default: <code>0.4</code></p>
+</span></span></div><div><code>CornerEMAThreshold<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>EMA oscillation threshold (Pass 2). Must be <code>> |1 - 2·alpha|</code>. Default: <code>0.25</code></p>
+</span></span></div><div><code>CornerMinProgressPerBounce<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Min studs of progress per bounce over history (Pass 4). <code>0</code> disables Pass 4. Default: <code>0.3</code></p>
+</span></span></div><div><code>LODDistance<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Studs from the LOD origin beyond which this bullet steps at reduced frequency. <code>0</code> = always full frequency. Default: <code>0</code></p>
 </span></span></div><div><code>CosmeticBulletTemplate<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/BasePart" target="_blank" rel="noopener noreferrer">BasePart?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
-<p>Part cloned per fire. Default: <code>nil</code></p>
+<p>Part cloned per fire call. Default: <code>nil</code></p>
 </span></span></div><div><code>CosmeticBulletContainer<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Instance" target="_blank" rel="noopener noreferrer">Instance?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><span class="inlineDescription_G7Er">-- <span>
-<p>Parent for cosmetic object. Default: <code>nil</code></p>
-</span></span></div><div><code>CosmeticBulletProvider<!-- -->: </code><code class="purple_ieR2">(</code><code class="green_DgR4">(</code><code class="green_DgR4">)</code><code class="green_DgR4"> → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Instance" target="_blank" rel="noopener noreferrer">Instance?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code class="purple_ieR2">)</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Provider function (takes priority). Default: <code>nil</code></p>
+<p>Parent for the cosmetic object. Defaults to <code>workspace</code>. Default: <code>nil</code></p>
+</span></span></div><div><code>CosmeticBulletProvider<!-- -->: </code><code class="purple_ieR2">(</code><code class="green_DgR4">(</code><code>context<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/BulletContext">BulletContext</a></code><code class="green_DgR4">)</code><code class="green_DgR4"> → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Instance" target="_blank" rel="noopener noreferrer">Instance?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code class="purple_ieR2">)</code><code class="blue_P4bS">?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Provider function; takes priority over Template. Default: <code>nil</code></p>
+</span></span></div><div><code>BatchTravel<!-- -->: </code><code class="blue_P4bS">boolean?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Include this cast in <code>OnTravelBatch</code> instead of firing individual <code>OnTravel</code> events. Default: <code>false</code></p>
+</span></span></div><div><code>WindResponse<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Multiplier on the solver's wind vector. <code>1.0</code> = fully affected, <code>0.0</code> = immune. Default: <code>1.0</code></p>
 </span></span></div><div><code>VisualizeCasts<!-- -->: </code><code class="blue_P4bS">boolean?</code><span class="inlineDescription_G7Er">-- <span>
-<p>Enable trajectory visualizer. Default: <code>false</code></p>
+<p>Enable trajectory visualizer for this cast. Default: <code>false</code></p>
 </span></span></div></div><code>}</code></div><div>
 <p>
   Complete configuration for a projectile cast. All fields are optional —
@@ -138,15 +232,117 @@ re-exported from [Vetra] where needed."><link data-rh="true" rel="canonical" hre
 </p>
 <p>
   Prefer constructing this via <a href="/api/BehaviorBuilder">BehaviorBuilder</a> rather than by hand to get
-  typed setters, validation, and a frozen result.
+  typed setters, build-time validation, and a frozen result. For fields not
+  exposed by the builder (drag, Magnus, homing config, tumble, etc.), pass a
+  raw table or a table that inherits from a built behavior via <code>__index</code>.
 </p>
+<hr>
 <p><strong>Physics</strong></p>
+<hr>
+<p><strong>Aerodynamic Drag</strong></p>
+<hr>
+<p><strong>Wind</strong></p>
+<hr>
+<p><strong>Supersonic / Subsonic Profiles</strong></p>
+<hr>
+<p><strong>Magnus Effect</strong></p>
+<hr>
+<p><strong>Gyroscopic Drift</strong></p>
+<hr>
+<p><strong>Tumble</strong></p>
+<hr>
+<p><strong>Homing</strong></p>
+<hr>
+<p><strong>Trajectory Provider</strong></p>
+<hr>
 <p><strong>Pierce</strong></p>
+<hr>
+<p><strong>Fragmentation</strong></p>
+<hr>
 <p><strong>Bounce</strong></p>
+<hr>
 <p><strong>High Fidelity</strong></p>
-<p><strong>Corner Trap</strong></p>
+<hr>
+<p><strong>Corner Trap Detection</strong></p>
+<hr>
+<p><strong>LOD</strong></p>
+<hr>
 <p><strong>Cosmetic</strong></p>
+<hr>
+<p><strong>Batch Travel</strong></p>
+<hr>
+<p><strong>Wind Sensitivity</strong></p>
+<hr>
 <p><strong>Debug</strong></p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="DragModel"><code style="text-decoration:none">DragModel</code><a href="#DragModel" class="hash-link" aria-label="Direct link to DragModel" title="Direct link to DragModel">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/TypeDefinitions.lua#L267"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">type</code> <code>DragModel<!-- --> = </code> <code class="blue_P4bS">&quot;Linear&quot;</code><code class="op_lSLc"> | </code><code class="blue_P4bS">&quot;Quadratic&quot;</code><code class="op_lSLc"> | </code><code class="blue_P4bS">&quot;Exponential&quot;</code><code class="op_lSLc"> | </code><code class="blue_P4bS">&quot;G1&quot;</code><code class="op_lSLc"> | </code><code class="blue_P4bS">&quot;G2&quot;</code><code class="op_lSLc"> | </code><code class="blue_P4bS">&quot;G3&quot;</code><code class="op_lSLc"> | </code><code class="blue_P4bS">&quot;G4&quot;</code><code class="op_lSLc"> | </code><code class="blue_P4bS">&quot;G5&quot;</code><code class="op_lSLc"> | </code><code class="blue_P4bS">&quot;G6&quot;</code><code class="op_lSLc"> | </code><code class="blue_P4bS">&quot;G7&quot;</code><code class="op_lSLc"> | </code><code class="blue_P4bS">&quot;G8&quot;</code><code class="op_lSLc"> | </code><code class="blue_P4bS">&quot;GL&quot;</code><code class="op_lSLc"> | </code><code class="blue_P4bS">&quot;Custom&quot;</code></div><div>
+<p>Drag model used to compute aerodynamic deceleration each <code>DragSegmentInterval</code>.</p>
+<p><strong>Analytic models:</strong></p>
+<ul>
+  <li><code>"Linear"</code> — deceleration ∝ speed.</li>
+  <li><code>"Quadratic"</code> — deceleration ∝ speed² (default). Most physically accurate for subsonic bullets.</li>
+  <li><code>"Exponential"</code> — deceleration ∝ eˢᵖᵉᵉᵈ. Models exotic high-drag shapes.</li>
+</ul>
+<p><strong>G-series empirical models (Mach-indexed Cd lookup tables):</strong></p>
+<ul>
+  <li><code>"G1"</code> — flat-base spitzer; general-purpose standard.</li>
+  <li><code>"G2"</code> — Aberdeen J projectile; large-caliber / atypical shapes.</li>
+  <li><code>"G5"</code> — boat-tail spitzer; mid-range rifles.</li>
+  <li><code>"G6"</code> — semi-spitzer flat-base; shotgun slugs.</li>
+  <li><code>"G7"</code> — long boat-tail; modern long-range / sniper standard.</li>
+  <li><code>"G8"</code> — flat-base semi-spitzer; hollow points / pistols.</li>
+  <li><code>"GL"</code> — lead round ball; cannons / muskets / buckshot.</li>
+</ul>
+<p><strong>User-supplied:</strong></p>
+<ul>
+  <li><code>"Custom"</code> — requires <code>CustomMachTable = { {mach, cd}, ... }</code> in the behavior.</li>
+</ul>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="TerminationReason"><code style="text-decoration:none">TerminationReason</code><a href="#TerminationReason" class="hash-link" aria-label="Direct link to TerminationReason" title="Direct link to TerminationReason">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/TypeDefinitions.lua#L283"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">type</code> <code>TerminationReason<!-- --> = </code> <code class="blue_P4bS">&quot;hit&quot;</code><code class="op_lSLc"> | </code><code class="blue_P4bS">&quot;distance&quot;</code><code class="op_lSLc"> | </code><code class="blue_P4bS">&quot;speed&quot;</code><code class="op_lSLc"> | </code><code class="blue_P4bS">&quot;corner_trap&quot;</code><code class="op_lSLc"> | </code><code class="blue_P4bS">&quot;manual&quot;</code></div><div>
+<p>
+  The reason a cast was terminated. Passed as the second argument to
+  <code>OnPreTermination</code> signal handlers.
+</p>
+<ul>
+  <li><code>"hit"</code> — bullet struck a surface and was not pierced or bounced.</li>
+  <li><code>"distance"</code> — <code>MaxDistance</code> was reached.</li>
+  <li><code>"speed"</code> — speed dropped below <code>MinSpeed</code> or exceeded <code>MaxSpeed</code>.</li>
+  <li><code>"corner_trap"</code> — corner-trap detection terminated the cast.</li>
+  <li><code>"manual"</code> — <code>Terminate()</code> was called explicitly, or the solver was destroyed.</li>
+</ul>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="NetworkConfig"><code style="text-decoration:none">NetworkConfig</code><a href="#NetworkConfig" class="hash-link" aria-label="Direct link to NetworkConfig" title="Direct link to NetworkConfig">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/TypeDefinitions.lua#L302"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>NetworkConfig<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>MaxOriginTolerance<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Max studs between client-reported and server-reconstructed fire origin. Default: <code>15</code></p>
+</span></span></div><div><code>MaxConcurrentPerPlayer<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Maximum in-flight bullets per player at any time. Default: <code>20</code></p>
+</span></span></div><div><code>TokensPerSecond<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Token-bucket refill rate for fire-rate limiting. Default: <code>10</code></p>
+</span></span></div><div><code>BurstLimit<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Maximum burst tokens. Must be <code>>= TokensPerSecond</code>. Default: <code>20</code></p>
+</span></span></div><div><code>DriftThreshold<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Studs of positional drift before cosmetic correction begins. Default: <code>2</code></p>
+</span></span></div><div><code>CorrectionRate<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Lerp speed for cosmetic drift correction in studs/second. Default: <code>8</code></p>
+</span></span></div><div><code>LatencyBuffer<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Extra seconds to delay local cosmetic spawn. <code>0</code> = use measured RTT automatically. Default: <code>0</code></p>
+</span></span></div><div><code>ReplicateState<!-- -->: </code><code class="blue_P4bS">boolean?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Broadcast bullet state every Heartbeat to all clients for cosmetic correction. Default: <code>true</code></p>
+</span></span></div></div><code>}</code></div><div>
+<p>
+  Optional configuration table passed to <code>VetraNet.new()</code> as the third argument.
+  All fields are optional — unset fields fall back to built-in defaults.
+</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="SpatialPartitionConfig"><code style="text-decoration:none">SpatialPartitionConfig</code><a href="#SpatialPartitionConfig" class="hash-link" aria-label="Direct link to SpatialPartitionConfig" title="Direct link to SpatialPartitionConfig">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/TypeDefinitions.lua#L318"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>SpatialPartitionConfig<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>HotRadius<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Studs radius around an interest point for HOT tier (full-frequency simulation). Default: <code>150</code></p>
+</span></span></div><div><code>WarmRadius<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Studs radius for WARM tier (must be >= HotRadius). Default: <code>400</code></p>
+</span></span></div><div><code>FallbackTier<!-- -->: </code><code class="blue_P4bS">string?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Tier for bullets outside all warm radii. <code>"HOT"</code>, <code>"WARM"</code>, or <code>"COLD"</code>. Default: <code>"HOT"</code></p>
+</span></span></div><div><code>UpdateInterval<!-- -->: </code><code class="blue_P4bS">number?</code><span class="inlineDescription_G7Er">-- <span>
+<p>Frames between spatial grid rebuilds. Default: <code>3</code></p>
+</span></span></div></div><code>}</code></div><div>
+<p>
+  Optional configuration for the LOD spatial partition system. Passed as
+  <code>SpatialPartition</code> inside the <code>FactoryConfig</code> to <code>Vetra.new()</code> or
+  <code>Vetra.newParallel()</code>.
+</p>
 </div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
     &quot;functions&quot;: [],
     &quot;properties&quot;: [],
@@ -178,11 +374,11 @@ re-exported from [Vetra] where needed."><link data-rh="true" rel="canonical" hre
                 {
                     &quot;name&quot;: &quot;Acceleration&quot;,
                     &quot;lua_type&quot;: &quot;Vector3&quot;,
-                    &quot;desc&quot;: &quot;Constant acceleration for this arc (gravity + extra).&quot;
+                    &quot;desc&quot;: &quot;Constant acceleration for this arc (gravity + extra + initial drag).&quot;
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 29,
+                &quot;line&quot;: 28,
                 &quot;path&quot;: &quot;docs/TypeDefinitions.lua&quot;
             }
         },
@@ -228,12 +424,17 @@ re-exported from [Vetra] where needed."><link data-rh="true" rel="canonical" hre
                 {
                     &quot;name&quot;: &quot;Lifetime&quot;,
                     &quot;lua_type&quot;: &quot;number&quot;,
-                    &quot;desc&quot;: &quot;Seconds elapsed since creation.&quot;
+                    &quot;desc&quot;: &quot;Seconds of simulated time elapsed since creation.&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;PathLength&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;,
+                    &quot;desc&quot;: &quot;True accumulated path distance (bounces included).&quot;
                 },
                 {
                     &quot;name&quot;: &quot;DistanceTraveled&quot;,
                     &quot;lua_type&quot;: &quot;number&quot;,
-                    &quot;desc&quot;: &quot;Straight-line distance from Origin to Position.&quot;
+                    &quot;desc&quot;: &quot;Alias for PathLength (API compatibility).&quot;
                 }
             ],
             &quot;source&quot;: {
@@ -261,34 +462,74 @@ re-exported from [Vetra] where needed."><link data-rh="true" rel="canonical" hre
                     &quot;desc&quot;: &quot;Required. Initial speed in studs/second.&quot;
                 },
                 {
-                    &quot;name&quot;: &quot;Callbacks&quot;,
-                    &quot;lua_type&quot;: &quot;BulletCallbacks?&quot;,
-                    &quot;desc&quot;: &quot;Optional per-instance event callbacks.&quot;
-                },
-                {
                     &quot;name&quot;: &quot;SolverData&quot;,
                     &quot;lua_type&quot;: &quot;any?&quot;,
-                    &quot;desc&quot;: &quot;Internal — used by the solver to attach lifecycle hooks.&quot;
+                    &quot;desc&quot;: &quot;Internal — used by the solver to attach lifecycle hooks. Do not set from weapon code.&quot;
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 64,
+                &quot;line&quot;: 63,
+                &quot;path&quot;: &quot;docs/TypeDefinitions.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SpeedProfile&quot;,
+            &quot;desc&quot;: &quot;Per-speed-regime behavior overrides. Assigned to `SupersonicProfile` or\n`SubsonicProfile` on a `VetraBehavior`. The solver blends in the matching\nprofile&#x27;s values when the bullet crosses the speed of sound (343 studs/s).\n\nAll fields are optional. Omitted fields continue using the base behavior values.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;DragCoefficient&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Drag coefficient override for this regime.&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;DragModel&quot;,
+                    &quot;lua_type&quot;: &quot;DragModel?&quot;,
+                    &quot;desc&quot;: &quot;Drag model override for this regime.&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;NormalPerturbation&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Bounce noise override for this regime.&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;MaterialRestitution&quot;,
+                    &quot;lua_type&quot;: &quot;{ [Enum.Material]: number }?&quot;,
+                    &quot;desc&quot;: &quot;Per-material restitution overrides.&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;Restitution&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Base restitution override for this regime.&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 82,
                 &quot;path&quot;: &quot;docs/TypeDefinitions.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;VetraBehavior&quot;,
-            &quot;desc&quot;: &quot;Complete configuration for a projectile cast. All fields are optional —\nany omitted field falls back to a safe built-in default.\n\nPrefer constructing this via [BehaviorBuilder] rather than by hand to get\ntyped setters, validation, and a frozen result.\n\n**Physics**\n\n**Pierce**\n\n**Bounce**\n\n**High Fidelity**\n\n**Corner Trap**\n\n**Cosmetic**\n\n**Debug**&quot;,
+            &quot;desc&quot;: &quot;Complete configuration for a projectile cast. All fields are optional —\nany omitted field falls back to a safe built-in default.\n\nPrefer constructing this via [BehaviorBuilder] rather than by hand to get\ntyped setters, build-time validation, and a frozen result. For fields not\nexposed by the builder (drag, Magnus, homing config, tumble, etc.), pass a\nraw table or a table that inherits from a built behavior via `__index`.\n\n---\n\n**Physics**\n\n---\n\n**Aerodynamic Drag**\n\n---\n\n**Wind**\n\n---\n\n**Supersonic / Subsonic Profiles**\n\n---\n\n**Magnus Effect**\n\n---\n\n**Gyroscopic Drift**\n\n---\n\n**Tumble**\n\n---\n\n**Homing**\n\n---\n\n**Trajectory Provider**\n\n---\n\n**Pierce**\n\n---\n\n**Fragmentation**\n\n---\n\n**Bounce**\n\n---\n\n**High Fidelity**\n\n---\n\n**Corner Trap Detection**\n\n---\n\n**LOD**\n\n---\n\n**Cosmetic**\n\n---\n\n**Batch Travel**\n\n---\n\n**Wind Sensitivity**\n\n---\n\n**Debug**&quot;,
             &quot;fields&quot;: [
                 {
                     &quot;name&quot;: &quot;Acceleration&quot;,
                     &quot;lua_type&quot;: &quot;Vector3?&quot;,
-                    &quot;desc&quot;: &quot;Extra acceleration on top of gravity. Default: `Vector3.zero`&quot;
+                    &quot;desc&quot;: &quot;Extra acceleration on top of gravity (e.g. rocket thrust). Default: `Vector3.zero`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;MaxDistance&quot;,
                     &quot;lua_type&quot;: &quot;number?&quot;,
                     &quot;desc&quot;: &quot;Max flight distance in studs. Default: `500`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;MaxSpeed&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Speed ceiling; bullet terminates if exceeded. Default: `math.huge`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;MinSpeed&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Termination speed threshold in studs/sec. Default: `1`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;RaycastParams&quot;,
@@ -298,17 +539,142 @@ re-exported from [Vetra] where needed."><link data-rh="true" rel="canonical" hre
                 {
                     &quot;name&quot;: &quot;Gravity&quot;,
                     &quot;lua_type&quot;: &quot;Vector3?&quot;,
-                    &quot;desc&quot;: &quot;Gravitational acceleration. Default: workspace gravity downward.&quot;
+                    &quot;desc&quot;: &quot;Gravitational acceleration (negative Y = downward). Default: workspace gravity downward.&quot;
                 },
                 {
-                    &quot;name&quot;: &quot;MinSpeed&quot;,
+                    &quot;name&quot;: &quot;CastFunction&quot;,
+                    &quot;lua_type&quot;: &quot;((Vector3, Vector3, RaycastParams) -&gt; RaycastResult?)?&quot;,
+                    &quot;desc&quot;: &quot;Custom cast function (serial solver only). Default: `nil`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;BulletMass&quot;,
                     &quot;lua_type&quot;: &quot;number?&quot;,
-                    &quot;desc&quot;: &quot;Termination speed threshold in studs/sec. Default: `1`&quot;
+                    &quot;desc&quot;: &quot;Bullet mass for penetration and impact-force calculations. Default: `0`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;DragCoefficient&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Drag coefficient. `0` = no drag. Default: `0`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;DragModel&quot;,
+                    &quot;lua_type&quot;: &quot;DragModel?&quot;,
+                    &quot;desc&quot;: &quot;Drag model type. Default: `\&quot;Quadratic\&quot;`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;DragSegmentInterval&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Seconds between drag + Magnus recalculation steps. Default: `0.05`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;CustomMachTable&quot;,
+                    &quot;lua_type&quot;: &quot;{ { number } }?&quot;,
+                    &quot;desc&quot;: &quot;Custom Mach→Cd table pairs when `DragModel = \&quot;Custom\&quot;`.&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;WindResponse&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Multiplier on the solver&#x27;s wind vector (`Vetra:SetWind`). `1.0` = full effect, `0.0` = immune. Default: `1.0`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;SpeedThresholds&quot;,
+                    &quot;lua_type&quot;: &quot;{ number }?&quot;,
+                    &quot;desc&quot;: &quot;Sorted list of speeds (studs/s) that fire `OnSpeedThresholdCrossed`. Default: `{}`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;SupersonicProfile&quot;,
+                    &quot;lua_type&quot;: &quot;SpeedProfile?&quot;,
+                    &quot;desc&quot;: &quot;Behavior overrides when bullet speed is &gt;= 343 studs/s. Default: `nil`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;SubsonicProfile&quot;,
+                    &quot;lua_type&quot;: &quot;SpeedProfile?&quot;,
+                    &quot;desc&quot;: &quot;Behavior overrides when bullet speed is &lt; 343 studs/s. Default: `nil`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;SpinVector&quot;,
+                    &quot;lua_type&quot;: &quot;Vector3?&quot;,
+                    &quot;desc&quot;: &quot;Spin axis (direction) × angular velocity (magnitude, rad/s). `Vector3.zero` = disabled. Default: `Vector3.zero`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;MagnusCoefficient&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Magnus lift coefficient. Typical range: 0.00005–0.001. `0` = disabled. Default: `0`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;SpinDecayRate&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Rate at which `SpinVector` magnitude decreases per second. `0` = no decay. Default: `0`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;GyroDriftRate&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Lateral drift acceleration magnitude in studs/s². `nil` = disabled. Default: `nil`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;GyroDriftAxis&quot;,
+                    &quot;lua_type&quot;: &quot;Vector3?&quot;,
+                    &quot;desc&quot;: &quot;Reference axis for drift direction. `nil` = world UP (right-hand rifling). Default: `nil`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;TumbleSpeedThreshold&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Speed below which tumbling begins. `nil` = disabled. Default: `nil`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;TumbleDragMultiplier&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Drag multiplied by this factor while tumbling. Default: `3.0`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;TumbleLateralStrength&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Chaotic lateral acceleration magnitude in studs/s². Default: `0`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;TumbleOnPierce&quot;,
+                    &quot;lua_type&quot;: &quot;boolean?&quot;,
+                    &quot;desc&quot;: &quot;Begin tumbling on first pierce regardless of speed. Default: `false`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;TumbleRecoverySpeed&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Speed above which tumbling ends. `nil` = tumble is permanent. Default: `nil`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;HomingPositionProvider&quot;,
+                    &quot;lua_type&quot;: &quot;((pos: Vector3, vel: Vector3) -&gt; Vector3?)?&quot;,
+                    &quot;desc&quot;: &quot;Called every frame for target position. Return `nil` to disengage. Default: `nil`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;CanHomeFunction&quot;,
+                    &quot;lua_type&quot;: &quot;CanHomeCallback?&quot;,
+                    &quot;desc&quot;: &quot;Gate callback; return `false` to disengage. Default: `nil`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;HomingStrength&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Steering force in degrees/second. Default: `90`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;HomingMaxDuration&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Max seconds of active homing before `OnHomingDisengaged` fires. Default: `3`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;HomingAcquisitionRadius&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Min target distance in studs to engage. `0` = engage immediately on fire. Default: `0`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;TrajectoryPositionProvider&quot;,
+                    &quot;lua_type&quot;: &quot;((elapsed: number) -&gt; Vector3?)?&quot;,
+                    &quot;desc&quot;: &quot;Override bullet position each frame with a sampled curve. Return `nil` to end the override and terminate. Default: `nil`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;CanPierceFunction&quot;,
-                    &quot;lua_type&quot;: &quot;((BulletContext, RaycastResult, Vector3) -&gt; boolean)?&quot;,
-                    &quot;desc&quot;: &quot;Pierce gate. Default: `nil`&quot;
+                    &quot;lua_type&quot;: &quot;CanPierceCallback?&quot;,
+                    &quot;desc&quot;: &quot;Pierce gate; return `true` to pierce. Default: `nil`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;MaxPierceCount&quot;,
@@ -318,7 +684,7 @@ re-exported from [Vetra] where needed."><link data-rh="true" rel="canonical" hre
                 {
                     &quot;name&quot;: &quot;PierceSpeedThreshold&quot;,
                     &quot;lua_type&quot;: &quot;number?&quot;,
-                    &quot;desc&quot;: &quot;Min speed to attempt pierce. Default: `50`&quot;
+                    &quot;desc&quot;: &quot;Min speed to attempt pierce (studs/s). Default: `50`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;PenetrationSpeedRetention&quot;,
@@ -328,12 +694,42 @@ re-exported from [Vetra] where needed."><link data-rh="true" rel="canonical" hre
                 {
                     &quot;name&quot;: &quot;PierceNormalBias&quot;,
                     &quot;lua_type&quot;: &quot;number?&quot;,
-                    &quot;desc&quot;: &quot;Min approach angle for pierce `[0,1]`. Default: `1.0`&quot;
+                    &quot;desc&quot;: &quot;Min approach angle for pierce `[0,1]`. `1.0` = all angles, `0.0` = perpendicular only. Default: `1.0`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;PenetrationDepth&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Max wall thickness per pierce in studs. `0` = no per-pierce depth limit. Default: `0`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;PenetrationForce&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Total momentum force budget for penetration. `0` = disabled. Default: `0`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;PenetrationThicknessLimit&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Hard cap on wall thickness for the exit-point raycast in studs. Default: `500`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;FragmentOnPierce&quot;,
+                    &quot;lua_type&quot;: &quot;boolean?&quot;,
+                    &quot;desc&quot;: &quot;Spawn fragment child bullets when a pierce occurs. Default: `false`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;FragmentCount&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Number of fragments to spawn per pierce. Default: `3`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;FragmentDeviation&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Angular half-angle spread of the fragment cone in degrees. Default: `15`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;CanBounceFunction&quot;,
-                    &quot;lua_type&quot;: &quot;((BulletContext, RaycastResult, Vector3) -&gt; boolean)?&quot;,
-                    &quot;desc&quot;: &quot;Bounce gate. Default: `nil`&quot;
+                    &quot;lua_type&quot;: &quot;CanBounceCallback?&quot;,
+                    &quot;desc&quot;: &quot;Bounce gate; return `true` to bounce. Default: `nil`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;MaxBounces&quot;,
@@ -343,7 +739,7 @@ re-exported from [Vetra] where needed."><link data-rh="true" rel="canonical" hre
                 {
                     &quot;name&quot;: &quot;BounceSpeedThreshold&quot;,
                     &quot;lua_type&quot;: &quot;number?&quot;,
-                    &quot;desc&quot;: &quot;Min speed to attempt bounce. Default: `20`&quot;
+                    &quot;desc&quot;: &quot;Min speed to attempt bounce (studs/s). Default: `20`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;Restitution&quot;,
@@ -352,87 +748,220 @@ re-exported from [Vetra] where needed."><link data-rh="true" rel="canonical" hre
                 },
                 {
                     &quot;name&quot;: &quot;MaterialRestitution&quot;,
-                    &quot;lua_type&quot;: &quot;{[Enum.Material]: number}?&quot;,
-                    &quot;desc&quot;: &quot;Per-material multipliers. Default: `{}`&quot;
+                    &quot;lua_type&quot;: &quot;{ [Enum.Material]: number }?&quot;,
+                    &quot;desc&quot;: &quot;Per-material multipliers, combined with `Restitution`. Default: `{}`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;NormalPerturbation&quot;,
                     &quot;lua_type&quot;: &quot;number?&quot;,
-                    &quot;desc&quot;: &quot;Random normal noise for rough surfaces. Default: `0.0`&quot;
+                    &quot;desc&quot;: &quot;Random surface-normal noise for rough surfaces. `0` = clean reflection. Default: `0.0`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;ResetPierceOnBounce&quot;,
+                    &quot;lua_type&quot;: &quot;boolean?&quot;,
+                    &quot;desc&quot;: &quot;Reset pierce state after each confirmed bounce. Default: `false`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;HighFidelitySegmentSize&quot;,
                     &quot;lua_type&quot;: &quot;number?&quot;,
-                    &quot;desc&quot;: &quot;Sub-segment length in studs. Default: `0.5`&quot;
+                    &quot;desc&quot;: &quot;Sub-segment length in studs (starting value). Default: `0.5`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;HighFidelityFrameBudget&quot;,
                     &quot;lua_type&quot;: &quot;number?&quot;,
-                    &quot;desc&quot;: &quot;Ms budget per cast per frame. Default: `4`&quot;
+                    &quot;desc&quot;: &quot;Millisecond budget per cast per frame for sub-segment raycasts. Default: `4`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;AdaptiveScaleFactor&quot;,
                     &quot;lua_type&quot;: &quot;number?&quot;,
-                    &quot;desc&quot;: &quot;Adaptive scaling multiplier `&gt; 1`. Default: `1.5`&quot;
+                    &quot;desc&quot;: &quot;Adaptive sizing multiplier, must be `&gt; 1`. Default: `1.5`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;MinSegmentSize&quot;,
                     &quot;lua_type&quot;: &quot;number?&quot;,
-                    &quot;desc&quot;: &quot;Hard floor for adaptive sizing. Default: `0.1`&quot;
+                    &quot;desc&quot;: &quot;Hard floor for adaptive segment size (studs). Default: `0.1`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;MaxBouncesPerFrame&quot;,
                     &quot;lua_type&quot;: &quot;number?&quot;,
-                    &quot;desc&quot;: &quot;Per-frame bounce cap. Default: `10`&quot;
+                    &quot;desc&quot;: &quot;Per-frame bounce cap across all sub-segments. Default: `10`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;CornerTimeThreshold&quot;,
                     &quot;lua_type&quot;: &quot;number?&quot;,
-                    &quot;desc&quot;: &quot;Min seconds between bounces. Default: `0.002`&quot;
+                    &quot;desc&quot;: &quot;Min seconds between bounces (Pass 1). Default: `0.002`&quot;
                 },
                 {
-                    &quot;name&quot;: &quot;CornerNormalDotThreshold&quot;,
+                    &quot;name&quot;: &quot;CornerPositionHistorySize&quot;,
                     &quot;lua_type&quot;: &quot;number?&quot;,
-                    &quot;desc&quot;: &quot;Normal opposition threshold `[-1,0]`. Default: `-0.85`&quot;
+                    &quot;desc&quot;: &quot;Bounce position history size, positive integer (Pass 3 &amp; 4). Default: `4`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;CornerDisplacementThreshold&quot;,
                     &quot;lua_type&quot;: &quot;number?&quot;,
-                    &quot;desc&quot;: &quot;Min bounce separation in studs. Default: `0.5`&quot;
+                    &quot;desc&quot;: &quot;Min bounce separation in studs (Pass 3). Default: `0.5`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;CornerEMAAlpha&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;EMA smoothing factor for velocity direction `(0,1)` (Pass 2). Default: `0.4`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;CornerEMAThreshold&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;EMA oscillation threshold (Pass 2). Must be `&gt; |1 - 2·alpha|`. Default: `0.25`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;CornerMinProgressPerBounce&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Min studs of progress per bounce over history (Pass 4). `0` disables Pass 4. Default: `0.3`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;LODDistance&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Studs from the LOD origin beyond which this bullet steps at reduced frequency. `0` = always full frequency. Default: `0`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;CosmeticBulletTemplate&quot;,
                     &quot;lua_type&quot;: &quot;BasePart?&quot;,
-                    &quot;desc&quot;: &quot;Part cloned per fire. Default: `nil`&quot;
+                    &quot;desc&quot;: &quot;Part cloned per fire call. Default: `nil`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;CosmeticBulletContainer&quot;,
                     &quot;lua_type&quot;: &quot;Instance?&quot;,
-                    &quot;desc&quot;: &quot;Parent for cosmetic object. Default: `nil`&quot;
+                    &quot;desc&quot;: &quot;Parent for the cosmetic object. Defaults to `workspace`. Default: `nil`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;CosmeticBulletProvider&quot;,
-                    &quot;lua_type&quot;: &quot;(() -&gt; Instance?)?&quot;,
-                    &quot;desc&quot;: &quot;Provider function (takes priority). Default: `nil`&quot;
+                    &quot;lua_type&quot;: &quot;((context: BulletContext) -&gt; Instance?)?&quot;,
+                    &quot;desc&quot;: &quot;Provider function; takes priority over Template. Default: `nil`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;BatchTravel&quot;,
+                    &quot;lua_type&quot;: &quot;boolean?&quot;,
+                    &quot;desc&quot;: &quot;Include this cast in `OnTravelBatch` instead of firing individual `OnTravel` events. Default: `false`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;WindResponse&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Multiplier on the solver&#x27;s wind vector. `1.0` = fully affected, `0.0` = immune. Default: `1.0`&quot;
                 },
                 {
                     &quot;name&quot;: &quot;VisualizeCasts&quot;,
                     &quot;lua_type&quot;: &quot;boolean?&quot;,
-                    &quot;desc&quot;: &quot;Enable trajectory visualizer. Default: `false`&quot;
+                    &quot;desc&quot;: &quot;Enable trajectory visualizer for this cast. Default: `false`&quot;
                 }
             ],
             &quot;source&quot;: {
-                &quot;line&quot;: 119,
+                &quot;line&quot;: 241,
+                &quot;path&quot;: &quot;docs/TypeDefinitions.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;DragModel&quot;,
+            &quot;desc&quot;: &quot;Drag model used to compute aerodynamic deceleration each `DragSegmentInterval`.\n\n**Analytic models:**\n- `\&quot;Linear\&quot;` — deceleration ∝ speed.\n- `\&quot;Quadratic\&quot;` — deceleration ∝ speed² (default). Most physically accurate for subsonic bullets.\n- `\&quot;Exponential\&quot;` — deceleration ∝ eˢᵖᵉᵉᵈ. Models exotic high-drag shapes.\n\n**G-series empirical models (Mach-indexed Cd lookup tables):**\n- `\&quot;G1\&quot;` — flat-base spitzer; general-purpose standard.\n- `\&quot;G2\&quot;` — Aberdeen J projectile; large-caliber / atypical shapes.\n- `\&quot;G5\&quot;` — boat-tail spitzer; mid-range rifles.\n- `\&quot;G6\&quot;` — semi-spitzer flat-base; shotgun slugs.\n- `\&quot;G7\&quot;` — long boat-tail; modern long-range / sniper standard.\n- `\&quot;G8\&quot;` — flat-base semi-spitzer; hollow points / pistols.\n- `\&quot;GL\&quot;` — lead round ball; cannons / muskets / buckshot.\n\n**User-supplied:**\n- `\&quot;Custom\&quot;` — requires `CustomMachTable = { {mach, cd}, ... }` in the behavior.&quot;,
+            &quot;lua_type&quot;: &quot;\&quot;Linear\&quot; | \&quot;Quadratic\&quot; | \&quot;Exponential\&quot; | \&quot;G1\&quot; | \&quot;G2\&quot; | \&quot;G3\&quot; | \&quot;G4\&quot; | \&quot;G5\&quot; | \&quot;G6\&quot; | \&quot;G7\&quot; | \&quot;G8\&quot; | \&quot;GL\&quot; | \&quot;Custom\&quot;&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 267,
+                &quot;path&quot;: &quot;docs/TypeDefinitions.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;TerminationReason&quot;,
+            &quot;desc&quot;: &quot;The reason a cast was terminated. Passed as the second argument to\n`OnPreTermination` signal handlers.\n\n- `\&quot;hit\&quot;` — bullet struck a surface and was not pierced or bounced.\n- `\&quot;distance\&quot;` — `MaxDistance` was reached.\n- `\&quot;speed\&quot;` — speed dropped below `MinSpeed` or exceeded `MaxSpeed`.\n- `\&quot;corner_trap\&quot;` — corner-trap detection terminated the cast.\n- `\&quot;manual\&quot;` — `Terminate()` was called explicitly, or the solver was destroyed.&quot;,
+            &quot;lua_type&quot;: &quot;\&quot;hit\&quot; | \&quot;distance\&quot; | \&quot;speed\&quot; | \&quot;corner_trap\&quot; | \&quot;manual\&quot;&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 283,
+                &quot;path&quot;: &quot;docs/TypeDefinitions.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;NetworkConfig&quot;,
+            &quot;desc&quot;: &quot;Optional configuration table passed to `VetraNet.new()` as the third argument.\nAll fields are optional — unset fields fall back to built-in defaults.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;MaxOriginTolerance&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Max studs between client-reported and server-reconstructed fire origin. Default: `15`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;MaxConcurrentPerPlayer&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Maximum in-flight bullets per player at any time. Default: `20`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;TokensPerSecond&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Token-bucket refill rate for fire-rate limiting. Default: `10`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;BurstLimit&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Maximum burst tokens. Must be `&gt;= TokensPerSecond`. Default: `20`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;DriftThreshold&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Studs of positional drift before cosmetic correction begins. Default: `2`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;CorrectionRate&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Lerp speed for cosmetic drift correction in studs/second. Default: `8`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;LatencyBuffer&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Extra seconds to delay local cosmetic spawn. `0` = use measured RTT automatically. Default: `0`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;ReplicateState&quot;,
+                    &quot;lua_type&quot;: &quot;boolean?&quot;,
+                    &quot;desc&quot;: &quot;Broadcast bullet state every Heartbeat to all clients for cosmetic correction. Default: `true`&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 302,
+                &quot;path&quot;: &quot;docs/TypeDefinitions.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SpatialPartitionConfig&quot;,
+            &quot;desc&quot;: &quot;Optional configuration for the LOD spatial partition system. Passed as\n`SpatialPartition` inside the `FactoryConfig` to `Vetra.new()` or\n`Vetra.newParallel()`.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;HotRadius&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Studs radius around an interest point for HOT tier (full-frequency simulation). Default: `150`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;WarmRadius&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Studs radius for WARM tier (must be &gt;= HotRadius). Default: `400`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;FallbackTier&quot;,
+                    &quot;lua_type&quot;: &quot;string?&quot;,
+                    &quot;desc&quot;: &quot;Tier for bullets outside all warm radii. `\&quot;HOT\&quot;`, `\&quot;WARM\&quot;`, or `\&quot;COLD\&quot;`. Default: `\&quot;HOT\&quot;`&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;UpdateInterval&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;,
+                    &quot;desc&quot;: &quot;Frames between spatial grid rebuilds. Default: `3`&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 318,
                 &quot;path&quot;: &quot;docs/TypeDefinitions.lua&quot;
             }
         }
     ],
     &quot;name&quot;: &quot;TypeDefinitions&quot;,
-    &quot;desc&quot;: &quot;Shared Luau type definitions used across Vetra.\n\nThese are imported for type annotations only — there is no runtime cost.\nYou generally do not need to require this module directly; the types are\nre-exported from [Vetra] where needed.&quot;,
+    &quot;desc&quot;: &quot;Shared Luau type definitions used across Vetra and VetraNet.\n\nThese are imported for type annotations only — there is no runtime cost.\nYou generally do not need to require this module directly.&quot;,
     &quot;source&quot;: {
-        &quot;line&quot;: 10,
+        &quot;line&quot;: 9,
         &quot;path&quot;: &quot;docs/TypeDefinitions.lua&quot;
     }
-}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#types" class="table-of-contents__link toc-highlight">Types</a><ul><li><a href="#BulletContextConfig" class="table-of-contents__link toc-highlight">BulletContextConfig</a></li><li><a href="#BulletSnapshot" class="table-of-contents__link toc-highlight">BulletSnapshot</a></li><li><a href="#CastTrajectory" class="table-of-contents__link toc-highlight">CastTrajectory</a></li><li><a href="#VetraBehavior" class="table-of-contents__link toc-highlight">VetraBehavior</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://discord.gg/XMYMRKcd3g" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord Server<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://discord.com/users/897026279243669504" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord (Direct)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div><div class="col footer__col"><div class="footer__title">Social</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://www.instagram.com/vedevelopment/" target="_blank" rel="noopener noreferrer" class="footer__link-item">Instagram<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://x.com/vedevelopment_" target="_blank" rel="noopener noreferrer" class="footer__link-item">X (Twitter)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://www.tiktok.com/@vedevelopment" target="_blank" rel="noopener noreferrer" class="footer__link-item">TikTok<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 VeDevelopment</div></div></div></footer></div>
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#types" class="table-of-contents__link toc-highlight">Types</a><ul><li><a href="#BulletContextConfig" class="table-of-contents__link toc-highlight">BulletContextConfig</a></li><li><a href="#BulletSnapshot" class="table-of-contents__link toc-highlight">BulletSnapshot</a></li><li><a href="#CastTrajectory" class="table-of-contents__link toc-highlight">CastTrajectory</a></li><li><a href="#DragModel" class="table-of-contents__link toc-highlight">DragModel</a></li><li><a href="#NetworkConfig" class="table-of-contents__link toc-highlight">NetworkConfig</a></li><li><a href="#SpatialPartitionConfig" class="table-of-contents__link toc-highlight">SpatialPartitionConfig</a></li><li><a href="#SpeedProfile" class="table-of-contents__link toc-highlight">SpeedProfile</a></li><li><a href="#TerminationReason" class="table-of-contents__link toc-highlight">TerminationReason</a></li><li><a href="#VetraBehavior" class="table-of-contents__link toc-highlight">VetraBehavior</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://discord.gg/XMYMRKcd3g" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord Server<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://discord.com/users/897026279243669504" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord (Direct)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div><div class="col footer__col"><div class="footer__title">Social</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://www.instagram.com/vedevelopment/" target="_blank" rel="noopener noreferrer" class="footer__link-item">Instagram<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://x.com/vedevelopment_" target="_blank" rel="noopener noreferrer" class="footer__link-item">X (Twitter)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://www.tiktok.com/@vedevelopment" target="_blank" rel="noopener noreferrer" class="footer__link-item">TikTok<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 VeDevelopment</div></div></div></footer></div>
 </body>
 </html>
