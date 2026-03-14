@@ -1,0 +1,115 @@
+---
+sidebar_position: 1
+---
+
+# Where to Go From Here
+
+Vetra has a lot of surface area. This page is a map.
+
+---
+
+## "I just want to fire bullets."
+
+Start at [Getting Started](./intro). You need three things: a solver, a behavior, and a context. The
+intro page covers all of them in order and gets you to a working gun in under 20 lines.
+
+---
+
+## "My bullets are tunnelling through walls."
+
+That's not a bug in your code — it's a mathematical property of how most projectile systems work.
+[Why Your Bullets Miss](./guides/why-bullets-miss) explains exactly what's happening and how Vetra's
+analytic trajectory and high-fidelity sub-segment raycasting solve it.
+
+---
+
+## "I want drag, spin drift, or realistic ballistics."
+
+[Making Bullets Feel Real](./guides/physics-features) goes through every physics feature — drag
+models, Magnus effect, gyroscopic drift, tumble, fragmentation, Coriolis — with practical guidance
+on when each one is worth using and what values to start with.
+
+The quick reference for every field lives in [TypeDefinitions](../api/TypeDefinitions) under
+`VetraBehavior`.
+
+---
+
+## "I need multiplayer — server authority, cosmetics, hit validation."
+
+[Networking and Trust](./guides/networking) explains the architecture: why trusting the client is
+dangerous, how VetraNet's trajectory reconstruction works, and what each rejection reason means.
+
+The API reference for setup and signals is [VetraNet](../api/VetraNet) and
+[BehaviorRegistry](../api/BehaviorRegistry).
+
+---
+
+## "I need to handle hundreds or thousands of bullets."
+
+[Performance](./guides/performance) covers LOD, spatial partitioning, `OnTravelBatch` vs
+`OnTravel`, and when the parallel solver is actually worth using.
+
+The [Benchmarks](./guides/benchmarks) page has the raw numbers — serial vs parallel across four
+profiles and 13 bullet counts — and instructions for running the benchmarker against your own
+weapon behaviors.
+
+---
+
+## "I need to customise physics mid-flight."
+
+[VetraCast](../api/VetraCast) — the object returned by `Solver:Fire()` — exposes `SetVelocity`,
+`SetAcceleration`, `SetPosition`, `Pause`, `Resume`, and state reset methods. Use these from signal
+handlers to override physics on a live bullet.
+
+For mutating a bounce or pierce *as it resolves* (before the math finalises), see the hook signals
+`OnPreBounce`, `OnMidBounce`, `OnPrePenetration`, and `OnMidPenetration` in the
+[Vetra signals table](../api/Vetra#GetSignals).
+
+---
+
+## "I want to build behaviors with typed setters and validation."
+
+[BehaviorBuilder](../api/BehaviorBuilder) is the fluent builder — chain `:Physics()`, `:Bounce()`,
+`:Pierce()`, and so on, then call `:Build()` to get a validated frozen table.
+
+The individual sub-builders are documented in [SubBuilders](../api/PhysicsBuilder):
+[PhysicsBuilder](../api/PhysicsBuilder),
+[PierceBuilder](../api/PierceBuilder),
+[BounceBuilder](../api/BounceBuilder),
+[HighFidelityBuilder](../api/HighFidelityBuilder),
+[CornerTrapBuilder](../api/CornerTrapBuilder),
+[CosmeticBuilder](../api/CosmeticBuilder),
+[HomingBuilder](../api/HomingBuilder),
+[DebugBuilder](../api/DebugBuilder).
+
+:::tip Fields the builder doesn't cover
+Drag, Magnus, tumble, fragmentation, homing config, speed profiles, and a few others must be set
+directly on the raw behavior table. They're all listed in
+[TypeDefinitions → VetraBehavior](../api/TypeDefinitions).
+:::
+
+---
+
+## "I need to track a live bullet's state."
+
+[BulletContext](../api/BulletContext) is the object you create before firing and receive in every
+signal handler. It exposes position, velocity, path length, lifetime, and `UserData`.
+
+---
+
+## Quick Reference
+
+| I want to… | Go to |
+|------------|-------|
+| Fire a bullet | [Getting Started](./intro) |
+| Understand why bullets tunnel | [Why Your Bullets Miss](./guides/why-bullets-miss) |
+| Add drag, spin, tumble, Coriolis | [Making Bullets Feel Real](./guides/physics-features) |
+| Set up multiplayer hit validation | [Networking and Trust](./guides/networking) |
+| Scale to hundreds of bullets | [Performance](./guides/performance) |
+| See benchmark numbers | [Benchmarks](./guides/benchmarks) |
+| Look up every behavior field | [TypeDefinitions](../api/TypeDefinitions) |
+| Configure the solver | [Vetra](../api/Vetra) |
+| Read or modify a live bullet | [VetraCast](../api/VetraCast) |
+| Access bullet state in signals | [BulletContext](../api/BulletContext) |
+| Build behaviors with typed setters | [BehaviorBuilder](../api/BehaviorBuilder) |
+| Set up VetraNet networking | [VetraNet](../api/VetraNet) |
