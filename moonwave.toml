@@ -9,7 +9,7 @@ baseUrl = "/"
 
 [home]
 enabled = true
-bannerImage = "https://Vel136.github.io/Vetra/banner.svg"
+bannerImage = "https://github.com/Vel136/Vetra/blob/master/docs/banner.svg"
 includeReadme = true
 
 [[classOrder]]

@@ -1,5 +1,3 @@
-![Vetra](banner.svg)
-
 <div align="center">
 
 **Every shot lands where physics says it should.**
