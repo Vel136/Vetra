@@ -7,37 +7,6 @@
     Pure gyroscopic spin-drift math — no Cast references, no side effects.
 
     Safe to call from both the serial simulation and the parallel Actor context.
-
-    Background
-    ──────────
-    A rifled barrel imparts spin to a bullet. As the bullet travels and gravity
-    deflects its nose downward, gyroscopic precession causes the spin axis to
-    lag behind the velocity vector. That lag generates a slow, continuous
-    lateral force — spin drift — always perpendicular to the current velocity.
-
-    For right-hand rifling the drift is to the RIGHT of travel regardless of
-    whether the bullet is climbing, flying level, or arcing downward. This is
-    what the old flat Vector3 field could not model: a static world-space
-    vector is only correct for a perfectly horizontal shot.
-
-    Model
-    ─────
-    DriftAcceleration = (GyroDriftAxis × velocity.Unit).Unit × GyroDriftRate
-
-    GyroDriftAxis is a world-space reference axis (typically UP_VECTOR for
-    right-hand rifling, -UP_VECTOR for left-hand). The cross product always
-    produces a vector perpendicular to the current velocity, so drift direction
-    tracks the flight path naturally through climb, level, and drop phases.
-
-    GyroDriftRate is the acceleration magnitude in studs/s². It is a designer
-    tunable: 0.5–3.0 is typical for a rifle-class projectile, higher values
-    exaggerate for gameplay feel. The force is applied at each drag segment
-    recalculation interval rather than every frame, consistent with how drag
-    and Magnus are applied.
-
-    Practical starting values:
-        GyroDriftRate = 1.5      -- studs/s², subtle but visible at long range
-        GyroDriftAxis = Vector3.new(0, 1, 0)   -- right-hand rifling (default)
 ]]
 
 local PureGyroDrift  = {}
