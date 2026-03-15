@@ -63,16 +63,7 @@ local string_format = string.format
 -- Players.LocalPlayer:GetNetworkPing() returns RTT directly in seconds,
 -- so no unit conversion is needed.
 function LatencyBuffer.GetRTT(): number
-	local Ok, RttSeconds = pcall(function()
-		return Player:GetNetworkPing()
-	end)
-	if Ok and type(RttSeconds) == "number" and RttSeconds > 0 then
-		return RttSeconds
-	end
-	-- Fall back to a conservative default rather than using 0 (which would
-	-- skip the delay entirely and undermine the alignment goal on first load).
-	Logger:Debug("LatencyBuffer: could not read DataPing — using fallback delay")
-	return Constants.DEFAULT_RTT_FALLBACK_SECONDS
+	return Player:GetNetworkPing()
 end
 
 -- Returns the estimated one-way (server→client) delay in seconds.

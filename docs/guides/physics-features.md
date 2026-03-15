@@ -54,20 +54,24 @@ This matters for gameplay in three ways.
 **Feel.** A rifle that feels snappy and penetrating at close range but requires careful aim at long range, purely because of physics, feels like a rifle. Not a magic wand with a gun skin.
 
 ```lua
-Solver:Fire(context, {
-    MaxDistance     = 800,
-    MinSpeed        = 30,
-    DragCoefficient = 0.003,
-    DragModel       = "G7",        -- long boat-tail, modern rifle standard
-    DragSegmentInterval = 0.05,    -- recalculate drag every 50ms
-})
+local Behavior = BehaviorBuilder.new()
+    :Physics()
+        :MaxDistance(800)
+        :MinSpeed(30)
+    :Done()
+    :Drag()
+        :Coefficient(0.003)
+        :Model(BehaviorBuilder.DragModel.G7)   -- long boat-tail, modern rifle standard
+        :SegmentInterval(0.05)                 -- recalculate drag every 50ms
+    :Done()
+    :Build()
 ```
 
-**Choosing a drag model.** The `DragModel` field controls which drag curve is used.
+**Choosing a drag model.** The `:Model()` setter controls which drag curve is used. Always pass a value from `BehaviorBuilder.DragModel` rather than a raw string — typos on raw strings pass the type checker silently and only fail at `:Build()`.
 
-For most rifles and modern guns, `"G7"` is the right choice. It models a long boat-tail projectile — the standard reference for contemporary small-arms ballistics. For shotgun slugs or blunt projectiles, `"G6"` applies more drag. For pistols and hollow points, `"G8"`. For muskets and round shot, `"GL"` (the "lead ball" model) gives the heavy, arcing feel of pre-rifled weapons.
+For most rifles and modern guns, `BehaviorBuilder.DragModel.G7` is the right choice. It models a long boat-tail projectile — the standard reference for contemporary small-arms ballistics. For shotgun slugs or blunt projectiles, `G6` applies more drag. For pistols and hollow points, `G8`. For muskets and round shot, `GL` (the "lead ball" model) gives the heavy, arcing feel of pre-rifled weapons.
 
-`"Quadratic"` is the default and is physically accurate for most situations where you don't need historical accuracy — drag proportional to speed squared. For pure gameplay tuning, it's often all you need.
+`Quadratic` is the default and is physically accurate for most situations where historical accuracy isn't required — drag proportional to speed squared. For pure gameplay tuning, it's often all you need.
 
 ---
 
@@ -80,21 +84,23 @@ A supersonic bullet is creating a shockwave in front of it. The drag profile is 
 Vetra tracks whether a bullet is supersonic (above 343 studs/s) and lets you configure different physics for each regime:
 
 ```lua
-Solver:Fire(context, {
-    DragCoefficient   = 0.002,
-    DragModel         = "G7",
-
-    SupersonicProfile = {
-        DragCoefficient = 0.0015,     -- lower drag pushing through compressed air
-    },
-    SubsonicProfile = {
-        DragCoefficient    = 0.004,   -- higher drag in the unstable transition zone
-        Restitution        = 0.4,     -- bounces are sloppier when slow
-        NormalPerturbation = 0.06,    -- more scatter on surface contact
-    },
-
-    SpeedThresholds = { 343 },        -- fire OnSpeedThresholdCrossed as it crosses
-})
+local Behavior = BehaviorBuilder.new()
+    :Drag()
+        :Coefficient(0.002)
+        :Model(BehaviorBuilder.DragModel.G7)
+    :Done()
+    :SpeedProfiles()
+        :Thresholds({ 343 })
+        :Supersonic()
+            :DragCoefficient(0.0015)    -- lower drag pushing through compressed air
+        :Done()
+        :Subsonic()
+            :DragCoefficient(0.004)     -- higher drag in the unstable transition zone
+            :Restitution(0.4)           -- bounces are sloppier when slow
+            :NormalPerturbation(0.06)   -- more scatter on surface contact
+        :Done()
+    :Done()
+    :Build()
 
 Signals.OnSpeedThresholdCrossed:Connect(function(context, threshold, velocity)
     -- swap tracer colour, change fire sound, etc.
@@ -114,11 +120,13 @@ The force is perpendicular to both the spin axis and the velocity — the Magnus
 In a game, this is useful in a few ways. You can build trick-shot mechanics. You can make specific weapons have a characteristic drift that skilled players need to account for. You can create a gun that literally curves its shots around cover.
 
 ```lua
-Solver:Fire(context, {
-    SpinVector        = Vector3.new(0, 0, 1) * 300,  -- rightward spin, 300 rad/s
-    MagnusCoefficient = 0.0001,
-    SpinDecayRate     = 0.05,    -- spin decays 5% per second as air slows it
-})
+local Behavior = BehaviorBuilder.new()
+    :Magnus()
+        :SpinVector(Vector3.new(0, 0, 1) * 300)  -- rightward spin, 300 rad/s
+        :Coefficient(0.0001)
+        :SpinDecayRate(0.05)    -- spin decays 5% per second as air slows it
+    :Done()
+    :Build()
 ```
 
 :::caution Start small
@@ -136,10 +144,12 @@ The practical difference: Magnus curves the path cleanly. Gyroscopic drift adds 
 Real bullets from right-hand rifling drift slightly right and slightly up at long range. This is the combination of gyroscopic precession and Magnus effect. For a milsim game this is a compelling detail. For most games it's noise.
 
 ```lua
-Solver:Fire(context, {
-    GyroDriftRate = 0.4,    -- lateral acceleration in studs/s²
-    -- GyroDriftAxis = nil  -- nil = world UP (right-hand rifling default)
-})
+local Behavior = BehaviorBuilder.new()
+    :GyroDrift()
+        :Rate(0.4)    -- lateral acceleration in studs/s²
+        -- :Axis() not set — defaults to world UP (right-hand rifling)
+    :Done()
+    :Build()
 ```
 
 Use this sparingly. It's most effective as a barely-perceptible force that snipers notice at extreme range — not as something that requires overcorrection on every shot.
@@ -155,17 +165,19 @@ A tumbling bullet is a bullet that has lost that stability. It's yawing, pitchin
 This can happen when a bullet slows down below the speed that its rotational stabilisation can maintain. It can happen when a bullet passes through a soft target and exits destabilised. Either way, a tumbling bullet behaves completely differently from a stable one.
 
 ```lua
-Solver:Fire(context, {
-    -- This bullet will destabilise after hitting a surface and exiting
-    CanPierceFunction    = function(ctx, result, vel) return true end,
-    MaxPierceCount       = 1,
-    TumbleOnPierce       = true,       -- begin tumbling immediately after first pierce
-
-    TumbleDragMultiplier  = 4.0,       -- drag multiplied by 4 — slows down fast
-    TumbleLateralStrength = 8,         -- chaotic lateral acceleration in studs/s²
-    TumbleSpeedThreshold  = nil,       -- no speed-based trigger, only pierce-based
-    TumbleRecoverySpeed   = nil,       -- once tumbling, permanent
-})
+local Behavior = BehaviorBuilder.new()
+    :Pierce()
+        :Max(1)
+        :Filter(function(ctx, result, vel) return true end)
+    :Done()
+    :Tumble()
+        :OnPierce(true)          -- begin tumbling immediately after first pierce
+        :DragMultiplier(4.0)     -- drag multiplied by 4 — slows down fast
+        :LateralStrength(8)      -- chaotic lateral acceleration in studs/s²
+        -- :SpeedThreshold() not set — pierce-based onset only
+        -- :RecoverySpeed() not set — once tumbling, permanent
+    :Done()
+    :Build()
 
 Signals.OnTumbleBegin:Connect(function(context, velocity)
     -- visual: swap tracer to a tumbling sprite, change audio
@@ -181,13 +193,17 @@ The result: bullets that exit a target are fast and predictable. Bullets that ex
 When a round hits and breaks apart, it sends shards outward in a cone. Fragmentation simulates this by spawning child bullets at the pierce point, each flying in a slightly different direction.
 
 ```lua
-Solver:Fire(context, {
-    CanPierceFunction = function(ctx, result, vel) return true end,
-    MaxPierceCount    = 1,
-    FragmentOnPierce  = true,
-    FragmentCount     = 5,     -- five fragments
-    FragmentDeviation = 20,    -- spread within a 20-degree half-angle cone
-})
+local Behavior = BehaviorBuilder.new()
+    :Pierce()
+        :Max(1)
+        :Filter(function(ctx, result, vel) return true end)
+    :Done()
+    :Fragmentation()
+        :OnPierce(true)
+        :Count(5)         -- five fragments
+        :Deviation(20)    -- spread within a 20-degree half-angle cone
+    :Done()
+    :Build()
 
 Signals.OnBranchSpawned:Connect(function(parentContext, childContext)
     -- inherit a fraction of the parent's damage

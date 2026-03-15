@@ -108,14 +108,6 @@ bullet passes through it silently on every subsequent arc.
 
 ---
 
-**How does `CoriolisLatitude` / `CoriolisScale` work on the behavior table?**
-
-It doesn't — those fields are in `DEFAULT_BEHAVIOR` for documentation purposes only. Coriolis is a
-solver-level setting, not a per-bullet one. Use `Solver:SetCoriolisConfig(latitude, scale)`.
-Setting these fields on the behavior table has no runtime effect.
-
----
-
 ## Performance
 
 **When should I use `Vetra.newParallel()` instead of `Vetra.new()`?**

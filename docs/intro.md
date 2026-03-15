@@ -70,22 +70,31 @@ For mutating a bounce or pierce *as it resolves* (before the math finalises), se
 ## "I want to build behaviors with typed setters and validation."
 
 [BehaviorBuilder](../api/BehaviorBuilder) is the fluent builder — chain `:Physics()`, `:Bounce()`,
-`:Pierce()`, and so on, then call `:Build()` to get a validated frozen table.
+`:Pierce()`, `:Drag()`, `:Magnus()`, `:Homing()`, and so on, then call `:Build()` to get a
+validated frozen table. Every `VetraBehavior` field is covered by a typed setter.
 
 The individual sub-builders are documented in [SubBuilders](../api/PhysicsBuilder):
 [PhysicsBuilder](../api/PhysicsBuilder),
+[HomingBuilder](../api/HomingBuilder),
 [PierceBuilder](../api/PierceBuilder),
 [BounceBuilder](../api/BounceBuilder),
 [HighFidelityBuilder](../api/HighFidelityBuilder),
 [CornerTrapBuilder](../api/CornerTrapBuilder),
 [CosmeticBuilder](../api/CosmeticBuilder),
-[HomingBuilder](../api/HomingBuilder),
-[DebugBuilder](../api/DebugBuilder).
+[DebugBuilder](../api/DebugBuilder),
+[DragBuilder](../api/DragBuilder),
+[WindBuilder](../api/WindBuilder),
+[MagnusBuilder](../api/MagnusBuilder),
+[GyroDriftBuilder](../api/GyroDriftBuilder),
+[TumbleBuilder](../api/TumbleBuilder),
+[FragmentationBuilder](../api/FragmentationBuilder),
+[SpeedProfilesBuilder](../api/SpeedProfilesBuilder),
+[TrajectoryBuilder](../api/TrajectoryBuilder),
+[LODBuilder](../api/LODBuilder).
 
-:::tip Fields the builder doesn't cover
-Drag, Magnus, tumble, fragmentation, homing config, speed profiles, and a few others must be set
-directly on the raw behavior table. They're all listed in
-[TypeDefinitions → VetraBehavior](../api/TypeDefinitions).
+:::tip DragModel enum
+Use `BehaviorBuilder.DragModel.G7` instead of the raw string `"G7"`. Typos on raw
+strings pass the type checker silently and only fail at `:Build()`.
 :::
 
 ---

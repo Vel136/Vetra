@@ -154,14 +154,4 @@ return table.freeze({
 	-- We halve it to get the estimated one-way (server → client) delay.
 	RTT_HALF_DIVISOR = 2,
 
-	-- Fallback full round-trip time used when Stats:GetStatValue cannot produce
-	-- a measurement (e.g. in Studio, or before the first ping completes).
-	-- GetDelay() halves this via RTT_HALF_DIVISOR to get the one-way estimate.
-	-- 100 ms is a typical moderate-latency baseline.
-	DEFAULT_RTT_FALLBACK_SECONDS = 0.1,
-
-	-- ── FireValidator Cancel Ceiling ─────────────────────────────────────────
-	-- Unused — reserved for a future hook layer. Not referenced by any module.
-	-- FIRE_REQUEST_CANCEL_LIMIT = 3,
-
 })

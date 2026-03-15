@@ -1,0 +1,161 @@
+--!native
+--!optimize 2
+--!strict
+
+--[[
+    Shared type definitions and the DragModel enum for BehaviorBuilder.
+
+    Every sub-builder and the root builder require this module to get the
+    BuiltBehavior type, callback aliases, and DragModelEnum.
+
+    IsValidDragModel is also exposed here so Drag.lua and SpeedProfiles.lua
+    can both validate against the enum without duplicating the loop.
+]]
+
+-- ─── Callback Aliases ────────────────────────────────────────────────────────
+
+export type BulletContext  = any
+export type PierceFilter   = (Context: BulletContext, Result: RaycastResult, Velocity: Vector3) -> boolean
+export type BounceFilter   = (Context: BulletContext, Result: RaycastResult, Velocity: Vector3) -> boolean
+export type HomingFilter   = (Context: BulletContext, currentPosition: Vector3, currentVelocity: Vector3) -> boolean
+export type HomingProvider = (pos: Vector3, vel: Vector3) -> Vector3?
+export type BulletProvider = (ctx: BulletContext) -> Instance?
+export type TrajectoryProvider = (elapsed: number) -> Vector3?
+
+-- ─── DragModel ───────────────────────────────────────────────────────────────
+
+export type DragModel =
+    "Linear" | "Quadratic" | "Exponential"
+    | "G1" | "G2" | "G3" | "G4" | "G5" | "G6" | "G7" | "G8" | "GL"
+    | "Custom"
+
+local DragModelEnum: { [string]: DragModel } = table.freeze({
+    Linear      = "Linear"      :: DragModel,
+    Quadratic   = "Quadratic"   :: DragModel,
+    Exponential = "Exponential" :: DragModel,
+    G1          = "G1"          :: DragModel,
+    G2          = "G2"          :: DragModel,
+    G3          = "G3"          :: DragModel,
+    G4          = "G4"          :: DragModel,
+    G5          = "G5"          :: DragModel,
+    G6          = "G6"          :: DragModel,
+    G7          = "G7"          :: DragModel,
+    G8          = "G8"          :: DragModel,
+    GL          = "GL"          :: DragModel,
+    Custom      = "Custom"      :: DragModel,
+})
+
+local function IsValidDragModel(Value: any): boolean
+    for _, v in DragModelEnum do
+        if v == Value then return true end
+    end
+    return false
+end
+
+-- ─── SpeedProfile ────────────────────────────────────────────────────────────
+
+export type SpeedProfile = {
+    DragCoefficient     : number?,
+    DragModel           : DragModel?,
+    NormalPerturbation  : number?,
+    MaterialRestitution : { [Enum.Material]: number }?,
+    Restitution         : number?,
+}
+
+-- ─── BuiltBehavior ───────────────────────────────────────────────────────────
+
+export type BuiltBehavior = {
+    -- Physics
+    Acceleration                 : Vector3,
+    MaxDistance                  : number,
+    MaxSpeed                     : number,
+    RaycastParams                : RaycastParams,
+    Gravity                      : Vector3,
+    MinSpeed                     : number,
+    -- Drag
+    DragCoefficient              : number,
+    DragModel                    : DragModel,
+    DragSegmentInterval          : number,
+    CustomMachTable              : { { number } }?,
+    -- Wind
+    WindResponse                 : number,
+    -- Magnus
+    SpinVector                   : Vector3,
+    MagnusCoefficient            : number,
+    SpinDecayRate                : number,
+    -- Gyroscopic Drift
+    GyroDriftRate                : number?,
+    GyroDriftAxis                : Vector3?,
+    -- Tumble
+    TumbleSpeedThreshold         : number?,
+    TumbleDragMultiplier         : number,
+    TumbleLateralStrength        : number,
+    TumbleOnPierce               : boolean,
+    TumbleRecoverySpeed          : number?,
+    -- Homing
+    CanHomeFunction              : HomingFilter?,
+    HomingPositionProvider       : HomingProvider?,
+    HomingStrength               : number,
+    HomingMaxDuration            : number,
+    HomingAcquisitionRadius      : number,
+    -- Speed Profiles
+    SpeedThresholds              : { number },
+    SupersonicProfile            : SpeedProfile?,
+    SubsonicProfile              : SpeedProfile?,
+    -- Trajectory
+    TrajectoryPositionProvider   : TrajectoryProvider?,
+    -- Bullet Mass
+    BulletMass                   : number,
+    CastFunction                 : ((Vector3, Vector3, RaycastParams) -> RaycastResult?)?,
+    -- Pierce
+    CanPierceFunction            : PierceFilter?,
+    MaxPierceCount               : number,
+    PierceSpeedThreshold         : number,
+    PenetrationSpeedRetention    : number,
+    PierceNormalBias             : number,
+    PenetrationDepth             : number,
+    PenetrationForce             : number,
+    PenetrationThicknessLimit    : number,
+    -- Fragmentation
+    FragmentOnPierce             : boolean,
+    FragmentCount                : number,
+    FragmentDeviation            : number,
+    -- Bounce
+    CanBounceFunction            : BounceFilter?,
+    MaxBounces                   : number,
+    ResetPierceOnBounce          : boolean,
+    BounceSpeedThreshold         : number,
+    Restitution                  : number,
+    MaterialRestitution          : { [Enum.Material]: number },
+    NormalPerturbation           : number,
+    -- High Fidelity
+    HighFidelitySegmentSize      : number,
+    HighFidelityFrameBudget      : number,
+    AdaptiveScaleFactor          : number,
+    MinSegmentSize               : number,
+    MaxBouncesPerFrame           : number,
+    -- Corner Trap
+    CornerTimeThreshold          : number,
+    CornerPositionHistorySize    : number,
+    CornerDisplacementThreshold  : number,
+    CornerEMAAlpha               : number,
+    CornerEMAThreshold           : number,
+    CornerMinProgressPerBounce   : number,
+    -- LOD
+    LODDistance                  : number,
+    -- Cosmetic
+    CosmeticBulletTemplate       : BasePart?,
+    CosmeticBulletContainer      : Instance?,
+    CosmeticBulletProvider       : BulletProvider?,
+    -- Batch Travel
+    BatchTravel                  : boolean,
+    -- Debug
+    VisualizeCasts               : boolean,
+}
+
+-- ─── Module Return ───────────────────────────────────────────────────────────
+
+return {
+    DragModelEnum    = DragModelEnum,
+    IsValidDragModel = IsValidDragModel,
+}

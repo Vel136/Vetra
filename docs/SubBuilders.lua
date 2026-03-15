@@ -10,7 +10,6 @@ local PhysicsBuilder = {}
 
 --[=[
 	Maximum distance in studs the bullet can travel before expiring.
-	`OnHit` fires with a nil `RaycastResult` when this is reached.
 
 	Default: `500`
 
@@ -20,11 +19,7 @@ local PhysicsBuilder = {}
 function PhysicsBuilder:MaxDistance(value: number): PhysicsBuilder end
 
 --[=[
-	Maximum speed in studs per second. When the bullet's speed rises above
-	this value it is terminated. `OnHit` fires with a nil `RaycastResult`.
-
-	Useful for capping homing missiles or rockets that accelerate indefinitely,
-	preventing them from tunnelling through thin surfaces.
+	Maximum speed in studs per second. Bullet terminates if speed exceeds this.
 
 	Default: `math.huge` (no cap)
 
@@ -34,8 +29,7 @@ function PhysicsBuilder:MaxDistance(value: number): PhysicsBuilder end
 function PhysicsBuilder:MaxSpeed(value: number): PhysicsBuilder end
 
 --[=[
-	Minimum speed in studs per second. When the bullet's speed drops below
-	this value it is terminated. `OnHit` fires with a nil `RaycastResult`.
+	Minimum speed in studs per second. Bullet terminates when speed drops below this.
 
 	Default: `1`
 
@@ -45,10 +39,9 @@ function PhysicsBuilder:MaxSpeed(value: number): PhysicsBuilder end
 function PhysicsBuilder:MinSpeed(value: number): PhysicsBuilder end
 
 --[=[
-	Gravitational acceleration applied to the bullet. Pass a negative-Y
-	vector for downward gravity.
+	Gravitational acceleration. Pass a negative-Y vector for downward gravity.
 
-	Default: `Vector3.new(0, -workspace.Gravity, 0)` (read at builder construction time)
+	Default: `Vector3.new(0, -workspace.Gravity, 0)` (read at construction time)
 
 	@param value Vector3
 	@return PhysicsBuilder
@@ -56,9 +49,7 @@ function PhysicsBuilder:MinSpeed(value: number): PhysicsBuilder end
 function PhysicsBuilder:Gravity(value: Vector3): PhysicsBuilder end
 
 --[=[
-	Extra constant acceleration layered on top of gravity — for example,
-	rocket thrust. Wind is applied separately via [Vetra:SetWind] and
-	`WindResponse`, and drag is applied separately via `DragCoefficient`.
+	Extra constant acceleration layered on top of gravity — e.g. rocket thrust.
 
 	Default: `Vector3.zero`
 
@@ -68,9 +59,7 @@ function PhysicsBuilder:Gravity(value: Vector3): PhysicsBuilder end
 function PhysicsBuilder:Acceleration(value: Vector3): PhysicsBuilder end
 
 --[=[
-	The `RaycastParams` used for all raycasts during this cast's lifetime.
-	The solver acquires a clone from its internal pool — the original is
-	never mutated.
+	`RaycastParams` used for all raycasts during this cast's lifetime.
 
 	Default: `RaycastParams.new()`
 
@@ -80,22 +69,17 @@ function PhysicsBuilder:Acceleration(value: Vector3): PhysicsBuilder end
 function PhysicsBuilder:RaycastParams(value: RaycastParams): PhysicsBuilder end
 
 --[=[
-	Optional custom cast function. Replaces `workspace:Raycast` for every
-	intersection test this bullet performs. Use for `workspace:Spherecast`,
-	`workspace:Blockcast`, or any custom raycast wrapper.
+	Optional custom cast function replacing `workspace:Raycast`. Use for
+	`Spherecast`, `Blockcast`, or any custom raycast wrapper.
 
 	Signature: `(origin: Vector3, direction: Vector3, params: RaycastParams) -> RaycastResult?`
 
-	`direction` is the raw displacement vector for that frame (not a unit vector)
-	— its length equals the cast distance.
-
-	:::caution Parallel solver
-	`CastFunction` is **serial-exclusive**. It is silently ignored when using
-	`Vetra.newParallel()` because functions cannot cross Actor boundaries via
-	message serialization. Use `Vetra.new()` if you need a custom cast function.
+	:::caution Serial solver only
+	Silently ignored by `Vetra.newParallel()` — functions cannot cross Actor
+	boundaries via message serialization.
 	:::
 
-	Default: `nil` (uses `workspace:Raycast`)
+	Default: `nil`
 
 	@param value (origin: Vector3, direction: Vector3, params: RaycastParams) -> RaycastResult?
 	@return PhysicsBuilder
@@ -103,13 +87,8 @@ function PhysicsBuilder:RaycastParams(value: RaycastParams): PhysicsBuilder end
 function PhysicsBuilder:CastFunction(value: (Vector3, Vector3, RaycastParams) -> RaycastResult?): PhysicsBuilder end
 
 --[=[
-	Mass of the bullet in game units. Used by penetration calculations that
-	model momentum transfer — a heavier bullet retains more speed through
-	a thick surface than a lighter one given the same `PenetrationForce` budget.
-
-	Set to `0` to disable mass-based calculations (the force budget is used
-	directly without mass scaling). Also used by VetraNet's `impactForce`
-	calculation: `BulletMass × velocity.Magnitude`.
+	Mass of the bullet in game units. Used by penetration and impact-force
+	calculations. Set to `0` to disable mass-based scaling.
 
 	Default: `0`
 
@@ -120,7 +99,6 @@ function PhysicsBuilder:BulletMass(value: number): PhysicsBuilder end
 
 --[=[
 	Returns the root [BehaviorBuilder].
-
 	@return BehaviorBuilder
 ]=]
 function PhysicsBuilder:Done(): BehaviorBuilder end
@@ -130,56 +108,18 @@ function PhysicsBuilder:Done(): BehaviorBuilder end
 --[=[
 	@class HomingBuilder
 
-	Sub-builder for the homing gate filter. Opened via [BehaviorBuilder:Homing].
+	Sub-builder for homing configuration. Opened via [BehaviorBuilder:Homing].
 	Call `:Done()` to return to the root [BehaviorBuilder].
-
-	:::caution Only exposes the gate filter
-	This builder only sets `CanHomeFunction`. The core homing fields —
-	`HomingPositionProvider`, `HomingStrength`, `HomingMaxDuration`, and
-	`HomingAcquisitionRadius` — must be set directly on the raw behavior table
-	passed to `Solver:Fire()`.
-
-	```lua
-	local Behavior = BehaviorBuilder.new()
-	    :Homing()
-	        :Filter(function(context, pos, vel)
-	            return not context.UserData.HomingDisabled
-	        end)
-	    :Done()
-	    :Build()
-
-	-- Pass homing config on the raw table alongside the built behavior:
-	Solver:Fire(context, setmetatable({
-	    HomingPositionProvider = function(pos, vel)
-	        return targetPart.Position
-	    end,
-	    HomingStrength         = 90,
-	    HomingMaxDuration      = 3,
-	    HomingAcquisitionRadius = 0,
-	}, { __index = Behavior }))
-	```
-
-	**Raw behavior fields for homing:**
-
-	| Field | Type | Default | Description |
-	|-------|------|---------|-------------|
-	| `HomingPositionProvider` | `((pos: Vector3, vel: Vector3) -> Vector3?)?` | `nil` | Called every frame to get the target position. Return `nil` to disengage. |
-	| `HomingStrength` | `number` | `90` | Steering force in degrees per second. |
-	| `HomingMaxDuration` | `number` | `3` | Maximum seconds of active homing before `OnHomingDisengaged` fires. |
-	| `HomingAcquisitionRadius` | `number` | `0` | Min target distance in studs to engage homing. `0` = engage immediately on fire. |
-	:::
 ]=]
 local HomingBuilder = {}
 
 --[=[
-	Sets the `CanHomeFunction` gate callback. Return `true` to allow homing
-	to continue this frame, `false` to disengage and fire `OnHomingDisengaged`.
-
-	Must be **synchronous** — yielding will terminate the cast.
+	Gate callback invoked every frame. Return `false` to disengage homing
+	and fire `OnHomingDisengaged`.
 
 	Signature: `(context: BulletContext, currentPosition: Vector3, currentVelocity: Vector3) -> boolean`
 
-	Default: `nil` (always home if `HomingPositionProvider` returns a position)
+	Default: `nil` (always homes while PositionProvider returns a position)
 
 	@param callback (context: BulletContext, currentPosition: Vector3, currentVelocity: Vector3) -> boolean
 	@return HomingBuilder
@@ -187,8 +127,49 @@ local HomingBuilder = {}
 function HomingBuilder:Filter(callback: (any, Vector3, Vector3) -> boolean): HomingBuilder end
 
 --[=[
-	Returns the root [BehaviorBuilder].
+	Called every frame to get the target position. Return `nil` to disengage.
 
+	Signature: `(pos: Vector3, vel: Vector3) -> Vector3?`
+
+	Default: `nil`
+
+	@param callback (pos: Vector3, vel: Vector3) -> Vector3?
+	@return HomingBuilder
+]=]
+function HomingBuilder:PositionProvider(callback: (Vector3, Vector3) -> Vector3?): HomingBuilder end
+
+--[=[
+	Steering force in degrees per second.
+
+	Default: `90`
+
+	@param value number
+	@return HomingBuilder
+]=]
+function HomingBuilder:Strength(value: number): HomingBuilder end
+
+--[=[
+	Maximum seconds of active homing before `OnHomingDisengaged` fires.
+
+	Default: `3`
+
+	@param value number
+	@return HomingBuilder
+]=]
+function HomingBuilder:MaxDuration(value: number): HomingBuilder end
+
+--[=[
+	Minimum target distance in studs to engage homing. `0` = engage immediately.
+
+	Default: `0`
+
+	@param value number
+	@return HomingBuilder
+]=]
+function HomingBuilder:AcquisitionRadius(value: number): HomingBuilder end
+
+--[=[
+	Returns the root [BehaviorBuilder].
 	@return BehaviorBuilder
 ]=]
 function HomingBuilder:Done(): BehaviorBuilder end
@@ -203,17 +184,12 @@ function HomingBuilder:Done(): BehaviorBuilder end
 
 	:::caution
 	Pierce and bounce are mutually exclusive per hit. Pierce is evaluated first.
-	If pierce succeeds, the bounce filter is not checked for that hit.
 	:::
 ]=]
 local PierceBuilder = {}
 
 --[=[
-	Callback invoked for each raycast hit. Return `true` to allow the bullet
-	to pierce through the instance.
-
-	Must be **synchronous** — yielding inside this callback terminates the cast
-	with an error on the next frame.
+	Pierce gate. Return `true` to pierce; `false` treats the hit as terminal.
 
 	Signature: `(context: BulletContext, result: RaycastResult, velocity: Vector3) -> boolean`
 
@@ -225,7 +201,7 @@ local PierceBuilder = {}
 function PierceBuilder:Filter(callback: (any, RaycastResult, Vector3) -> boolean): PierceBuilder end
 
 --[=[
-	Maximum total number of surfaces the bullet can pierce over its lifetime.
+	Maximum total surfaces the bullet can pierce over its lifetime.
 
 	Default: `3`
 
@@ -235,8 +211,7 @@ function PierceBuilder:Filter(callback: (any, RaycastResult, Vector3) -> boolean
 function PierceBuilder:Max(value: number): PierceBuilder end
 
 --[=[
-	Minimum speed in studs per second required for a pierce attempt.
-	Below this speed the hit is treated as a solid terminal impact.
+	Minimum speed (studs/s) required to attempt a pierce.
 
 	Default: `50`
 
@@ -246,9 +221,7 @@ function PierceBuilder:Max(value: number): PierceBuilder end
 function PierceBuilder:SpeedThreshold(value: number): PierceBuilder end
 
 --[=[
-	Fraction of speed retained after each pierce. Must be in `[0, 1]`.
-	`0.8` means 20% of speed is lost per pierce — deeper chains become
-	progressively slower.
+	Fraction of speed retained per pierce. Must be in `[0, 1]`.
 
 	Default: `0.8`
 
@@ -258,9 +231,8 @@ function PierceBuilder:SpeedThreshold(value: number): PierceBuilder end
 function PierceBuilder:SpeedRetention(value: number): PierceBuilder end
 
 --[=[
-	Restricts piercing to impacts above a minimum head-on angle. Must be
-	in `[0, 1]`. `1.0` = all angles allowed. `0.0` = only perfectly
-	perpendicular impacts pierce.
+	Minimum approach angle for pierce. Must be in `[0, 1]`.
+	`1.0` = all angles; `0.0` = perpendicular only.
 
 	Default: `1.0`
 
@@ -270,11 +242,7 @@ function PierceBuilder:SpeedRetention(value: number): PierceBuilder end
 function PierceBuilder:NormalBias(value: number): PierceBuilder end
 
 --[=[
-	Maximum wall thickness in studs that the bullet can penetrate per pierce.
-	The solver performs an internal second raycast to find the exit point — if
-	the wall is thicker than this value the bullet stops inside it.
-
-	`0` = no depth limit per pierce (the `ThicknessLimit` hard cap still applies).
+	Maximum wall thickness per pierce in studs. `0` = no per-pierce limit.
 
 	Default: `0`
 
@@ -284,12 +252,7 @@ function PierceBuilder:NormalBias(value: number): PierceBuilder end
 function PierceBuilder:PenetrationDepth(value: number): PierceBuilder end
 
 --[=[
-	Total penetration force budget. Each surface absorbs force proportional
-	to its thickness and the bullet's `BulletMass`. When the budget reaches
-	zero the bullet can no longer pierce.
-
-	`0` = disabled (use `MaxPierceCount` alone for simple multi-pierce without
-	momentum modeling).
+	Total momentum force budget for penetration. `0` = disabled.
 
 	Default: `0`
 
@@ -299,21 +262,17 @@ function PierceBuilder:PenetrationDepth(value: number): PierceBuilder end
 function PierceBuilder:PenetrationForce(value: number): PierceBuilder end
 
 --[=[
-	Hard cap on wall thickness in studs. The solver's internal exit-point
-	raycast extends at most this many studs through a surface. Any wall
-	thicker than this is treated as impenetrable regardless of force budget
-	or `PenetrationDepth`.
+	Hard cap on wall thickness for the exit-point raycast in studs.
 
 	Default: `500`
 
-	@param value number -- Must be > 0.
+	@param value number
 	@return PierceBuilder
 ]=]
 function PierceBuilder:ThicknessLimit(value: number): PierceBuilder end
 
 --[=[
 	Returns the root [BehaviorBuilder].
-
 	@return BehaviorBuilder
 ]=]
 function PierceBuilder:Done(): BehaviorBuilder end
@@ -328,17 +287,13 @@ function PierceBuilder:Done(): BehaviorBuilder end
 
 	:::caution
 	Pierce and bounce are mutually exclusive per hit. Bounce is only evaluated
-	if pierce did not occur on that hit.
+	if pierce did not occur.
 	:::
 ]=]
 local BounceBuilder = {}
 
 --[=[
-	Callback invoked for each raycast hit. Return `true` to allow the bullet
-	to bounce off the surface.
-
-	Must be **synchronous** — yielding inside this callback terminates the cast
-	with an error on the next frame.
+	Bounce gate. Return `true` to bounce.
 
 	Signature: `(context: BulletContext, result: RaycastResult, velocity: Vector3) -> boolean`
 
@@ -350,7 +305,7 @@ local BounceBuilder = {}
 function BounceBuilder:Filter(callback: (any, RaycastResult, Vector3) -> boolean): BounceBuilder end
 
 --[=[
-	Maximum total bounces across the bullet's entire lifetime.
+	Lifetime bounce limit.
 
 	Default: `5`
 
@@ -360,8 +315,7 @@ function BounceBuilder:Filter(callback: (any, RaycastResult, Vector3) -> boolean
 function BounceBuilder:Max(value: number): BounceBuilder end
 
 --[=[
-	Minimum speed in studs per second required for a bounce attempt.
-	Below this speed the hit is treated as a terminal impact.
+	Minimum speed (studs/s) required to attempt a bounce.
 
 	Default: `20`
 
@@ -371,12 +325,7 @@ function BounceBuilder:Max(value: number): BounceBuilder end
 function BounceBuilder:SpeedThreshold(value: number): BounceBuilder end
 
 --[=[
-	Energy-retention coefficient applied to reflected velocity. Must be in `[0, 1]`.
-	`1.0` = perfectly elastic (no energy loss). `0.0` = bullet stops on first contact.
-
-	Combined multiplicatively with `MaterialRestitution` for the hit surface's
-	material. The `SubsonicProfile.Restitution` override applies when the bullet
-	is subsonic.
+	Base energy retention per bounce. Must be in `[0, 1]`.
 
 	Default: `0.7`
 
@@ -386,31 +335,19 @@ function BounceBuilder:SpeedThreshold(value: number): BounceBuilder end
 function BounceBuilder:Restitution(value: number): BounceBuilder end
 
 --[=[
-	Per-material restitution multipliers, keyed by `Enum.Material`.
-	Combined multiplicatively with the base [BounceBuilder:Restitution].
-	Omitted materials use a multiplier of `1.0`.
-
-	```lua
-	:MaterialRestitution({
-	    [Enum.Material.Concrete] = 0.5,
-	    [Enum.Material.Plastic]  = 0.95,
-	})
-	```
+	Per-material restitution multipliers, combined with the base `Restitution`.
 
 	Default: `{}`
 
-	@param value {[Enum.Material]: number}
+	@param value { [Enum.Material]: number }
 	@return BounceBuilder
 ]=]
 function BounceBuilder:MaterialRestitution(value: { [Enum.Material]: number }): BounceBuilder end
 
 --[=[
-	Adds random noise to the surface normal before reflecting, simulating rough
-	or irregular surfaces. `0` = clean mirror reflection. Higher values scatter
-	the bullet more unpredictably. The `SubsonicProfile.NormalPerturbation`
-	override applies when the bullet is subsonic.
+	Random surface-normal noise for rough surfaces. `0` = clean reflection.
 
-	Default: `0.0`
+	Default: `0`
 
 	@param value number
 	@return BounceBuilder
@@ -418,15 +355,7 @@ function BounceBuilder:MaterialRestitution(value: { [Enum.Material]: number }): 
 function BounceBuilder:NormalPerturbation(value: number): BounceBuilder end
 
 --[=[
-	When `true`, pierce state (`PiercedInstances`, `PierceCount`, and the
-	`FilterDescendantsInstances` filter) is automatically reset after each
-	confirmed bounce, restoring the full pierce budget for the new arc.
-
-	Required for bounce + pierce combinations where the post-bounce trajectory
-	should be able to re-detect previously pierced surfaces.
-
-	For conditional resets (e.g. only after the first bounce), call
-	`cast:ResetPierceState()` manually inside an `OnBounce` handler instead.
+	If `true`, pierce state resets after each confirmed bounce.
 
 	Default: `false`
 
@@ -437,7 +366,6 @@ function BounceBuilder:ResetPierceOnBounce(value: boolean): BounceBuilder end
 
 --[=[
 	Returns the root [BehaviorBuilder].
-
 	@return BehaviorBuilder
 ]=]
 function BounceBuilder:Done(): BehaviorBuilder end
@@ -447,21 +375,13 @@ function BounceBuilder:Done(): BehaviorBuilder end
 --[=[
 	@class HighFidelityBuilder
 
-	Sub-builder for high-fidelity raycasting configuration. Opened via
-	[BehaviorBuilder:HighFidelity]. Call `:Done()` to return to the root
-	[BehaviorBuilder].
-
-	High-fidelity mode subdivides each frame's travel into multiple smaller
-	raycasts to prevent fast bullets from tunnelling through thin surfaces.
-	The segment size is adjusted adaptively each frame to stay near the
-	configured frame budget.
+	Sub-builder for high-fidelity sub-segment raycasting.
+	Opened via [BehaviorBuilder:HighFidelity]. Call `:Done()` to return.
 ]=]
 local HighFidelityBuilder = {}
 
 --[=[
-	Starting sub-segment length in studs. Smaller values produce more raycasts
-	per frame and better thin-surface detection at the cost of performance.
-	The adaptive system adjusts this value at runtime.
+	Sub-segment length in studs (starting value, shrinks adaptively).
 
 	Default: `0.5`
 
@@ -471,9 +391,7 @@ local HighFidelityBuilder = {}
 function HighFidelityBuilder:SegmentSize(value: number): HighFidelityBuilder end
 
 --[=[
-	Target wall-clock budget in milliseconds this cast may spend on sub-segment
-	raycasts per frame. The adaptive system scales segment size up or down to
-	stay near this target.
+	Millisecond budget per cast per frame for sub-segment raycasts.
 
 	Default: `4`
 
@@ -483,8 +401,7 @@ function HighFidelityBuilder:SegmentSize(value: number): HighFidelityBuilder end
 function HighFidelityBuilder:FrameBudget(value: number): HighFidelityBuilder end
 
 --[=[
-	Multiplier applied when coarsening or refining segment size adaptively.
-	Must be `> 1`. Higher values adapt faster but with less precision.
+	Adaptive sizing multiplier. Must be `> 1`.
 
 	Default: `1.5`
 
@@ -494,9 +411,7 @@ function HighFidelityBuilder:FrameBudget(value: number): HighFidelityBuilder end
 function HighFidelityBuilder:AdaptiveScale(value: number): HighFidelityBuilder end
 
 --[=[
-	Hard floor for adaptive segment size reduction in studs.
-	Must be `<= SegmentSize`. Prevents the adaptive algorithm from shrinking
-	segments to near-zero.
+	Hard floor for adaptive segment size in studs. Must be `<= SegmentSize`.
 
 	Default: `0.1`
 
@@ -506,9 +421,7 @@ function HighFidelityBuilder:AdaptiveScale(value: number): HighFidelityBuilder e
 function HighFidelityBuilder:MinSegmentSize(value: number): HighFidelityBuilder end
 
 --[=[
-	Maximum bounces allowed across all sub-segments within a single frame step.
-	Prevents a bullet from exhausting its entire lifetime bounce budget in one
-	frame when moving very fast through a dense environment.
+	Per-frame bounce cap across all sub-segments.
 
 	Default: `10`
 
@@ -519,7 +432,6 @@ function HighFidelityBuilder:MaxBouncesPerFrame(value: number): HighFidelityBuil
 
 --[=[
 	Returns the root [BehaviorBuilder].
-
 	@return BehaviorBuilder
 ]=]
 function HighFidelityBuilder:Done(): BehaviorBuilder end
@@ -529,43 +441,22 @@ function HighFidelityBuilder:Done(): BehaviorBuilder end
 --[=[
 	@class CornerTrapBuilder
 
-	Sub-builder for corner-trap detection configuration. Opened via
-	[BehaviorBuilder:CornerTrap]. Call `:Done()` to return to the root
-	[BehaviorBuilder].
+	Sub-builder for corner-trap detection. Opened via [BehaviorBuilder:CornerTrap].
+	Call `:Done()` to return to the root [BehaviorBuilder].
 
-	Corner-trap detection terminates bullets that become stuck bouncing
-	infinitely between two or more opposing surfaces (V-grooves, inside corners,
-	narrow slots). The detector runs four independent checks — any single check
-	firing is sufficient to declare a trap and terminate the cast:
+	Corner-trap detection terminates bullets stuck bouncing infinitely between
+	opposing surfaces. Four independent passes run on every bounce — any single
+	pass firing is sufficient to declare a trap:
 
-	**Pass 1 — Temporal:** Two bounces within `CornerTimeThreshold` seconds
-	triggers termination.
-
-	**Pass 2 — Velocity EMA:** An exponential moving average of the bullet's
-	velocity direction is tracked across bounces. If the EMA magnitude falls
-	below `CornerEMAThreshold`, the bullet is oscillating and is terminated.
-
-	**Pass 3 — Spatial:** If successive bounce contact points fall within
-	`CornerDisplacementThreshold` studs of each other, the bullet is trapped.
-
-	**Pass 4 — Minimum progress:** The bullet must advance at least
-	`CornerMinProgressPerBounce` studs from its first bounce contact over
-	the tracked history window. Catches slow-drift traps that pass the other
-	three checks. Set to `0` to disable this pass.
-
-	:::tip EMA parameter constraint
-	`CornerEMAThreshold` must be greater than `|1 − 2 · CornerEMAAlpha|`.
-	At the default `alpha = 0.4`, this gives `|1 - 0.8| = 0.2`, so the
-	threshold must be `> 0.2`. The default `0.25` satisfies this with a
-	clear margin. `:Build()` validates this constraint and returns `nil`
-	if it is violated.
-	:::
+	- **Pass 1 — Temporal:** Two bounces within `CornerTimeThreshold` seconds.
+	- **Pass 2 — Velocity EMA:** Velocity direction EMA falls below `CornerEMAThreshold`.
+	- **Pass 3 — Spatial:** Successive bounce contact points within `CornerDisplacementThreshold` studs.
+	- **Pass 4 — Minimum progress:** Bullet fails to advance `CornerMinProgressPerBounce` studs from its first bounce contact.
 ]=]
 local CornerTrapBuilder = {}
 
 --[=[
-	Minimum time in seconds that must elapse between successive bounces.
-	Two bounces closer together than this are flagged as a corner trap (Pass 1).
+	Minimum seconds between successive bounces (Pass 1).
 
 	Default: `0.002`
 
@@ -575,9 +466,7 @@ local CornerTrapBuilder = {}
 function CornerTrapBuilder:TimeThreshold(value: number): CornerTrapBuilder end
 
 --[=[
-	Number of bounce contact points kept in the rolling position history.
-	Must be a positive integer. Higher values make the Pass 3 spatial and
-	Pass 4 progress checks more robust at the cost of slightly more memory.
+	Bounce contact point history size. Must be a positive integer.
 
 	Default: `4`
 
@@ -587,8 +476,7 @@ function CornerTrapBuilder:TimeThreshold(value: number): CornerTrapBuilder end
 function CornerTrapBuilder:PositionHistorySize(value: number): CornerTrapBuilder end
 
 --[=[
-	Minimum stud distance between successive bounce contact points.
-	Displacement below this threshold triggers the Pass 3 spatial-proximity guard.
+	Minimum stud distance between successive contact points (Pass 3).
 
 	Default: `0.5`
 
@@ -599,24 +487,22 @@ function CornerTrapBuilder:DisplacementThreshold(value: number): CornerTrapBuild
 
 --[=[
 	EMA smoothing factor for velocity direction tracking (Pass 2). Must be in `(0, 1)`.
-	Higher values weight recent bounces more heavily — detection is faster but more
-	sensitive to brief directional wobble.
+
+	:::caution
+	`EMAThreshold` must be `> |1 − 2 · EMAAlpha|`. Changing this value requires
+	updating `EMAThreshold`. `:Build()` enforces the constraint.
+	:::
 
 	Default: `0.4`
 
-	:::caution
-	`CornerEMAThreshold` must be `> |1 − 2 · CornerEMAAlpha|`. If you change
-	this value, adjust `EMAThreshold` accordingly. `:Build()` enforces this.
-	:::
-
-	@param value number -- Must be in (0, 1).
+	@param value number
 	@return CornerTrapBuilder
 ]=]
 function CornerTrapBuilder:EMAAlpha(value: number): CornerTrapBuilder end
 
 --[=[
 	EMA magnitude threshold below which oscillation is declared (Pass 2).
-	Must be `> |1 − 2 · CornerEMAAlpha|` — see class note.
+	Must be `> |1 − 2 · EMAAlpha|`.
 
 	Default: `0.25`
 
@@ -626,8 +512,8 @@ function CornerTrapBuilder:EMAAlpha(value: number): CornerTrapBuilder end
 function CornerTrapBuilder:EMAThreshold(value: number): CornerTrapBuilder end
 
 --[=[
-	Minimum studs the bullet must advance from its first bounce contact over
-	the `PositionHistorySize` window (Pass 4). Set to `0` to disable Pass 4.
+	Minimum studs of progress per bounce over the history window (Pass 4).
+	Set to `0` to disable Pass 4.
 
 	Default: `0.3`
 
@@ -638,7 +524,6 @@ function CornerTrapBuilder:MinProgressPerBounce(value: number): CornerTrapBuilde
 
 --[=[
 	Returns the root [BehaviorBuilder].
-
 	@return BehaviorBuilder
 ]=]
 function CornerTrapBuilder:Done(): BehaviorBuilder end
@@ -648,9 +533,8 @@ function CornerTrapBuilder:Done(): BehaviorBuilder end
 --[=[
 	@class CosmeticBuilder
 
-	Sub-builder for cosmetic bullet configuration. Opened via
-	[BehaviorBuilder:Cosmetic]. Call `:Done()` to return to the root
-	[BehaviorBuilder].
+	Sub-builder for cosmetic bullet configuration. Opened via [BehaviorBuilder:Cosmetic].
+	Call `:Done()` to return to the root [BehaviorBuilder].
 
 	:::caution
 	`:Provider()` and `:Template()` are mutually exclusive. Provider takes
@@ -660,11 +544,7 @@ function CornerTrapBuilder:Done(): BehaviorBuilder end
 local CosmeticBuilder = {}
 
 --[=[
-	A `BasePart` that is cloned once per [Vetra:Fire] call and used as the
-	visible bullet. The clone is parented to `Container` (or `workspace` if nil)
-	and destroyed automatically on termination.
-
-	Mutually exclusive with `:Provider()` — Provider takes priority.
+	A `BasePart` cloned once per fire call. Mutually exclusive with `:Provider()`.
 
 	Default: `nil`
 
@@ -674,8 +554,7 @@ local CosmeticBuilder = {}
 function CosmeticBuilder:Template(value: BasePart): CosmeticBuilder end
 
 --[=[
-	Parent `Instance` for the cosmetic bullet object. Defaults to `workspace`
-	if nil.
+	Parent `Instance` for the cosmetic bullet object. Defaults to `workspace`.
 
 	Default: `nil`
 
@@ -685,14 +564,7 @@ function CosmeticBuilder:Template(value: BasePart): CosmeticBuilder end
 function CosmeticBuilder:Container(value: Instance): CosmeticBuilder end
 
 --[=[
-	A function called once per [Vetra:Fire] that returns the cosmetic bullet
-	`Instance`. Use this for object pooling or procedural creation.
-
-	Must be **synchronous** — yielding logs a warning. Takes priority over
-	`:Template()` if both are set.
-
-	The [BulletContext] is passed as the first argument so the provider can
-	read `UserData` (e.g. to pick a projectile model by weapon type).
+	Factory function called once per fire call. Takes priority over `:Template()`.
 
 	Signature: `(context: BulletContext) -> Instance?`
 
@@ -705,7 +577,6 @@ function CosmeticBuilder:Provider(callback: (any) -> Instance?): CosmeticBuilder
 
 --[=[
 	Returns the root [BehaviorBuilder].
-
 	@return BehaviorBuilder
 ]=]
 function CosmeticBuilder:Done(): BehaviorBuilder end
@@ -721,10 +592,7 @@ function CosmeticBuilder:Done(): BehaviorBuilder end
 local DebugBuilder = {}
 
 --[=[
-	Enables the trajectory visualizer. Draws cast segments, hit points, surface
-	normals, bounce vectors, and corner-trap markers directly in the world.
-
-	Zero runtime cost when `false` — no raycasts or draw calls are added.
+	Enables the trajectory visualizer. Zero runtime cost when `false`.
 
 	Default: `false`
 
@@ -735,9 +603,445 @@ function DebugBuilder:Visualize(value: boolean): DebugBuilder end
 
 --[=[
 	Returns the root [BehaviorBuilder].
-
 	@return BehaviorBuilder
 ]=]
 function DebugBuilder:Done(): BehaviorBuilder end
+
+-- ─── DragBuilder ─────────────────────────────────────────────────────────────
+
+--[=[
+	@class DragBuilder
+
+	Sub-builder for aerodynamic drag. Opened via [BehaviorBuilder:Drag].
+	Call `:Done()` to return to the root [BehaviorBuilder].
+]=]
+local DragBuilder = {}
+
+--[=[
+	Drag coefficient. `0` = no drag.
+
+	Default: `0`
+
+	@param value number
+	@return DragBuilder
+]=]
+function DragBuilder:Coefficient(value: number): DragBuilder end
+
+--[=[
+	Drag model. Use `BehaviorBuilder.DragModel` enum values.
+
+	Default: `BehaviorBuilder.DragModel.Quadratic`
+
+	@param value DragModel
+	@return DragBuilder
+]=]
+function DragBuilder:Model(value: DragModel): DragBuilder end
+
+--[=[
+	Seconds between drag and Magnus recalculation steps.
+
+	Default: `0.05`
+
+	@param value number
+	@return DragBuilder
+]=]
+function DragBuilder:SegmentInterval(value: number): DragBuilder end
+
+--[=[
+	Required when `Model = BehaviorBuilder.DragModel.Custom`.
+	Table of `{mach, cd}` pairs, sorted ascending by Mach number.
+
+	Default: `nil`
+
+	@param value { { number } }
+	@return DragBuilder
+]=]
+function DragBuilder:CustomMachTable(value: { { number } }): DragBuilder end
+
+--[=[
+	Returns the root [BehaviorBuilder].
+	@return BehaviorBuilder
+]=]
+function DragBuilder:Done(): BehaviorBuilder end
+
+-- ─── WindBuilder ─────────────────────────────────────────────────────────────
+
+--[=[
+	@class WindBuilder
+
+	Sub-builder for wind sensitivity. Opened via [BehaviorBuilder:Wind].
+	Call `:Done()` to return to the root [BehaviorBuilder].
+]=]
+local WindBuilder = {}
+
+--[=[
+	Multiplier on the solver's global wind vector (`Vetra:SetWind`).
+	`1.0` = fully affected, `0.0` = immune.
+
+	Default: `1.0`
+
+	@param value number
+	@return WindBuilder
+]=]
+function WindBuilder:Response(value: number): WindBuilder end
+
+--[=[
+	Returns the root [BehaviorBuilder].
+	@return BehaviorBuilder
+]=]
+function WindBuilder:Done(): BehaviorBuilder end
+
+-- ─── MagnusBuilder ───────────────────────────────────────────────────────────
+
+--[=[
+	@class MagnusBuilder
+
+	Sub-builder for the Magnus effect. Opened via [BehaviorBuilder:Magnus].
+	Call `:Done()` to return to the root [BehaviorBuilder].
+]=]
+local MagnusBuilder = {}
+
+--[=[
+	Spin axis × angular velocity in rad/s. `Vector3.zero` disables the effect.
+
+	Default: `Vector3.zero`
+
+	@param value Vector3
+	@return MagnusBuilder
+]=]
+function MagnusBuilder:SpinVector(value: Vector3): MagnusBuilder end
+
+--[=[
+	Magnus lift coefficient. Typical range: `0.00005`–`0.001`.
+
+	Default: `0`
+
+	@param value number
+	@return MagnusBuilder
+]=]
+function MagnusBuilder:Coefficient(value: number): MagnusBuilder end
+
+--[=[
+	Rate at which `SpinVector` magnitude decreases per second. `0` = no decay.
+
+	Default: `0`
+
+	@param value number
+	@return MagnusBuilder
+]=]
+function MagnusBuilder:SpinDecayRate(value: number): MagnusBuilder end
+
+--[=[
+	Returns the root [BehaviorBuilder].
+	@return BehaviorBuilder
+]=]
+function MagnusBuilder:Done(): BehaviorBuilder end
+
+-- ─── GyroDriftBuilder ────────────────────────────────────────────────────────
+
+--[=[
+	@class GyroDriftBuilder
+
+	Sub-builder for gyroscopic drift. Opened via [BehaviorBuilder:GyroDrift].
+	Call `:Done()` to return to the root [BehaviorBuilder].
+]=]
+local GyroDriftBuilder = {}
+
+--[=[
+	Lateral drift acceleration magnitude in studs/s². Setting this enables drift.
+
+	Default: `nil` (disabled)
+
+	@param value number
+	@return GyroDriftBuilder
+]=]
+function GyroDriftBuilder:Rate(value: number): GyroDriftBuilder end
+
+--[=[
+	Reference axis for drift direction. `nil` = world UP (right-hand rifling).
+
+	Default: `nil`
+
+	@param value Vector3
+	@return GyroDriftBuilder
+]=]
+function GyroDriftBuilder:Axis(value: Vector3): GyroDriftBuilder end
+
+--[=[
+	Returns the root [BehaviorBuilder].
+	@return BehaviorBuilder
+]=]
+function GyroDriftBuilder:Done(): BehaviorBuilder end
+
+-- ─── TumbleBuilder ───────────────────────────────────────────────────────────
+
+--[=[
+	@class TumbleBuilder
+
+	Sub-builder for bullet tumble. Opened via [BehaviorBuilder:Tumble].
+	Call `:Done()` to return to the root [BehaviorBuilder].
+]=]
+local TumbleBuilder = {}
+
+--[=[
+	Speed (studs/s) below which tumbling begins. Setting this enables speed-based onset.
+
+	Default: `nil` (disabled)
+
+	@param value number
+	@return TumbleBuilder
+]=]
+function TumbleBuilder:SpeedThreshold(value: number): TumbleBuilder end
+
+--[=[
+	Drag multiplied by this factor while tumbling. Must be `>= 1`.
+
+	Default: `3.0`
+
+	@param value number
+	@return TumbleBuilder
+]=]
+function TumbleBuilder:DragMultiplier(value: number): TumbleBuilder end
+
+--[=[
+	Chaotic lateral acceleration magnitude in studs/s² applied while tumbling.
+
+	Default: `0`
+
+	@param value number
+	@return TumbleBuilder
+]=]
+function TumbleBuilder:LateralStrength(value: number): TumbleBuilder end
+
+--[=[
+	If `true`, bullet begins tumbling on first pierce regardless of speed.
+
+	Default: `false`
+
+	@param value boolean
+	@return TumbleBuilder
+]=]
+function TumbleBuilder:OnPierce(value: boolean): TumbleBuilder end
+
+--[=[
+	Speed above which tumbling ends. `nil` = permanent once triggered.
+	Must be `> SpeedThreshold` if both are set.
+
+	Default: `nil`
+
+	@param value number
+	@return TumbleBuilder
+]=]
+function TumbleBuilder:RecoverySpeed(value: number): TumbleBuilder end
+
+--[=[
+	Returns the root [BehaviorBuilder].
+	@return BehaviorBuilder
+]=]
+function TumbleBuilder:Done(): BehaviorBuilder end
+
+-- ─── FragmentationBuilder ────────────────────────────────────────────────────
+
+--[=[
+	@class FragmentationBuilder
+
+	Sub-builder for fragmentation on pierce. Opened via [BehaviorBuilder:Fragmentation].
+	Call `:Done()` to return to the root [BehaviorBuilder].
+]=]
+local FragmentationBuilder = {}
+
+--[=[
+	Enable or disable fragment child bullet spawning on pierce.
+
+	Default: `false`
+
+	@param value boolean
+	@return FragmentationBuilder
+]=]
+function FragmentationBuilder:OnPierce(value: boolean): FragmentationBuilder end
+
+--[=[
+	Number of fragment child bullets spawned per pierce.
+
+	Default: `3`
+
+	@param value number
+	@return FragmentationBuilder
+]=]
+function FragmentationBuilder:Count(value: number): FragmentationBuilder end
+
+--[=[
+	Angular half-angle spread of the fragment cone in degrees. Must be in `[0, 180]`.
+
+	Default: `15`
+
+	@param value number
+	@return FragmentationBuilder
+]=]
+function FragmentationBuilder:Deviation(value: number): FragmentationBuilder end
+
+--[=[
+	Returns the root [BehaviorBuilder].
+	@return BehaviorBuilder
+]=]
+function FragmentationBuilder:Done(): BehaviorBuilder end
+
+-- ─── SpeedProfilesBuilder ────────────────────────────────────────────────────
+
+--[=[
+	@class SpeedProfilesBuilder
+
+	Sub-builder for supersonic/subsonic speed profile configuration.
+	Opened via [BehaviorBuilder:SpeedProfiles]. Call `:Done()` to return to
+	the root [BehaviorBuilder].
+]=]
+local SpeedProfilesBuilder = {}
+
+--[=[
+	Sorted list of speeds (studs/s) that fire `OnSpeedThresholdCrossed`.
+
+	Default: `{}`
+
+	@param value { number }
+	@return SpeedProfilesBuilder
+]=]
+function SpeedProfilesBuilder:Thresholds(value: { number }): SpeedProfilesBuilder end
+
+--[=[
+	Opens a [SpeedProfileBuilder] for the supersonic regime (speed >= 343 studs/s).
+	Call `:Done()` on the profile builder to commit it and return here.
+
+	@return SpeedProfileBuilder
+]=]
+function SpeedProfilesBuilder:Supersonic(): SpeedProfileBuilder end
+
+--[=[
+	Opens a [SpeedProfileBuilder] for the subsonic regime (speed < 343 studs/s).
+	Call `:Done()` on the profile builder to commit it and return here.
+
+	@return SpeedProfileBuilder
+]=]
+function SpeedProfilesBuilder:Subsonic(): SpeedProfileBuilder end
+
+--[=[
+	Returns the root [BehaviorBuilder].
+	@return BehaviorBuilder
+]=]
+function SpeedProfilesBuilder:Done(): BehaviorBuilder end
+
+-- ─── SpeedProfileBuilder ─────────────────────────────────────────────────────
+
+--[=[
+	@class SpeedProfileBuilder
+
+	Inner builder for a single speed-regime profile (supersonic or subsonic).
+	Opened via [SpeedProfilesBuilder:Supersonic] or [SpeedProfilesBuilder:Subsonic].
+	Call `:Done()` to commit the profile and return to [SpeedProfilesBuilder].
+
+	All fields are optional — omitted fields continue using the base behavior values.
+]=]
+local SpeedProfileBuilder = {}
+
+--[=[
+	Drag coefficient override for this regime.
+
+	@param value number
+	@return SpeedProfileBuilder
+]=]
+function SpeedProfileBuilder:DragCoefficient(value: number): SpeedProfileBuilder end
+
+--[=[
+	Drag model override for this regime. Use `BehaviorBuilder.DragModel` values.
+
+	@param value DragModel
+	@return SpeedProfileBuilder
+]=]
+function SpeedProfileBuilder:DragModel(value: DragModel): SpeedProfileBuilder end
+
+--[=[
+	Bounce normal perturbation override for this regime.
+
+	@param value number
+	@return SpeedProfileBuilder
+]=]
+function SpeedProfileBuilder:NormalPerturbation(value: number): SpeedProfileBuilder end
+
+--[=[
+	Base restitution override for this regime.
+
+	@param value number
+	@return SpeedProfileBuilder
+]=]
+function SpeedProfileBuilder:Restitution(value: number): SpeedProfileBuilder end
+
+--[=[
+	Per-material restitution overrides for this regime.
+
+	@param value { [Enum.Material]: number }
+	@return SpeedProfileBuilder
+]=]
+function SpeedProfileBuilder:MaterialRestitution(value: { [Enum.Material]: number }): SpeedProfileBuilder end
+
+--[=[
+	Commits the profile to the parent config and returns [SpeedProfilesBuilder].
+	@return SpeedProfilesBuilder
+]=]
+function SpeedProfileBuilder:Done(): SpeedProfilesBuilder end
+
+-- ─── TrajectoryBuilder ───────────────────────────────────────────────────────
+
+--[=[
+	@class TrajectoryBuilder
+
+	Sub-builder for trajectory position override. Opened via [BehaviorBuilder:Trajectory].
+	Call `:Done()` to return to the root [BehaviorBuilder].
+]=]
+local TrajectoryBuilder = {}
+
+--[=[
+	Overrides bullet position each frame with a sampled curve.
+	Return `nil` from the callback to end the override and terminate the cast.
+
+	Signature: `(elapsed: number) -> Vector3?`
+
+	Default: `nil`
+
+	@param value (elapsed: number) -> Vector3?
+	@return TrajectoryBuilder
+]=]
+function TrajectoryBuilder:Provider(value: (number) -> Vector3?): TrajectoryBuilder end
+
+--[=[
+	Returns the root [BehaviorBuilder].
+	@return BehaviorBuilder
+]=]
+function TrajectoryBuilder:Done(): BehaviorBuilder end
+
+-- ─── LODBuilder ──────────────────────────────────────────────────────────────
+
+--[=[
+	@class LODBuilder
+
+	Sub-builder for LOD distance configuration. Opened via [BehaviorBuilder:LOD].
+	Call `:Done()` to return to the root [BehaviorBuilder].
+]=]
+local LODBuilder = {}
+
+--[=[
+	Studs from the LOD origin beyond which this bullet steps at reduced frequency.
+	`0` = always full frequency (LOD disabled for this cast).
+
+	Default: `0`
+
+	@param value number
+	@return LODBuilder
+]=]
+function LODBuilder:Distance(value: number): LODBuilder end
+
+--[=[
+	Returns the root [BehaviorBuilder].
+	@return BehaviorBuilder
+]=]
+function LODBuilder:Done(): BehaviorBuilder end
 
 return {}
