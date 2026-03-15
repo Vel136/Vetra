@@ -3,153 +3,58 @@
 <head>
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.7.0">
-<title data-rh="true">CornerTrapBuilder | Vetra</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://vetra-docs.netlify.app/api/CornerTrapBuilder"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="CornerTrapBuilder | Vetra"><meta data-rh="true" name="description" content="Sub-builder for corner-trap detection configuration. Opened via
-[BehaviorBuilder:CornerTrap]. Call `:Done()` to return to the root
-[BehaviorBuilder].
+<title data-rh="true">CornerTrapBuilder | Vetra</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://vetra-docs.netlify.app/api/CornerTrapBuilder"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="CornerTrapBuilder | Vetra"><meta data-rh="true" name="description" content="Sub-builder for corner-trap detection. Opened via [BehaviorBuilder:CornerTrap].
+Call `:Done()` to return to the root [BehaviorBuilder].
 
-Corner-trap detection terminates bullets that become stuck bouncing
-infinitely between two or more opposing surfaces (V-grooves, inside corners,
-narrow slots). The detector runs four independent checks — any single check
-firing is sufficient to declare a trap and terminate the cast:
+Corner-trap detection terminates bullets stuck bouncing infinitely between
+opposing surfaces. Four independent passes run on every bounce — any single
+pass firing is sufficient to declare a trap:
 
-**Pass 1 — Temporal:** Two bounces within `CornerTimeThreshold` seconds
-triggers termination.
+- **Pass 1 — Temporal:** Two bounces within `CornerTimeThreshold` seconds.
+- **Pass 2 — Velocity EMA:** Velocity direction EMA falls below `CornerEMAThreshold`.
+- **Pass 3 — Spatial:** Successive bounce contact points within `CornerDisplacementThreshold` studs.
+- **Pass 4 — Minimum progress:** Bullet fails to advance `CornerMinProgressPerBounce` studs from its first bounce contact."><meta data-rh="true" property="og:description" content="Sub-builder for corner-trap detection. Opened via [BehaviorBuilder:CornerTrap].
+Call `:Done()` to return to the root [BehaviorBuilder].
 
-**Pass 2 — Velocity EMA:** An exponential moving average of the bullet&#x27;s
-velocity direction is tracked across bounces. If the EMA magnitude falls
-below `CornerEMAThreshold`, the bullet is oscillating and is terminated.
+Corner-trap detection terminates bullets stuck bouncing infinitely between
+opposing surfaces. Four independent passes run on every bounce — any single
+pass firing is sufficient to declare a trap:
 
-**Pass 3 — Spatial:** If successive bounce contact points fall within
-`CornerDisplacementThreshold` studs of each other, the bullet is trapped.
-
-**Pass 4 — Minimum progress:** The bullet must advance at least
-`CornerMinProgressPerBounce` studs from its first bounce contact over
-the tracked history window. Catches slow-drift traps that pass the other
-three checks. Set to `0` to disable this pass.
-
-:::tip EMA parameter constraint
-`CornerEMAThreshold` must be greater than `|1 − 2 · CornerEMAAlpha|`.
-At the default `alpha = 0.4`, this gives `|1 - 0.8| = 0.2`, so the
-threshold must be `&gt; 0.2`. The default `0.25` satisfies this with a
-clear margin. `:Build()` validates this constraint and returns `nil`
-if it is violated.
-:::"><meta data-rh="true" property="og:description" content="Sub-builder for corner-trap detection configuration. Opened via
-[BehaviorBuilder:CornerTrap]. Call `:Done()` to return to the root
-[BehaviorBuilder].
-
-Corner-trap detection terminates bullets that become stuck bouncing
-infinitely between two or more opposing surfaces (V-grooves, inside corners,
-narrow slots). The detector runs four independent checks — any single check
-firing is sufficient to declare a trap and terminate the cast:
-
-**Pass 1 — Temporal:** Two bounces within `CornerTimeThreshold` seconds
-triggers termination.
-
-**Pass 2 — Velocity EMA:** An exponential moving average of the bullet&#x27;s
-velocity direction is tracked across bounces. If the EMA magnitude falls
-below `CornerEMAThreshold`, the bullet is oscillating and is terminated.
-
-**Pass 3 — Spatial:** If successive bounce contact points fall within
-`CornerDisplacementThreshold` studs of each other, the bullet is trapped.
-
-**Pass 4 — Minimum progress:** The bullet must advance at least
-`CornerMinProgressPerBounce` studs from its first bounce contact over
-the tracked history window. Catches slow-drift traps that pass the other
-three checks. Set to `0` to disable this pass.
-
-:::tip EMA parameter constraint
-`CornerEMAThreshold` must be greater than `|1 − 2 · CornerEMAAlpha|`.
-At the default `alpha = 0.4`, this gives `|1 - 0.8| = 0.2`, so the
-threshold must be `&gt; 0.2`. The default `0.25` satisfies this with a
-clear margin. `:Build()` validates this constraint and returns `nil`
-if it is violated.
-:::"><link data-rh="true" rel="canonical" href="https://vetra-docs.netlify.app/api/CornerTrapBuilder"><link data-rh="true" rel="alternate" href="https://vetra-docs.netlify.app/api/CornerTrapBuilder" hreflang="en"><link data-rh="true" rel="alternate" href="https://vetra-docs.netlify.app/api/CornerTrapBuilder" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f0e219d2.css">
-<script src="/assets/js/runtime~main.caa7b844.js" defer="defer"></script>
-<script src="/assets/js/main.2340574e.js" defer="defer"></script>
+- **Pass 1 — Temporal:** Two bounces within `CornerTimeThreshold` seconds.
+- **Pass 2 — Velocity EMA:** Velocity direction EMA falls below `CornerEMAThreshold`.
+- **Pass 3 — Spatial:** Successive bounce contact points within `CornerDisplacementThreshold` studs.
+- **Pass 4 — Minimum progress:** Bullet fails to advance `CornerMinProgressPerBounce` studs from its first bounce contact."><link data-rh="true" rel="canonical" href="https://vetra-docs.netlify.app/api/CornerTrapBuilder"><link data-rh="true" rel="alternate" href="https://vetra-docs.netlify.app/api/CornerTrapBuilder" hreflang="en"><link data-rh="true" rel="alternate" href="https://vetra-docs.netlify.app/api/CornerTrapBuilder" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f0e219d2.css">
+<script src="/assets/js/runtime~main.db5ec327.js" defer="defer"></script>
+<script src="/assets/js/main.faca28bd.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
-<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,t("light"))}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><b class="navbar__title text--truncate">Vetra</b></a><a class="navbar__item navbar__link" href="/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Vel136/Vetra" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/api/Vetra">Core</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/api/BehaviorBuilder">Configuration</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/BehaviorBuilder">​Behavior​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/PhysicsBuilder">​Physics​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/HomingBuilder">​Homing​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/PierceBuilder">​Pierce​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/BounceBuilder">​Bounce​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/HighFidelityBuilder">​High​Fidelity​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/api/CornerTrapBuilder">​Corner​Trap​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/CosmeticBuilder">​Cosmetic​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/DebugBuilder">​Debug​Builder</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/api/VetraNet">Network</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/api/TypeDefinitions">Types</a></div></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Corner</span><span style="display:inline-block">Trap</span><span style="display:inline-block">Builder</span></h1><div class="luaClassTags_EipM"></div><div>
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,t("light"))}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><b class="navbar__title text--truncate">Vetra</b></a><a class="navbar__item navbar__link" href="/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Vel136/Vetra" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/api/Vetra">Core</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/api/BehaviorBuilder">Configuration</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/BehaviorBuilder">​Behavior​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/PhysicsBuilder">​Physics​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/HomingBuilder">​Homing​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/PierceBuilder">​Pierce​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/BounceBuilder">​Bounce​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/HighFidelityBuilder">​High​Fidelity​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/api/CornerTrapBuilder">​Corner​Trap​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/CosmeticBuilder">​Cosmetic​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/api/DebugBuilder">​Debug​Builder</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/api/VetraNet">Network</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/api/TypeDefinitions">Types</a></div></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/api/DragBuilder">​Drag​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/api/FragmentationBuilder">​Fragmentation​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/api/GyroDriftBuilder">​Gyro​Drift​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/api/LODBuilder">​L​O​D​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/api/MagnusBuilder">​Magnus​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/api/SpeedProfileBuilder">​Speed​Profile​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/api/SpeedProfilesBuilder">​Speed​Profiles​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/api/TrajectoryBuilder">​Trajectory​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/api/TumbleBuilder">​Tumble​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/api/WindBuilder">​Wind​Builder</a></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Corner</span><span style="display:inline-block">Trap</span><span style="display:inline-block">Builder</span></h1><div class="luaClassTags_EipM"></div><div>
 <p>
-  Sub-builder for corner-trap detection configuration. Opened via
-  <a href="/api/BehaviorBuilder#CornerTrap">BehaviorBuilder:CornerTrap</a>. Call <code>:Done()</code> to return to the root
-  <a href="/api/BehaviorBuilder">BehaviorBuilder</a>.
+  Sub-builder for corner-trap detection. Opened via <a href="/api/BehaviorBuilder#CornerTrap">BehaviorBuilder:CornerTrap</a>.
+  Call <code>:Done()</code> to return to the root <a href="/api/BehaviorBuilder">BehaviorBuilder</a>.
 </p>
 <p>
-  Corner-trap detection terminates bullets that become stuck bouncing
-  infinitely between two or more opposing surfaces (V-grooves, inside corners,
-  narrow slots). The detector runs four independent checks — any single check
-  firing is sufficient to declare a trap and terminate the cast:
+  Corner-trap detection terminates bullets stuck bouncing infinitely between
+  opposing surfaces. Four independent passes run on every bounce — any single
+  pass firing is sufficient to declare a trap:
 </p>
-<p>
-  <strong>Pass 1 — Temporal:</strong> Two bounces within <code>CornerTimeThreshold</code> seconds
-  triggers termination.
-</p>
-<p>
-  <strong>Pass 2 — Velocity EMA:</strong> An exponential moving average of the bullet's
-  velocity direction is tracked across bounces. If the EMA magnitude falls
-  below <code>CornerEMAThreshold</code>, the bullet is oscillating and is terminated.
-</p>
-<p>
-  <strong>Pass 3 — Spatial:</strong> If successive bounce contact points fall within
-  <code>CornerDisplacementThreshold</code> studs of each other, the bullet is trapped.
-</p>
-<p>
-  <strong>Pass 4 — Minimum progress:</strong> The bullet must advance at least
-  <code>CornerMinProgressPerBounce</code> studs from its first bounce contact over
-  the tracked history window. Catches slow-drift traps that pass the other
-  three checks. Set to <code>0</code> to disable this pass.
-</p>
-
-  
-    
-    
-      <div class="admonition admonition-success alert alert--success">
-        <div class="admonition-heading">
-          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="16" viewBox="0 0 12 16">
-                <path d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path>
-              </svg></span><span class="admonition-title">EMA parameter constraint</span></h5>
-        </div>
-        <div class="admonition-content">
-          <p>
-            <code>CornerEMAThreshold</code> must be greater than <code>|1 − 2 · CornerEMAAlpha|</code>.
-            At the default <code>alpha = 0.4</code>, this gives <code>|1 - 0.8| = 0.2</code>, so the
-            threshold must be <code>> 0.2</code>. The default <code>0.25</code> satisfies this with a
-            clear margin. <code>:Build()</code> validates this constraint and returns <code>nil</code>
-            if it is violated.
-          </p>
-        </div>
-      </div>
-    
-  
-
-</div></header><h2 class="anchor anchorWithStickyNavbar_LWe7" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="TimeThreshold"><code style="text-decoration:none">TimeThreshold</code><a href="#TimeThreshold" class="hash-link" aria-label="Direct link to TimeThreshold" title="Direct link to TimeThreshold">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/SubBuilders.lua#L575"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CornerTrapBuilder<!-- -->:</code><code class="green_DgR4">TimeThreshold</code><code>(</code><code>value<!-- -->: </code><code class="blue_P4bS">number</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/CornerTrapBuilder">CornerTrapBuilder</a></code></div><div>
-<p>
-  Minimum time in seconds that must elapse between successive bounces.
-  Two bounces closer together than this are flagged as a corner trap (Pass 1).
-</p>
+<ul>
+  <li><strong>Pass 1 — Temporal:</strong> Two bounces within <code>CornerTimeThreshold</code> seconds.</li>
+  <li><strong>Pass 2 — Velocity EMA:</strong> Velocity direction EMA falls below <code>CornerEMAThreshold</code>.</li>
+  <li><strong>Pass 3 — Spatial:</strong> Successive bounce contact points within <code>CornerDisplacementThreshold</code> studs.</li>
+  <li><strong>Pass 4 — Minimum progress:</strong> Bullet fails to advance <code>CornerMinProgressPerBounce</code> studs from its first bounce contact.</li>
+</ul>
+</div></header><h2 class="anchor anchorWithStickyNavbar_LWe7" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="TimeThreshold"><code style="text-decoration:none">TimeThreshold</code><a href="#TimeThreshold" class="hash-link" aria-label="Direct link to TimeThreshold" title="Direct link to TimeThreshold">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/SubBuilders.lua#L466"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CornerTrapBuilder<!-- -->:</code><code class="green_DgR4">TimeThreshold</code><code>(</code><code>value<!-- -->: </code><code class="blue_P4bS">number</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/CornerTrapBuilder">CornerTrapBuilder</a></code></div><div>
+<p>Minimum seconds between successive bounces (Pass 1).</p>
 <p>Default: <code>0.002</code></p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="PositionHistorySize"><code style="text-decoration:none">PositionHistorySize</code><a href="#PositionHistorySize" class="hash-link" aria-label="Direct link to PositionHistorySize" title="Direct link to PositionHistorySize">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/SubBuilders.lua#L587"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CornerTrapBuilder<!-- -->:</code><code class="green_DgR4">PositionHistorySize</code><code>(</code><code>value<!-- -->: </code><code class="blue_P4bS">number</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/CornerTrapBuilder">CornerTrapBuilder</a></code></div><div>
-<p>
-  Number of bounce contact points kept in the rolling position history.
-  Must be a positive integer. Higher values make the Pass 3 spatial and
-  Pass 4 progress checks more robust at the cost of slightly more memory.
-</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="PositionHistorySize"><code style="text-decoration:none">PositionHistorySize</code><a href="#PositionHistorySize" class="hash-link" aria-label="Direct link to PositionHistorySize" title="Direct link to PositionHistorySize">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/SubBuilders.lua#L476"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CornerTrapBuilder<!-- -->:</code><code class="green_DgR4">PositionHistorySize</code><code>(</code><code>value<!-- -->: </code><code class="blue_P4bS">number</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/CornerTrapBuilder">CornerTrapBuilder</a></code></div><div>
+<p>Bounce contact point history size. Must be a positive integer.</p>
 <p>Default: <code>4</code></p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="DisplacementThreshold"><code style="text-decoration:none">DisplacementThreshold</code><a href="#DisplacementThreshold" class="hash-link" aria-label="Direct link to DisplacementThreshold" title="Direct link to DisplacementThreshold">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/SubBuilders.lua#L598"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CornerTrapBuilder<!-- -->:</code><code class="green_DgR4">DisplacementThreshold</code><code>(</code><code>value<!-- -->: </code><code class="blue_P4bS">number</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/CornerTrapBuilder">CornerTrapBuilder</a></code></div><div>
-<p>
-  Minimum stud distance between successive bounce contact points.
-  Displacement below this threshold triggers the Pass 3 spatial-proximity guard.
-</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="DisplacementThreshold"><code style="text-decoration:none">DisplacementThreshold</code><a href="#DisplacementThreshold" class="hash-link" aria-label="Direct link to DisplacementThreshold" title="Direct link to DisplacementThreshold">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/SubBuilders.lua#L486"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CornerTrapBuilder<!-- -->:</code><code class="green_DgR4">DisplacementThreshold</code><code>(</code><code>value<!-- -->: </code><code class="blue_P4bS">number</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/CornerTrapBuilder">CornerTrapBuilder</a></code></div><div>
+<p>Minimum stud distance between successive contact points (Pass 3).</p>
 <p>Default: <code>0.5</code></p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="EMAAlpha"><code style="text-decoration:none">EMAAlpha</code><a href="#EMAAlpha" class="hash-link" aria-label="Direct link to EMAAlpha" title="Direct link to EMAAlpha">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/SubBuilders.lua#L615"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CornerTrapBuilder<!-- -->:</code><code class="green_DgR4">EMAAlpha</code><code>(</code><div class="inset_uKQm"><div><code>value<!-- -->: </code><code class="blue_P4bS">number</code><span class="inlineDescription_G7Er">-- <span>
-<p>Must be in (0, 1).</p>
-</span></span></div></div><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/CornerTrapBuilder">CornerTrapBuilder</a></code></div><div>
-<p>
-  EMA smoothing factor for velocity direction tracking (Pass 2). Must be in <code>(0, 1)</code>.
-  Higher values weight recent bounces more heavily — detection is faster but more
-  sensitive to brief directional wobble.
-</p>
-<p>Default: <code>0.4</code></p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="EMAAlpha"><code style="text-decoration:none">EMAAlpha</code><a href="#EMAAlpha" class="hash-link" aria-label="Direct link to EMAAlpha" title="Direct link to EMAAlpha">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/SubBuilders.lua#L501"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CornerTrapBuilder<!-- -->:</code><code class="green_DgR4">EMAAlpha</code><code>(</code><code>value<!-- -->: </code><code class="blue_P4bS">number</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/CornerTrapBuilder">CornerTrapBuilder</a></code></div><div>
+<p>EMA smoothing factor for velocity direction tracking (Pass 2). Must be in <code>(0, 1)</code>.</p>
 
   
     
@@ -162,33 +67,34 @@ if it is violated.
         </div>
         <div class="admonition-content">
           <p>
-            <code>CornerEMAThreshold</code> must be <code>> |1 − 2 · CornerEMAAlpha|</code>. If you change
-            this value, adjust <code>EMAThreshold</code> accordingly. <code>:Build()</code> enforces this.
+            <code>EMAThreshold</code> must be <code>> |1 − 2 · EMAAlpha|</code>. Changing this value requires
+            updating <code>EMAThreshold</code>. <code>:Build()</code> enforces the constraint.
           </p>
         </div>
       </div>
     
   
 
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="EMAThreshold"><code style="text-decoration:none">EMAThreshold</code><a href="#EMAThreshold" class="hash-link" aria-label="Direct link to EMAThreshold" title="Direct link to EMAThreshold">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/SubBuilders.lua#L626"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CornerTrapBuilder<!-- -->:</code><code class="green_DgR4">EMAThreshold</code><code>(</code><code>value<!-- -->: </code><code class="blue_P4bS">number</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/CornerTrapBuilder">CornerTrapBuilder</a></code></div><div>
+<p>Default: <code>0.4</code></p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="EMAThreshold"><code style="text-decoration:none">EMAThreshold</code><a href="#EMAThreshold" class="hash-link" aria-label="Direct link to EMAThreshold" title="Direct link to EMAThreshold">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/SubBuilders.lua#L512"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CornerTrapBuilder<!-- -->:</code><code class="green_DgR4">EMAThreshold</code><code>(</code><code>value<!-- -->: </code><code class="blue_P4bS">number</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/CornerTrapBuilder">CornerTrapBuilder</a></code></div><div>
 <p>
   EMA magnitude threshold below which oscillation is declared (Pass 2).
-  Must be <code>> |1 − 2 · CornerEMAAlpha|</code> — see class note.
+  Must be <code>> |1 − 2 · EMAAlpha|</code>.
 </p>
 <p>Default: <code>0.25</code></p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="MinProgressPerBounce"><code style="text-decoration:none">MinProgressPerBounce</code><a href="#MinProgressPerBounce" class="hash-link" aria-label="Direct link to MinProgressPerBounce" title="Direct link to MinProgressPerBounce">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/SubBuilders.lua#L637"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CornerTrapBuilder<!-- -->:</code><code class="green_DgR4">MinProgressPerBounce</code><code>(</code><code>value<!-- -->: </code><code class="blue_P4bS">number</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/CornerTrapBuilder">CornerTrapBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="MinProgressPerBounce"><code style="text-decoration:none">MinProgressPerBounce</code><a href="#MinProgressPerBounce" class="hash-link" aria-label="Direct link to MinProgressPerBounce" title="Direct link to MinProgressPerBounce">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/SubBuilders.lua#L523"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CornerTrapBuilder<!-- -->:</code><code class="green_DgR4">MinProgressPerBounce</code><code>(</code><code>value<!-- -->: </code><code class="blue_P4bS">number</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/CornerTrapBuilder">CornerTrapBuilder</a></code></div><div>
 <p>
-  Minimum studs the bullet must advance from its first bounce contact over
-  the <code>PositionHistorySize</code> window (Pass 4). Set to <code>0</code> to disable Pass 4.
+  Minimum studs of progress per bounce over the history window (Pass 4).
+  Set to <code>0</code> to disable Pass 4.
 </p>
 <p>Default: <code>0.3</code></p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Done"><code style="text-decoration:none">Done</code><a href="#Done" class="hash-link" aria-label="Direct link to Done" title="Direct link to Done">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/SubBuilders.lua#L644"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CornerTrapBuilder<!-- -->:</code><code class="green_DgR4">Done</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Done"><code style="text-decoration:none">Done</code><a href="#Done" class="hash-link" aria-label="Direct link to Done" title="Direct link to Done">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/SubBuilders.lua#L529"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CornerTrapBuilder<!-- -->:</code><code class="green_DgR4">Done</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
 <p>Returns the root <a href="/api/BehaviorBuilder">BehaviorBuilder</a>.</p>
 </div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
     &quot;functions&quot;: [
         {
             &quot;name&quot;: &quot;TimeThreshold&quot;,
-            &quot;desc&quot;: &quot;Minimum time in seconds that must elapse between successive bounces.\nTwo bounces closer together than this are flagged as a corner trap (Pass 1).\n\nDefault: `0.002`&quot;,
+            &quot;desc&quot;: &quot;Minimum seconds between successive bounces (Pass 1).\n\nDefault: `0.002`&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;value&quot;,
@@ -204,13 +110,13 @@ if it is violated.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 575,
+                &quot;line&quot;: 466,
                 &quot;path&quot;: &quot;docs/SubBuilders.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;PositionHistorySize&quot;,
-            &quot;desc&quot;: &quot;Number of bounce contact points kept in the rolling position history.\nMust be a positive integer. Higher values make the Pass 3 spatial and\nPass 4 progress checks more robust at the cost of slightly more memory.\n\nDefault: `4`&quot;,
+            &quot;desc&quot;: &quot;Bounce contact point history size. Must be a positive integer.\n\nDefault: `4`&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;value&quot;,
@@ -226,13 +132,13 @@ if it is violated.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 587,
+                &quot;line&quot;: 476,
                 &quot;path&quot;: &quot;docs/SubBuilders.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;DisplacementThreshold&quot;,
-            &quot;desc&quot;: &quot;Minimum stud distance between successive bounce contact points.\nDisplacement below this threshold triggers the Pass 3 spatial-proximity guard.\n\nDefault: `0.5`&quot;,
+            &quot;desc&quot;: &quot;Minimum stud distance between successive contact points (Pass 3).\n\nDefault: `0.5`&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;value&quot;,
@@ -248,17 +154,17 @@ if it is violated.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 598,
+                &quot;line&quot;: 486,
                 &quot;path&quot;: &quot;docs/SubBuilders.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;EMAAlpha&quot;,
-            &quot;desc&quot;: &quot;EMA smoothing factor for velocity direction tracking (Pass 2). Must be in `(0, 1)`.\nHigher values weight recent bounces more heavily — detection is faster but more\nsensitive to brief directional wobble.\n\nDefault: `0.4`\n\n:::caution\n`CornerEMAThreshold` must be `&gt; |1 − 2 · CornerEMAAlpha|`. If you change\nthis value, adjust `EMAThreshold` accordingly. `:Build()` enforces this.\n:::&quot;,
+            &quot;desc&quot;: &quot;EMA smoothing factor for velocity direction tracking (Pass 2). Must be in `(0, 1)`.\n\n:::caution\n`EMAThreshold` must be `&gt; |1 − 2 · EMAAlpha|`. Changing this value requires\nupdating `EMAThreshold`. `:Build()` enforces the constraint.\n:::\n\nDefault: `0.4`&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;value&quot;,
-                    &quot;desc&quot;: &quot;Must be in (0, 1).&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
                     &quot;lua_type&quot;: &quot;number&quot;
                 }
             ],
@@ -270,13 +176,13 @@ if it is violated.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 615,
+                &quot;line&quot;: 501,
                 &quot;path&quot;: &quot;docs/SubBuilders.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;EMAThreshold&quot;,
-            &quot;desc&quot;: &quot;EMA magnitude threshold below which oscillation is declared (Pass 2).\nMust be `&gt; |1 − 2 · CornerEMAAlpha|` — see class note.\n\nDefault: `0.25`&quot;,
+            &quot;desc&quot;: &quot;EMA magnitude threshold below which oscillation is declared (Pass 2).\nMust be `&gt; |1 − 2 · EMAAlpha|`.\n\nDefault: `0.25`&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;value&quot;,
@@ -292,13 +198,13 @@ if it is violated.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 626,
+                &quot;line&quot;: 512,
                 &quot;path&quot;: &quot;docs/SubBuilders.lua&quot;
             }
         },
         {
             &quot;name&quot;: &quot;MinProgressPerBounce&quot;,
-            &quot;desc&quot;: &quot;Minimum studs the bullet must advance from its first bounce contact over\nthe `PositionHistorySize` window (Pass 4). Set to `0` to disable Pass 4.\n\nDefault: `0.3`&quot;,
+            &quot;desc&quot;: &quot;Minimum studs of progress per bounce over the history window (Pass 4).\nSet to `0` to disable Pass 4.\n\nDefault: `0.3`&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;value&quot;,
@@ -314,7 +220,7 @@ if it is violated.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 637,
+                &quot;line&quot;: 523,
                 &quot;path&quot;: &quot;docs/SubBuilders.lua&quot;
             }
         },
@@ -330,7 +236,7 @@ if it is violated.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 644,
+                &quot;line&quot;: 529,
                 &quot;path&quot;: &quot;docs/SubBuilders.lua&quot;
             }
         }
@@ -338,9 +244,9 @@ if it is violated.
     &quot;properties&quot;: [],
     &quot;types&quot;: [],
     &quot;name&quot;: &quot;CornerTrapBuilder&quot;,
-    &quot;desc&quot;: &quot;Sub-builder for corner-trap detection configuration. Opened via\n[BehaviorBuilder:CornerTrap]. Call `:Done()` to return to the root\n[BehaviorBuilder].\n\nCorner-trap detection terminates bullets that become stuck bouncing\ninfinitely between two or more opposing surfaces (V-grooves, inside corners,\nnarrow slots). The detector runs four independent checks — any single check\nfiring is sufficient to declare a trap and terminate the cast:\n\n**Pass 1 — Temporal:** Two bounces within `CornerTimeThreshold` seconds\ntriggers termination.\n\n**Pass 2 — Velocity EMA:** An exponential moving average of the bullet&#x27;s\nvelocity direction is tracked across bounces. If the EMA magnitude falls\nbelow `CornerEMAThreshold`, the bullet is oscillating and is terminated.\n\n**Pass 3 — Spatial:** If successive bounce contact points fall within\n`CornerDisplacementThreshold` studs of each other, the bullet is trapped.\n\n**Pass 4 — Minimum progress:** The bullet must advance at least\n`CornerMinProgressPerBounce` studs from its first bounce contact over\nthe tracked history window. Catches slow-drift traps that pass the other\nthree checks. Set to `0` to disable this pass.\n\n:::tip EMA parameter constraint\n`CornerEMAThreshold` must be greater than `|1 − 2 · CornerEMAAlpha|`.\nAt the default `alpha = 0.4`, this gives `|1 - 0.8| = 0.2`, so the\nthreshold must be `&gt; 0.2`. The default `0.25` satisfies this with a\nclear margin. `:Build()` validates this constraint and returns `nil`\nif it is violated.\n:::&quot;,
+    &quot;desc&quot;: &quot;Sub-builder for corner-trap detection. Opened via [BehaviorBuilder:CornerTrap].\nCall `:Done()` to return to the root [BehaviorBuilder].\n\nCorner-trap detection terminates bullets stuck bouncing infinitely between\nopposing surfaces. Four independent passes run on every bounce — any single\npass firing is sufficient to declare a trap:\n\n- **Pass 1 — Temporal:** Two bounces within `CornerTimeThreshold` seconds.\n- **Pass 2 — Velocity EMA:** Velocity direction EMA falls below `CornerEMAThreshold`.\n- **Pass 3 — Spatial:** Successive bounce contact points within `CornerDisplacementThreshold` studs.\n- **Pass 4 — Minimum progress:** Bullet fails to advance `CornerMinProgressPerBounce` studs from its first bounce contact.&quot;,
     &quot;source&quot;: {
-        &quot;line&quot;: 564,
+        &quot;line&quot;: 456,
         &quot;path&quot;: &quot;docs/SubBuilders.lua&quot;
     }
 }</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#DisplacementThreshold" class="table-of-contents__link toc-highlight">:DisplacementThreshold</a></li><li><a href="#Done" class="table-of-contents__link toc-highlight">:Done</a></li><li><a href="#EMAAlpha" class="table-of-contents__link toc-highlight">:EMAAlpha</a></li><li><a href="#EMAThreshold" class="table-of-contents__link toc-highlight">:EMAThreshold</a></li><li><a href="#MinProgressPerBounce" class="table-of-contents__link toc-highlight">:MinProgressPerBounce</a></li><li><a href="#PositionHistorySize" class="table-of-contents__link toc-highlight">:PositionHistorySize</a></li><li><a href="#TimeThreshold" class="table-of-contents__link toc-highlight">:TimeThreshold</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://discord.gg/XMYMRKcd3g" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord Server<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://discord.com/users/897026279243669504" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord (Direct)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div><div class="col footer__col"><div class="footer__title">Social</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://www.instagram.com/vedevelopment/" target="_blank" rel="noopener noreferrer" class="footer__link-item">Instagram<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://x.com/vedevelopment_" target="_blank" rel="noopener noreferrer" class="footer__link-item">X (Twitter)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://www.tiktok.com/@vedevelopment" target="_blank" rel="noopener noreferrer" class="footer__link-item">TikTok<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 VeDevelopment</div></div></div></footer></div>
