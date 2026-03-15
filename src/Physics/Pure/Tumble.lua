@@ -7,65 +7,6 @@
     Pure tumbling math — no Cast references, no Runtime mutations, no signals.
 
     Safe to call from both the serial simulation and the parallel Actor context.
-
-    Background
-    ──────────
-    A rifled bullet maintains gyroscopic stability so long as its spin rate
-    keeps the nose pointed near the velocity vector. When velocity drops below
-    the stability threshold, the gyroscopic moment is no longer sufficient and
-    the bullet begins to yaw, then precess, then tumble end-over-end.
-
-    Effects
-    ───────
-    1. Drag multiplies — a tumbling bullet presents far more cross-section to
-       the airstream. TumbleDragMultiplier scales the effective drag coefficient.
-       Typical range: 2.0 – 5.0 (a fully sideways bullet has ~3–4× the drag of
-       a stable one; end-over-end tumble is higher still).
-
-    2. Chaotic lateral acceleration — the yawing nose generates oscillating
-       lift and side forces. Modelled as a random unit vector perpendicular to
-       velocity, scaled by TumbleLateralStrength. The direction advances by a
-       small deterministic step each segment so it drifts smoothly rather than
-       snapping every interval.
-
-    Determinism
-    ───────────
-    The lateral perturbation is seeded from CastId so that the server and client
-    always produce identical trajectories from the same starting conditions —
-    critical for server-authoritative hit validation and cosmetic reconciliation.
-
-    A Random instance is created with seed = CastId when tumble begins, then
-    advanced once per drag-recalc interval. Because the interval is the same on
-    both sides and the seed is the same, both contexts generate the same sequence.
-
-    The Random object must be stored on the Runtime table (serial) or the
-    local snapshot (parallel) so it persists across intervals. It is NOT frozen
-    — it carries mutable PRNG state by design.
-
-    Triggers
-    ────────
-    • Speed falls below TumbleSpeedThreshold
-    • A pierce occurs and TumbleOnPierce = true
-
-    Once started, tumble is permanent for the lifetime of the cast — re-stabilise
-    is not modelled (if the user wants that, they can terminate and re-fire).
-
-    Behavior fields
-    ───────────────
-    TumbleSpeedThreshold  : number   — speed (studs/s) below which tumble begins.
-                                       nil = speed-triggered tumble disabled.
-    TumbleDragMultiplier  : number   — multiplier on DragCoefficient while tumbling.
-                                       Default 3.0. Must be >= 1.
-    TumbleLateralStrength : number   — lateral acceleration magnitude (studs/s²).
-                                       Default 0. 0 = no chaotic lateral force.
-    TumbleOnPierce        : boolean  — begin tumble on the first pierce regardless
-                                       of speed. Default false.
-
-    Practical starting values (subsonic pistol / fragmented rifle bullet):
-        TumbleSpeedThreshold  = 200    -- begin tumbling below ~200 studs/s
-        TumbleDragMultiplier  = 3.5
-        TumbleLateralStrength = 4.0
-        TumbleOnPierce        = false
 ]]
 
 local PureTumble  = {}
