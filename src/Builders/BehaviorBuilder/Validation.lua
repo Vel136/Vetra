@@ -11,10 +11,17 @@
 ]]
 
 local Types = require(script.Parent.Types)
+local Enums = require(script.Parent.Parent.Parent.Core.Enums)
 
 type BuiltBehavior = Types.BuiltBehavior
 
-local IsValidDragModel = Types.IsValidDragModel
+local function IsValidDragModel(Value: any): boolean
+    if type(Value) ~= "number" then return false end
+    for _, v in Enums.DragModel do
+        if v == Value then return true end
+    end
+    return false
+end
 
 local function ValidateBuilt(Config: BuiltBehavior): { string }
     local Errors = {}

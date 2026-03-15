@@ -78,40 +78,12 @@ return table.freeze({
 	-- Speed of sound in studs/s. Used by drag physics and the supersonic
 	-- transition signal.
 	SPEED_OF_SOUND = 340,
+	
 	-- NOTE: DEFAULT_GRAVITY is intentionally absent from Constants.
 	-- workspace.Gravity is a runtime value that can change (gravity zones,
 	-- zero-G sections, etc.). Computing it once at require() time would
 	-- permanently freeze it for all subsequent casts. Callers that need a
 	-- gravity default must read workspace.Gravity at cast-fire time instead.
-
-	-- Drag model identifiers as numeric enums — avoids string comparison
-	-- overhead in the hot path of Drag.ComputeDragDeceleration.
-	-- 1 = Quadratic (default), 2 = Linear, 3 = Exponential.
-	-- 4–12 = empirical G-series ballistic drag functions (Mach-indexed Cd
-	-- lookup tables). Coefficient acts as a scalar multiplier on top of the
-	-- table value — 1.0 is physically accurate, lower values give arcade feel.
-	-- G3 and G4 are included for completeness; they are niche reference
-	-- projectiles rarely used in modern ballistics software, but excluding
-	-- them would only invite confusion.
-	-- 13 = Custom: user-supplied { {mach, cd}, ... } table via CustomMachTable
-	-- on the behavior. Same Coefficient multiplier applies.
-	DRAG_MODEL = table.freeze({
-		Quadratic   = 1,
-		Linear      = 2,
-		Exponential = 3,
-		-- G-series empirical drag functions
-		G1          = 4,   -- flat-base spitzer; general-purpose standard
-		G2          = 5,   -- Aberdeen J projectile; large-caliber / atypical
-		G3          = 6,   -- Finnish reference projectile; rarely used in practice
-		G4          = 7,   -- seldom-used reference; included for completeness
-		G5          = 8,   -- boat-tail spitzer; mid-range rifles
-		G6          = 9,   -- semi-spitzer flat-base; shotgun slugs / blunt rounds
-		G7          = 10,  -- long boat-tail; modern long-range / sniper standard
-		G8          = 11,  -- flat-base semi-spitzer; hollow points / pistols
-		GL          = 12,  -- lead round ball; cannons / muskets / buckshot
-		-- User-supplied Mach/Cd table
-		Custom      = 13,  -- requires CustomMachTable = { {mach, cd}, ... } on behavior
-	}),
 
 	-- Re-export of Core/MachTables so callers that already have a Constants
 	-- reference do not need a separate require.
@@ -229,18 +201,5 @@ return table.freeze({
 		Terminal = "terminal",
 		Bounce   = "bounce",
 		Pierce   = "pierce",
-	}),
-
-	-- ── Terminate Reasons ──────────────────────────────────────────────────
-
-	-- Human-readable reason string forwarded to the user-facing Terminated
-	-- signal. Centralised so callers don't scatter raw "distance"/"speed"
-	-- literals across the codebase.
-	TERMINATE_REASON = table.freeze({
-		Hit        = "hit",
-		Distance   = "distance",
-		Speed      = "speed",
-		Manual     = "manual",
-		CornerTrap = "corner_trap",
 	}),
 })

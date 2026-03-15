@@ -1,117 +1,145 @@
+--!native
+--!optimize 2
 --!strict
 
--- Typed callback signatures matching TypeDefinition.luau — using any for the
--- BulletContext parameter since the public API type is not re-exported here.
-export type CanPierceCallback = (ctx: any, result: RaycastResult, velocity: Vector3) -> boolean
-export type CanBounceCallback = (ctx: any, result: RaycastResult, velocity: Vector3) -> boolean
-export type CanHomeCallback   = (ctx: any, currentPosition: Vector3, currentVelocity: Vector3) -> boolean
+--[[
+    Shared type definitions and the DragModel enum for BehaviorBuilder.
 
-export type DragModel =
-	-- Analytic models
-	| "Linear"
-	| "Quadratic"
-	| "Exponential"
-	-- G-series empirical drag functions (Mach-indexed Cd lookup tables).
-	-- Coefficient acts as a scalar multiplier — 1.0 = physically accurate.
-	| "G1"   -- flat-base spitzer; general-purpose standard
-	| "G2"   -- Aberdeen J projectile; large-caliber / atypical
-	| "G3"   -- Finnish reference projectile; rarely used in practice
-	| "G4"   -- seldom-used reference; included for completeness
-	| "G5"   -- boat-tail spitzer; mid-range rifles
-	| "G6"   -- semi-spitzer flat-base; shotgun slugs / blunt rounds
-	| "G7"   -- long boat-tail; modern long-range / sniper standard
-	| "G8"   -- flat-base semi-spitzer; hollow points / pistols
-	| "GL"   -- lead round ball; cannons / muskets / buckshot
-	-- User-supplied table. Requires CustomMachTable = { {mach, cd}, ... }
-	| "Custom"
+    Every sub-builder and the root builder require this module to get the
+    BuiltBehavior type, callback aliases, and DirtySet.
+
+    IsValidDragModel is defined locally in each file that needs it (Drag.lua,
+    SpeedProfiles.lua, Validation.lua), each checking against Vetra.Enums.DragModel.
+]]
+
+-- ─── Callback Aliases ────────────────────────────────────────────────────────
+
+export type BulletContext  = any
+export type PierceFilter   = (Context: BulletContext, Result: RaycastResult, Velocity: Vector3) -> boolean
+export type BounceFilter   = (Context: BulletContext, Result: RaycastResult, Velocity: Vector3) -> boolean
+export type HomingFilter   = (Context: BulletContext, currentPosition: Vector3, currentVelocity: Vector3) -> boolean
+export type HomingProvider = (pos: Vector3, vel: Vector3) -> Vector3?
+export type BulletProvider = (ctx: BulletContext) -> Instance?
+export type TrajectoryProvider = (elapsed: number) -> Vector3?
+
+-- ─── SpeedProfile ────────────────────────────────────────────────────────────
 
 export type SpeedProfile = {
-	DragCoefficient    : number?,
-	NormalPerturbation : number?,
-	MaterialRestitution: { [Enum.Material]: number }?,
-	Restitution        : number?,
+    DragCoefficient     : number?,
+    DragModel           : DragModel?,
+    NormalPerturbation  : number?,
+    MaterialRestitution : { [Enum.Material]: number }?,
+    Restitution         : number?,
 }
 
-export type TerminationReason = "hit" | "distance" | "speed" | "corner_trap" | "manual"
+-- ─── BuiltBehavior ───────────────────────────────────────────────────────────
 
-export type VetraBehavior = {
-	Acceleration                 : Vector3?,
-	MaxDistance                  : number?,
-	MaxSpeed                     : number?,
-	RaycastParams                : RaycastParams?,
-	Gravity                      : Vector3?,
-	MinSpeed                     : number?,
-
-	DragCoefficient              : number?,
-	DragModel                    : DragModel?,
-	DragSegmentInterval          : number?,
-	CustomMachTable              : { { number } }?,
-
-	GyroDriftRate                : number?,   -- acceleration magnitude (studs/s²); nil or 0 = disabled
-	GyroDriftAxis                : Vector3?,  -- reference axis for drift direction; nil = world UP (right-hand rifling)
-
-	TumbleSpeedThreshold         : number?,   -- speed (studs/s) below which tumbling begins; nil = disabled
-	TumbleDragMultiplier         : number?,   -- drag coefficient multiplier while tumbling; default 3.0
-	TumbleLateralStrength        : number?,   -- chaotic lateral acceleration magnitude (studs/s²); default 0
-	TumbleOnPierce               : boolean?,  -- begin tumbling on first pierce regardless of speed
-	TumbleRecoverySpeed          : number?,   -- speed (studs/s) above which tumbling ends; nil = permanent
-
-	SpeedThresholds              : { number }?,
-	SupersonicProfile            : SpeedProfile?,
-	SubsonicProfile              : SpeedProfile?,
-
-	WindResponse                 : number?,
-
-	TrajectoryPositionProvider   : ((elapsed: number) -> Vector3?)?,
-
-	HomingPositionProvider       : ((currentPosition: Vector3, currentVelocity: Vector3) -> Vector3?)?,
-	CanHomeFunction              : CanHomeCallback?,
-	HomingStrength               : number?,
-	HomingMaxDuration            : number?,
-	HomingAcquisitionRadius      : number?,
-
-	CanPierceFunction            : CanPierceCallback?,
-	MaxPierceCount               : number?,
-	PierceSpeedThreshold         : number?,
-	PenetrationSpeedRetention    : number?,
-	PierceNormalBias             : number?,
-	PenetrationDepth             : number?,
-	PenetrationForce             : number?,
-
-	FragmentOnPierce             : boolean?,
-	FragmentCount                : number?,
-	FragmentDeviation            : number?,
-
-	BulletMass                   : number?,
-
-	CanBounceFunction            : CanBounceCallback?,
-	MaxBounces                   : number?,
-	BounceSpeedThreshold         : number?,
-	Restitution                  : number?,
-	MaterialRestitution          : { [Enum.Material]: number }?,
-	NormalPerturbation           : number?,
-	ResetPierceOnBounce          : boolean?,
-
-	HighFidelitySegmentSize      : number?,
-	HighFidelityFrameBudget      : number?,
-	AdaptiveScaleFactor          : number?,
-	MinSegmentSize               : number?,
-	MaxBouncesPerFrame           : number?,
-
-	CornerTimeThreshold          : number?,
-	CornerPositionHistorySize    : number?,
-	CornerDisplacementThreshold  : number?,
-	CornerEMAAlpha               : number?,
-	CornerEMAThreshold           : number?,
-
-	LODDistance                  : number?,
-
-	CosmeticBulletTemplate       : BasePart?,
-	CosmeticBulletContainer      : Instance?,
-	CosmeticBulletProvider       : ((ctx: any) -> Instance?)?,
-
-	BatchTravel                  : boolean?,
-	VisualizeCasts               : boolean?,
+export type BuiltBehavior = {
+    -- Physics
+    Acceleration                 : Vector3,
+    MaxDistance                  : number,
+    MaxSpeed                     : number,
+    RaycastParams                : RaycastParams,
+    Gravity                      : Vector3,
+    MinSpeed                     : number,
+    -- Drag
+    DragCoefficient              : number,
+    DragModel                    : DragModel,
+    DragSegmentInterval          : number,
+    CustomMachTable              : { { number } }?,
+    -- Wind
+    WindResponse                 : number,
+    -- Magnus
+    SpinVector                   : Vector3,
+    MagnusCoefficient            : number,
+    SpinDecayRate                : number,
+    -- Gyroscopic Drift
+    GyroDriftRate                : number?,
+    GyroDriftAxis                : Vector3?,
+    -- Tumble
+    TumbleSpeedThreshold         : number?,
+    TumbleDragMultiplier         : number,
+    TumbleLateralStrength        : number,
+    TumbleOnPierce               : boolean,
+    TumbleRecoverySpeed          : number?,
+    -- Homing
+    CanHomeFunction              : HomingFilter?,
+    HomingPositionProvider       : HomingProvider?,
+    HomingStrength               : number,
+    HomingMaxDuration            : number,
+    HomingAcquisitionRadius      : number,
+    -- Speed Profiles
+    SpeedThresholds              : { number },
+    SupersonicProfile            : SpeedProfile?,
+    SubsonicProfile              : SpeedProfile?,
+    -- Trajectory
+    TrajectoryPositionProvider   : TrajectoryProvider?,
+    -- Bullet Mass
+    BulletMass                   : number,
+    CastFunction                 : ((Vector3, Vector3, RaycastParams) -> RaycastResult?)?,
+    -- Pierce
+    CanPierceFunction            : PierceFilter?,
+    MaxPierceCount               : number,
+    PierceSpeedThreshold         : number,
+    PenetrationSpeedRetention    : number,
+    PierceNormalBias             : number,
+    PenetrationDepth             : number,
+    PenetrationForce             : number,
+    PenetrationThicknessLimit    : number,
+    -- Fragmentation
+    FragmentOnPierce             : boolean,
+    FragmentCount                : number,
+    FragmentDeviation            : number,
+    -- Bounce
+    CanBounceFunction            : BounceFilter?,
+    MaxBounces                   : number,
+    ResetPierceOnBounce          : boolean,
+    BounceSpeedThreshold         : number,
+    Restitution                  : number,
+    MaterialRestitution          : { [Enum.Material]: number },
+    NormalPerturbation           : number,
+    -- High Fidelity
+    HighFidelitySegmentSize      : number,
+    HighFidelityFrameBudget      : number,
+    AdaptiveScaleFactor          : number,
+    MinSegmentSize               : number,
+    MaxBouncesPerFrame           : number,
+    -- Corner Trap
+    CornerTimeThreshold          : number,
+    CornerPositionHistorySize    : number,
+    CornerDisplacementThreshold  : number,
+    CornerEMAAlpha               : number,
+    CornerEMAThreshold           : number,
+    CornerMinProgressPerBounce   : number,
+    -- LOD
+    LODDistance                  : number,
+    -- Cosmetic
+    CosmeticBulletTemplate       : BasePart?,
+    CosmeticBulletContainer      : Instance?,
+    CosmeticBulletProvider       : BulletProvider?,
+    -- Batch Travel
+    BatchTravel                  : boolean,
+    -- Debug
+    VisualizeCasts               : boolean,
 }
+
+-- ─── DragModel ───────────────────────────────────────────────────────────────
+--[[
+    Integer from Vetra.Enums.DragModel — same table used by the physics engine.
+    Using integers avoids string comparison in the hot path and eliminates the
+    desync risk of two separate enum tables with the same names.
+    Access via BehaviorBuilder.DragModel or Vetra.Enums.DragModel.
+]]
+export type DragModel = number
+
+-- ─── DirtySet ────────────────────────────────────────────────────────────────
+--[[
+    Tracks which BuiltBehavior fields were explicitly set by the user vs still
+    sitting at their defaults. Used by :Impose() to copy only intentional
+    changes, preventing a modifier from clobbering fields it never touched.
+]]
+export type DirtySet = { [string]: boolean }
+
+-- ─── Module Return ───────────────────────────────────────────────────────────
 
 return {}

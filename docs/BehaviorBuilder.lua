@@ -21,7 +21,7 @@
 	    :Done()
 	    :Drag()
 	        :Coefficient(0.003)
-	        :Model(BehaviorBuilder.DragModel.G7)
+	        :Model(Vetra.Enums.DragModel.G7)
 	    :Done()
 	    :Build()
 	```
@@ -48,22 +48,22 @@
 	| `:Trajectory()` | Provider |
 	| `:LOD()` | Distance |
 	| `:BatchTravel()` | Root-level boolean toggle — no sub-builder |
+	| `:Clone()` | Returns an independent copy of this builder |
+	| `:Impose(other)` | Copies only the explicitly-set fields from `other` onto self |
+	| `:Merge(a, b, ...)` | Clone + impose multiple modifiers, returns new builder |
+	| `:When(cond, fn)` | Conditionally apply a block without breaking the chain |
+	| `BehaviorBuilder.Inherit(frozen)` | Create a builder from a frozen `VetraBehavior` table |
 
 	:::tip DragModel enum
-	Use `BehaviorBuilder.DragModel` instead of raw strings. Typos on raw strings
-	pass the type checker silently and only fail at `:Build()`. Enum access
-	fails immediately at the indexing site:
+	Use `Vetra.Enums.DragModel` when passing a drag model to `:Drag():Model()`.
+	A wrong integer is silently incorrect; an invalid enum key is a nil-index
+	warning immediately at the call site:
 
 	```lua
-	-- Safe — typo is a nil-index warning immediately
-	:Drag():Model(BehaviorBuilder.DragModel.G7):Done()
-
-	-- Unsafe — "g7" silently passes strict mode, fails at :Build()
-	:Drag():Model("g7"):Done()
+	:Drag():Model(Vetra.Enums.DragModel.G7):Done()
 	```
 
-	Available values: `Linear`, `Quadratic`, `Exponential`, `G1`, `G2`, `G3`,
-	`G4`, `G5`, `G6`, `G7`, `G8`, `GL`, `Custom`.
+	See [Enums.DragModel] for the full value table and descriptions.
 	:::
 
 	Builders are **reusable** — call `:Build()` multiple times to produce
@@ -88,37 +88,6 @@
 	:::
 ]=]
 local BehaviorBuilder = {}
-
--- ─── DragModel Enum ──────────────────────────────────────────────────────────
-
---[=[
-	@prop DragModel { [string]: DragModel }
-	@within BehaviorBuilder
-
-	Frozen enum table for the drag model field. Pass values from this table to
-	`:Drag():Model()` and `:SpeedProfiles():Supersonic():DragModel()`.
-
-	```lua
-	:Drag()
-	    :Model(BehaviorBuilder.DragModel.G7)
-	:Done()
-	```
-
-	| Key | Description |
-	|-----|-------------|
-	| `Linear` | Deceleration ∝ speed |
-	| `Quadratic` | Deceleration ∝ speed² (default) |
-	| `Exponential` | Deceleration ∝ eˢᵖᵉᵉᵈ |
-	| `G1` | Flat-base spitzer — general-purpose standard |
-	| `G2` | Aberdeen J projectile — large-calibre / atypical shapes |
-	| `G5` | Boat-tail spitzer — mid-range rifles |
-	| `G6` | Semi-spitzer flat-base — shotgun slugs |
-	| `G7` | Long boat-tail — modern long-range / sniper standard |
-	| `G8` | Flat-base semi-spitzer — hollow points / pistols |
-	| `GL` | Lead round ball — cannons / muskets / buckshot |
-	| `Custom` | User-supplied `CustomMachTable` required |
-]=]
-BehaviorBuilder.DragModel = {}
 
 -- ─── Constructor ─────────────────────────────────────────────────────────────
 
@@ -239,7 +208,7 @@ function BehaviorBuilder:Debug(): DebugBuilder end
 	`:CustomMachTable()`. Call `:Done()` to return.
 
 	:::caution
-	`:CustomMachTable()` is required when `Model = BehaviorBuilder.DragModel.Custom`.
+	`:CustomMachTable()` is required when `Model = Vetra.Enums.DragModel.Custom`.
 	`:Build()` returns `nil` if it is omitted.
 	:::
 
@@ -375,6 +344,167 @@ function BehaviorBuilder:LOD(): LODBuilder end
 	@return BehaviorBuilder
 ]=]
 function BehaviorBuilder:BatchTravel(value: boolean): BehaviorBuilder end
+
+-- ─── Clone / Impose ──────────────────────────────────────────────────────────
+
+--[=[
+	Returns an independent `BehaviorBuilder` whose configuration and dirty set
+	are deep copies of this builder's. Changes to either builder after cloning
+	do not affect the other.
+
+	Use this to derive variants from a shared archetype without mutating it:
+
+	```lua
+	local Base    = BehaviorBuilder.Sniper()
+	local Variant = Base:Clone():Physics():MaxDistance(2000):Done():Build()
+	-- Base is unchanged; Variant has MaxDistance = 2000
+	```
+
+	`:Clone()` is the correct way to branch from a preset. Calling setters
+	directly on the preset builder mutates it for all future `:Build()` calls,
+	which is rarely what you want.
+
+	@return BehaviorBuilder -- Independent copy with cloned config and dirty set.
+]=]
+function BehaviorBuilder:Clone(): BehaviorBuilder end
+
+--[=[
+	Copies only the **explicitly-set** fields from `other` onto this builder.
+
+	"Explicitly set" means a field whose setter was called on `other` — tracked
+	internally via dirty flags. Fields sitting at their defaults on `other` are
+	never copied, so a modifier cannot silently clobber values it never touched.
+
+	Returns `self` for chaining. Does not mutate `other`.
+
+	```lua
+	-- Define a reusable modifier — only two fields are dirty.
+	local APMod = BehaviorBuilder.new()
+	    :Pierce()
+	        :Max(5)
+	        :SpeedRetention(0.95)
+	    :Done()
+
+	-- Apply to any base without touching MaxDistance, HighFidelity, etc.
+	local APSniper = BehaviorBuilder.Sniper():Clone():Impose(APMod):Build()
+	local APPistol = BehaviorBuilder.Pistol():Clone():Impose(APMod):Build()
+	```
+
+	Modifiers stack cleanly — each `:Impose()` only writes its own dirty set:
+
+	```lua
+	local HollowMod = BehaviorBuilder.new()
+	    :Tumble():OnPierce(true):DragMultiplier(5):Done()
+
+	local APHollow = BehaviorBuilder.Sniper():Clone()
+	    :Impose(APMod)
+	    :Impose(HollowMod)
+	    :Build()
+	```
+
+	:::caution Last write wins
+	If two modifiers set the same field, the second `:Impose()` wins.
+	There is no merge strategy for conflicting values — ordering is the
+	caller's responsibility.
+	:::
+
+	@param other BehaviorBuilder -- The modifier to apply. Must be a BehaviorBuilder.
+	@return BehaviorBuilder -- self, for chaining.
+]=]
+function BehaviorBuilder:Impose(other: BehaviorBuilder): BehaviorBuilder end
+
+-- ─── Merge / Inherit / When ──────────────────────────────────────────────────
+
+--[=[
+	Returns a new builder that is a clone of `self` with all provided modifiers
+	applied in order via `:Impose()`. Neither `self` nor any modifier is mutated.
+
+	Equivalent to `self:Clone():Impose(a):Impose(b):...`, but reads more
+	naturally when combining a preset with modifiers at the call site.
+
+	```lua
+	local Behavior = BehaviorBuilder.Sniper()
+	    :Merge(APMod, HollowMod)
+	    :Build()
+	```
+
+	Because `:Merge()` returns a builder, you can continue chaining after it:
+
+	```lua
+	local Behavior = BehaviorBuilder.Sniper()
+	    :Merge(APMod)
+	    :Physics():MaxDistance(2000):Done()   -- applied after the merge
+	    :Build()
+	```
+
+	@param ... BehaviorBuilder -- One or more modifier builders to apply in order.
+	@return BehaviorBuilder -- New independent builder with all modifiers imposed.
+]=]
+function BehaviorBuilder:Merge(...: BehaviorBuilder): BehaviorBuilder end
+
+--[=[
+	Creates a new `BehaviorBuilder` pre-populated from a frozen `VetraBehavior`
+	table, with every field marked dirty.
+
+	This is the inverse of `:Build()` — it lets you round-trip a frozen behavior
+	back into a mutable builder so you can tweak individual fields without
+	reconstructing from scratch.
+
+	Because every field is marked dirty, the resulting builder works correctly
+	with `:Impose()` and `:Merge()` — all its values are treated as intentional
+	rather than defaults.
+
+	```lua
+	-- Received from a registry, config file, or another module
+	local existing = BehaviorRegistry:Get("Sniper")
+
+	-- Round-trip: unfreeze → tweak → refreeze
+	local tweaked = BehaviorBuilder.Inherit(existing)
+	    :Physics():MaxDistance(2000):Done()
+	    :Build()
+	```
+
+	Note that `BehaviorBuilder.Inherit` is a **static constructor**, not an
+	instance method — call it on the class, not on a builder instance.
+
+	@param frozen VetraBehavior -- A frozen behavior table produced by `:Build()`.
+	@return BehaviorBuilder -- Mutable builder pre-populated from the frozen table.
+]=]
+function BehaviorBuilder.Inherit(frozen: VetraBehavior): BehaviorBuilder end
+
+--[=[
+	Conditionally applies a block of builder calls without breaking the fluent
+	chain. If `condition` is falsy the builder is returned unchanged.
+
+	The callback receives `self` and is called for its side effects — it should
+	not return a value.
+
+	```lua
+	local Behavior = BehaviorBuilder.Sniper()
+	    :When(isRaining,   function(b) b:Wind():Response(1.5):Done() end)
+	    :When(isHeavyAmmo, function(b) b:Pierce():Max(5):Done() end)
+	    :When(isDebug,     function(b) b:Debug():Visualize(true):Done() end)
+	    :Build()
+	```
+
+	Without `:When()`, each conditional would require breaking out of the chain:
+
+	```lua
+	local b = BehaviorBuilder.Sniper()
+	if isRaining   then b:Wind():Response(1.5):Done() end
+	if isHeavyAmmo then b:Pierce():Max(5):Done() end
+	if isDebug     then b:Debug():Visualize(true):Done() end
+	local Behavior = b:Build()
+	```
+
+	Both are equivalent. `:When()` is purely ergonomic — it keeps construction
+	as a single coherent declaration.
+
+	@param condition any -- Truthy value to gate the block. Falsy = skip.
+	@param fn (builder: BehaviorBuilder) -> () -- Block to apply if condition is truthy.
+	@return BehaviorBuilder -- self, for chaining.
+]=]
+function BehaviorBuilder:When(condition: any, fn: (BehaviorBuilder) -> ()): BehaviorBuilder end
 
 -- ─── Build ───────────────────────────────────────────────────────────────────
 

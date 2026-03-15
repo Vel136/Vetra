@@ -39,6 +39,7 @@ local Builders   = script.Builders
 local LogService            = require(Core.Logger)
 local t                     = require(Core.TypeCheck)
 local Constants             = require(Core.Constants)
+local Enums                 = require(Core.Enums)
 local RaycastParamsPooler   = require(Core.RaycastParamsPooler)
 local BulletContext         = require(Core.BulletContext)
 local VeSignal              = require(Core.VeSignal)
@@ -85,7 +86,7 @@ local VetraMetatable = table.freeze({ __index = Vetra })
 -- ─── Constants ───────────────────────────────────────────────────────────────
 
 local os_clock         = os.clock
-local TERMINATE_REASON = Constants.TERMINATE_REASON
+local TERMINATE_REASON = Enums.TerminateReason
 
 -- Fallback cast function used when the consumer does not supply a CastFunction.
 -- Defined once here and assigned onto Behavior in Fire() so all call sites can
@@ -105,7 +106,7 @@ local DEFAULT_BEHAVIOR = {
 	Gravity                      = Constants.ZERO_VECTOR,      -- sentinel; Fire() always overwrites with workspace.Gravity
 
 	DragCoefficient              = 0,
-	DragModel                    = Constants.DRAG_MODEL.Quadratic,
+	DragModel                    = Enums.DragModel.Quadratic,
 	DragSegmentInterval          = 0.05,
 
 	GyroDriftRate                = nil,
@@ -666,6 +667,7 @@ Factory.__type          = Identity
 Factory.BehaviorBuilder = BehaviorBuilder
 Factory.BulletContext   = BulletContext
 Factory.VetraNet		= VetraNet
+Factory.Enums           = Enums
 function Factory.new(FactoryConfig: any?): any
 	local ResolvedConfig  = FactoryConfig or {}
 	local SpatialConfig   = SpatialPartition.ResolveConfig(ResolvedConfig.SpatialPartition)

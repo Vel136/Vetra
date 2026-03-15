@@ -38,7 +38,7 @@ local FireHelpers   = require(Signals.FireHelpers)
 local HookHelpers   = require(Signals.HookHelpers)
 local Visualizer    = require(Core.TrajectoryVisualizer)
 local TypeDefinition = require(Core.TypeDefinition)
-
+local Enums			= require(Core.Enums)
 -- ─── Types ───────────────────────────────────────────────────────────────────
 
 type VetraCast      = TypeDefinition.VetraCast
@@ -56,7 +56,7 @@ local table_insert   = table.insert
 local ZERO_VECTOR          = Constants.ZERO_VECTOR
 local PARALLEL_EVENT       = Constants.PARALLEL_EVENT
 local VISUALIZER_HIT_TYPE  = Constants.VISUALIZER_HIT_TYPE
-local TERMINATE_REASON     = Constants.TERMINATE_REASON
+local TERMINATE_REASON     = Enums.TerminateReason
 local MIN_DOT_SQ          = Constants.MIN_DOT_SQ
 local LOOK_AT_FALLBACK    = Constants.LOOK_AT_FALLBACK
 local SPEED_OF_SOUND      = Constants.SPEED_OF_SOUND

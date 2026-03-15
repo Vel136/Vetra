@@ -4,30 +4,38 @@
 
 local t     = require(script.Parent.Parent.Parent.Core.TypeCheck)
 local Types = require(script.Parent.Types)
+local Enums = require(script.Parent.Parent.Parent.Core.Enums)
 
 type BuiltBehavior = Types.BuiltBehavior
+type DirtySet      = Types.DirtySet
 type SpeedProfile  = Types.SpeedProfile
 type DragModel     = Types.DragModel
 
-local IsValidDragModel = Types.IsValidDragModel
+local function IsValidDragModel(Value: any): boolean
+    if type(Value) ~= "number" then return false end
+    for _, v in Enums.DragModel do
+        if v == Value then return true end
+    end
+    return false
+end
 
 -- ─── SpeedProfileBuilder (inner) ─────────────────────────────────────────────
 --[[
     Builds a single SpeedProfile table (supersonic or subsonic regime).
     Returned by SpeedProfilesBuilder:Supersonic() and :Subsonic().
-    :Done() writes the completed profile back to the parent config and
-    returns the parent SpeedProfilesBuilder, not the root BehaviorBuilder.
-    Call :Done() a second time on SpeedProfilesBuilder to reach the root.
+    :Done() commits the profile to _Config[_Key], marks the root _Dirty, and
+    returns the parent SpeedProfilesBuilder.
 ]]
 
 local SpeedProfileBuilder = {}
 SpeedProfileBuilder.__index = SpeedProfileBuilder
 
 export type SpeedProfileBuilder = typeof(setmetatable({} :: {
-    _Parent  : any,        -- SpeedProfilesBuilder
-    _Config  : BuiltBehavior,
-    _Profile : SpeedProfile,
-    _Key     : string,     -- "SupersonicProfile" | "SubsonicProfile"
+    _Parent      : any,        -- SpeedProfilesBuilder
+    _Config      : BuiltBehavior,
+    _RootDirty   : DirtySet,   -- the root builder's _Dirty, for marking on commit
+    _Profile     : SpeedProfile,
+    _Key         : string,     -- "SupersonicProfile" | "SubsonicProfile"
 }, SpeedProfileBuilder))
 
 function SpeedProfileBuilder.DragCoefficient(self: SpeedProfileBuilder, Value: number): SpeedProfileBuilder
@@ -66,9 +74,11 @@ function SpeedProfileBuilder.MaterialRestitution(
     return self
 end
 
--- Commits the profile and returns the parent SpeedProfilesBuilder.
+-- Commits the profile to _Config[_Key], marks it dirty on the root builder,
+-- and returns the parent SpeedProfilesBuilder.
 function SpeedProfileBuilder.Done(self: SpeedProfileBuilder): any
     (self._Config :: any)[self._Key] = self._Profile
+    self._RootDirty[self._Key]       = true
     return self._Parent
 end
 
@@ -78,38 +88,38 @@ local SpeedProfilesBuilder = {}
 SpeedProfilesBuilder.__index = SpeedProfilesBuilder
 
 export type SpeedProfilesBuilder = typeof(setmetatable({} :: {
-    _Root   : any,
-    _Config : BuiltBehavior,
+    _Root      : any,
+    _Config    : BuiltBehavior,
+    _Dirty     : DirtySet,
 }, SpeedProfilesBuilder))
 
--- Sorted list of speeds (studs/s) that fire OnSpeedThresholdCrossed.
 function SpeedProfilesBuilder.Thresholds(self: SpeedProfilesBuilder, Value: { number }): SpeedProfilesBuilder
     assert(type(Value) == "table", "SpeedProfilesBuilder:Thresholds — expected array of numbers")
     self._Config.SpeedThresholds = Value
+    self._Dirty.SpeedThresholds  = true
     return self
 end
 
--- Opens a SpeedProfileBuilder for the supersonic regime (speed >= 343 studs/s).
 function SpeedProfilesBuilder.Supersonic(self: SpeedProfilesBuilder): SpeedProfileBuilder
     return setmetatable({
-        _Parent  = self,
-        _Config  = self._Config,
-        _Profile = {} :: SpeedProfile,
-        _Key     = "SupersonicProfile",
+        _Parent    = self,
+        _Config    = self._Config,
+        _RootDirty = self._Dirty,
+        _Profile   = {} :: SpeedProfile,
+        _Key       = "SupersonicProfile",
     }, SpeedProfileBuilder)
 end
 
--- Opens a SpeedProfileBuilder for the subsonic regime (speed < 343 studs/s).
 function SpeedProfilesBuilder.Subsonic(self: SpeedProfilesBuilder): SpeedProfileBuilder
     return setmetatable({
-        _Parent  = self,
-        _Config  = self._Config,
-        _Profile = {} :: SpeedProfile,
-        _Key     = "SubsonicProfile",
+        _Parent    = self,
+        _Config    = self._Config,
+        _RootDirty = self._Dirty,
+        _Profile   = {} :: SpeedProfile,
+        _Key       = "SubsonicProfile",
     }, SpeedProfileBuilder)
 end
 
--- Returns the root BehaviorBuilder.
 function SpeedProfilesBuilder.Done(self: SpeedProfilesBuilder): any
     return self._Root
 end

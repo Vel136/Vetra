@@ -18,7 +18,27 @@ classes = ["Vetra", "BulletContext", "VetraCast"]
 
 [[classOrder]]
 section = "Configuration"
-classes = ["BehaviorBuilder", "PhysicsBuilder", "HomingBuilder", "PierceBuilder", "BounceBuilder", "HighFidelityBuilder", "CornerTrapBuilder", "CosmeticBuilder", "DebugBuilder"]
+classes = [
+    "BehaviorBuilder",
+    "PhysicsBuilder",
+    "HomingBuilder",
+    "PierceBuilder",
+    "BounceBuilder",
+    "HighFidelityBuilder",
+    "CornerTrapBuilder",
+    "CosmeticBuilder",
+    "DebugBuilder",
+    "DragBuilder",
+    "WindBuilder",
+    "MagnusBuilder",
+    "GyroDriftBuilder",
+    "TumbleBuilder",
+    "FragmentationBuilder",
+    "SpeedProfilesBuilder",
+    "SpeedProfileBuilder",
+    "TrajectoryBuilder",
+    "LODBuilder",
+]
 
 [[classOrder]]
 section = "Network"
@@ -26,7 +46,7 @@ classes = ["VetraNet", "BehaviorRegistry"]
 
 [[classOrder]]
 section = "Types"
-classes = ["TypeDefinitions"]
+classes = ["TypeDefinitions", "Enums"]
 
 [navbar]
 title = "Vetra"

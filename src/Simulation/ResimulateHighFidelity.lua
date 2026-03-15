@@ -19,6 +19,7 @@ local Simulation = script.Parent
 
 -- ─── Module References ───────────────────────────────────────────────────────
 
+local Enums		   = require(Core.Enums)
 local LogService   = require(Core.Logger)
 local Constants    = require(Core.Constants)
 local SimulateCast = require(Simulation.SimulateCast)
@@ -30,7 +31,7 @@ local Logger = LogService.new(Identity, false)
 
 -- ─── Constants ───────────────────────────────────────────────────────────────
 
-local TERMINATE_REASON = Constants.TERMINATE_REASON
+local TERMINATE_REASON = Enums.TerminateReason
 
 -- ─── Cached Globals ──────────────────────────────────────────────────────────
 

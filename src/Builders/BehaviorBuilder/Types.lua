@@ -22,36 +22,6 @@ export type HomingProvider = (pos: Vector3, vel: Vector3) -> Vector3?
 export type BulletProvider = (ctx: BulletContext) -> Instance?
 export type TrajectoryProvider = (elapsed: number) -> Vector3?
 
--- ─── DragModel ───────────────────────────────────────────────────────────────
-
-export type DragModel =
-    "Linear" | "Quadratic" | "Exponential"
-    | "G1" | "G2" | "G3" | "G4" | "G5" | "G6" | "G7" | "G8" | "GL"
-    | "Custom"
-
-local DragModelEnum: { [string]: DragModel } = table.freeze({
-    Linear      = "Linear"      :: DragModel,
-    Quadratic   = "Quadratic"   :: DragModel,
-    Exponential = "Exponential" :: DragModel,
-    G1          = "G1"          :: DragModel,
-    G2          = "G2"          :: DragModel,
-    G3          = "G3"          :: DragModel,
-    G4          = "G4"          :: DragModel,
-    G5          = "G5"          :: DragModel,
-    G6          = "G6"          :: DragModel,
-    G7          = "G7"          :: DragModel,
-    G8          = "G8"          :: DragModel,
-    GL          = "GL"          :: DragModel,
-    Custom      = "Custom"      :: DragModel,
-})
-
-local function IsValidDragModel(Value: any): boolean
-    for _, v in DragModelEnum do
-        if v == Value then return true end
-    end
-    return false
-end
-
 -- ─── SpeedProfile ────────────────────────────────────────────────────────────
 
 export type SpeedProfile = {
@@ -153,9 +123,14 @@ export type BuiltBehavior = {
     VisualizeCasts               : boolean,
 }
 
+-- ─── DirtySet ────────────────────────────────────────────────────────────────
+--[[
+    Tracks which BuiltBehavior fields were explicitly set by the user vs still
+    sitting at their defaults. Used by :Impose() to copy only intentional
+    changes, preventing a modifier from clobbering fields it never touched.
+]]
+export type DirtySet = { [string]: boolean }
+
 -- ─── Module Return ───────────────────────────────────────────────────────────
 
-return {
-    DragModelEnum    = DragModelEnum,
-    IsValidDragModel = IsValidDragModel,
-}
+return {}

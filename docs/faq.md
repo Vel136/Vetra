@@ -68,18 +68,86 @@ You handle your own networking and call `Solver:Fire()` from wherever makes sens
 **What's the difference between `BehaviorBuilder` and passing a raw table to `Fire()`?**
 
 They produce the same result — a `VetraBehavior` table passed to the solver. `BehaviorBuilder`
-gives you typed setters, build-time validation, and a frozen result. A raw table is faster to write
-for quick tests or one-off fire calls. For production behaviors you'd normally use the builder; for
-mixing in fields the builder doesn't expose (drag, Magnus, tumble, etc.) you can inherit from a
-built behavior via `__index`.
+gives you typed setters, build-time validation, a frozen result, and dirty-tracked `:Clone()` /
+`:Impose()` for composing weapon archetypes. A raw table is fine for quick tests or one-off fire
+calls.
 
 ---
 
-**Why don't drag, Magnus, and tumble have builder setters?**
+**Why did drag, Magnus, and tumble previously require raw table overrides?**
 
-Because they weren't included in the initial builder surface area. They're fully documented in
-[TypeDefinitions](../api/TypeDefinitions) and work correctly when set on the raw table. Builder
-setters for them are planned.
+They didn't have builder setters in earlier versions. As of v5.5 the builder covers every
+`VetraBehavior` field — `:Drag()`, `:Magnus()`, `:GyroDrift()`, `:Tumble()`, `:Fragmentation()`,
+`:SpeedProfiles()`, `:Wind()`, `:Trajectory()`, and `:LOD()` are all fully implemented. Raw table
+usage is still valid but no longer necessary.
+
+---
+
+**How do I create weapon variants from a shared base?**
+
+Use `:Clone()` to get an independent copy, then chain setters on the clone:
+
+```lua
+local Base  = BehaviorBuilder.Sniper()
+local Heavy = Base:Clone():Pierce():Max(5):Done():Build()
+local Light = Base:Clone():Physics():MaxDistance(800):Done():Build()
+-- Base is untouched
+```
+
+For applying one or more reusable modifiers in a single call, use `:Merge()`:
+
+```lua
+local APMod = BehaviorBuilder.new()
+    :Pierce():Max(5):SpeedRetention(0.95):Done()
+
+local HollowMod = BehaviorBuilder.new()
+    :Tumble():OnPierce(true):DragMultiplier(5):Done()
+
+-- Neither the preset nor the modifiers are mutated
+local Behavior = BehaviorBuilder.Sniper():Merge(APMod, HollowMod):Build()
+```
+
+`:Merge(a, b)` is shorthand for `:Clone():Impose(a):Impose(b)`. Use `:Impose()` directly when you already have a cloned builder and want to apply modifiers step by step.
+
+---
+
+**What is `:Impose()` and how does it differ from `:Merge()`?**
+
+`:Impose(other)` copies only the **explicitly set** fields from `other` onto `self`, then returns `self`. It mutates the builder it is called on.
+
+`:Merge(a, b, ...)` is non-destructive — it clones `self` first, then imposes each modifier in order, and returns the new builder. Neither `self` nor the modifiers are touched.
+
+The key point for both: "explicitly set" means a setter was actually called on the source builder, tracked via dirty flags. Default-valued fields are never copied, so a modifier cannot silently reset fields it never touched.
+
+---
+
+**I have a frozen behavior table from a registry. How do I modify one field?**
+
+Use `BehaviorBuilder.Inherit()` — a static constructor that takes a frozen table and returns a mutable builder with every field pre-populated and marked dirty:
+
+```lua
+local existing = BehaviorRegistry:Get("Sniper")
+
+local tweaked = BehaviorBuilder.Inherit(existing)
+    :Physics():MaxDistance(2000):Done()
+    :Build()
+```
+
+The original frozen table is untouched.
+
+---
+
+**How do I apply conditional config without breaking the fluent chain?**
+
+Use `:When(condition, fn)`. If the condition is truthy the callback is called with `self`; if falsy the builder is returned unchanged:
+
+```lua
+local Behavior = BehaviorBuilder.Sniper()
+    :When(isRaining,   function(b) b:Wind():Response(1.5):Done() end)
+    :When(isHeavyAmmo, function(b) b:Pierce():Max(5):Done() end)
+    :When(isDebug,     function(b) b:Debug():Visualize(true):Done() end)
+    :Build()
+```
 
 ---
 
@@ -105,6 +173,14 @@ After each confirmed bounce, it clears the list of already-pierced instances and
 count to zero. This means the bullet's post-bounce arc can re-pierce surfaces that were already
 pierced on the previous arc. Without it, once an instance is in the "already pierced" list, the
 bullet passes through it silently on every subsequent arc.
+
+---
+
+**How does `CoriolisLatitude` / `CoriolisScale` work on the behavior table?**
+
+It doesn't — those fields are in `DEFAULT_BEHAVIOR` for documentation purposes only. Coriolis is a
+solver-level setting, not a per-bullet one. Use `Solver:SetCoriolisConfig(latitude, scale)`.
+Setting these fields on the behavior table has no runtime effect.
 
 ---
 

@@ -12,10 +12,9 @@
 ]]
 
 local Types = require(script.Parent.Types)
+local Enums = require(script.Parent.Parent.Parent.Core.Enums)
 
 type BuiltBehavior = Types.BuiltBehavior
-
-local DragModelEnum = Types.DragModelEnum
 
 local DEFAULTS: BuiltBehavior = {
     -- Physics (RaycastParams and Gravity are sentinels — overridden in .new())
@@ -28,7 +27,7 @@ local DEFAULTS: BuiltBehavior = {
 
     -- Drag
     DragCoefficient              = 0,
-    DragModel                    = DragModelEnum.Quadratic,
+    DragModel                    = Enums.DragModel.Quadratic,
     DragSegmentInterval          = 0.05,
     CustomMachTable              = nil,
 

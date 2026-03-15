@@ -54,7 +54,7 @@ local Core  = Vetra.Core
 
 local LogService = require(Core.Logger)
 local Constants  = require(Core.Constants)
-
+local Enums		 = require(Core.Enums)
 -- ─── Logger ──────────────────────────────────────────────────────────────────
 
 local Logger = LogService.new(Identity, false)
@@ -129,7 +129,7 @@ local function NewBehavior(): any
 		OriginalFilter             = nil,
 		ResetPierceOnBounce        = false,
 		DragCoefficient            = 0,
-		DragModel                  = Constants.DRAG_MODEL.Quadratic,
+		DragModel                  = Enums.DragModel.Quadratic,
 		DragSegmentInterval        = 0,
 		GyroDriftRate              = nil,
 		GyroDriftAxis              = nil,

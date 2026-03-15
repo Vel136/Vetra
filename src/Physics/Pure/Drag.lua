@@ -22,12 +22,12 @@ local Core  = Vetra.Core
 -- ─── Module References ───────────────────────────────────────────────────────
 
 local Constants = require(Core.Constants)
-
+local Enums		= require(Core.Enums)
 -- ─── Cached Globals ──────────────────────────────────────────────────────────
 
 local math_exp         = math.exp
 
-local DRAG_MODEL       = Constants.DRAG_MODEL
+local DRAG_MODEL       = Enums.DragModel
 local ZERO_VECTOR      = Constants.ZERO_VECTOR
 local MIN_MAGNITUDE_SQ = Constants.MIN_MAGNITUDE_SQ
 local SPEED_OF_SOUND   = Constants.SPEED_OF_SOUND

@@ -94,8 +94,24 @@ The individual sub-builders are documented in [SubBuilders](../api/PhysicsBuilde
 
 :::tip DragModel enum
 Use `BehaviorBuilder.DragModel.G7` instead of the raw string `"G7"`. Typos on raw
-strings pass the type checker silently and only fail at `:Build()`.
+strings pass the type checker silently and only fail at `:Build()`. `BehaviorBuilder.DragModel`
+is a direct re-export of `Vetra.Enums.DragModel` — they are the same table.
 :::
+
+## "I need to compare against a termination reason or drag model."
+
+[Enums](../api/Enums) documents every named constant table exposed on `Vetra.Enums`.
+Use `Vetra.Enums.TerminateReason.Hit` instead of the raw string `"hit"` in
+`OnPreTermination` handlers — if a value is ever renamed, every reference site
+produces a nil rather than silently passing the wrong value.
+
+```lua
+Signals.OnPreTermination:Connect(function(context, reason, mutate)
+    if reason == Vetra.Enums.TerminateReason.Hit then
+        mutate(true, nil)  -- cancel termination
+    end
+end)
+```
 
 ---
 
@@ -121,4 +137,5 @@ signal handler. It exposes position, velocity, path length, lifetime, and `UserD
 | Read or modify a live bullet | [VetraCast](../api/VetraCast) |
 | Access bullet state in signals | [BulletContext](../api/BulletContext) |
 | Build behaviors with typed setters | [BehaviorBuilder](../api/BehaviorBuilder) |
+| Look up enum values | [Enums](../api/Enums) |
 | Set up VetraNet networking | [VetraNet](../api/VetraNet) |

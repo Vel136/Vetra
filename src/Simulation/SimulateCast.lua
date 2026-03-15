@@ -25,6 +25,8 @@ local Simulation = script.Parent
 
 -- Core Section
 local LogService    = require(Core.Logger)
+
+local Enums			= require(Core.Enums)
 local Constants     = require(Core.Constants)
 local t             = require(Core.TypeCheck)
 local Visualizer    = require(Core.TrajectoryVisualizer)
@@ -53,7 +55,7 @@ local MIN_MAGNITUDE_SQ          = Constants.MIN_MAGNITUDE_SQ
 local MIN_DOT_SQ                = Constants.MIN_DOT_SQ
 local PROVIDER_VELOCITY_EPSILON = Constants.PROVIDER_VELOCITY_EPSILON
 local VISUALIZER_HIT_TYPE       = Constants.VISUALIZER_HIT_TYPE
-local TERMINATE_REASON          = Constants.TERMINATE_REASON
+local TERMINATE_REASON          = Enums.TerminateReason
 
 -- ─── Cached Globals ──────────────────────────────────────────────────
 

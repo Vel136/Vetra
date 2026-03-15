@@ -58,6 +58,14 @@
         :Trajectory()    → Provider
         :LOD()           → Distance
         :BatchTravel()   → (root-level boolean toggle, no sub-builder)
+        :Clone()         → returns an independent copy of this builder
+        :Impose(other)   → copies only the explicitly-set fields from other onto self
+
+    Dirty tracking:
+        Every setter marks its field name in _Dirty. :Impose() reads the source
+        builder's _Dirty to copy only intentional changes — default-valued fields
+        on the source are never copied, so a modifier cannot silently reset fields
+        it never touched.
 
     All sub-builders are in sibling modules under BehaviorBuilder/.
     Types, defaults, and validation each live in their own module too.
@@ -70,9 +78,9 @@ local Core = script.Parent.Parent.Core
 
 -- ─── Module References ───────────────────────────────────────────────────────
 
-local LogService  = require(Core.Logger)
-local Types       = require(script.Types)
-local DEFAULTS    = require(script.Defaults)
+local LogService    = require(Core.Logger)
+local Types         = require(script.Types)
+local DEFAULTS      = require(script.Defaults)
 local ValidateBuilt = require(script.Validation)
 
 -- ─── Sub-Builder Requires ────────────────────────────────────────────────────
@@ -100,10 +108,45 @@ local SpeedProfilesBuilder = SpeedProfilesModule.SpeedProfilesBuilder
 -- ─── Types ───────────────────────────────────────────────────────────────────
 
 type BuiltBehavior = Types.BuiltBehavior
+type DirtySet      = Types.DirtySet
 
 -- ─── Logger ──────────────────────────────────────────────────────────────────
 
 local Logger = LogService.new("BehaviorBuilder", true)
+
+-- ─── Table helpers ───────────────────────────────────────────────────────────
+
+-- Fields whose values are tables that need deep-cloning rather than simple copy.
+-- Primitive fields (numbers, booleans, strings, Vector3, functions) copy by value
+-- automatically; these are the exceptions.
+local TABLE_FIELDS: { [string]: boolean } = {
+    MaterialRestitution = true,
+    SpeedThresholds     = true,
+    SupersonicProfile   = true,
+    SubsonicProfile     = true,
+}
+
+local function cloneConfig(Config: BuiltBehavior): BuiltBehavior
+    local Copy = table.clone(Config)
+    Copy.MaterialRestitution = table.clone(Config.MaterialRestitution)
+    Copy.SpeedThresholds     = table.clone(Config.SpeedThresholds)
+    -- SpeedProfiles are shallow tables of plain values — one level deep is enough.
+    if Config.SupersonicProfile then
+        Copy.SupersonicProfile = table.clone(Config.SupersonicProfile)
+    end
+    if Config.SubsonicProfile then
+        Copy.SubsonicProfile = table.clone(Config.SubsonicProfile)
+    end
+    -- Fresh RaycastParams so builders never share a mutable params object.
+    Copy.RaycastParams = RaycastParams.new()
+    if Config.RaycastParams then
+        Copy.RaycastParams.FilterDescendantsInstances = Config.RaycastParams.FilterDescendantsInstances
+        Copy.RaycastParams.FilterType                 = Config.RaycastParams.FilterType
+        Copy.RaycastParams.IgnoreWater                = Config.RaycastParams.IgnoreWater
+        Copy.RaycastParams.CollisionGroup             = Config.RaycastParams.CollisionGroup
+    end
+    return Copy
+end
 
 -- ─── Root Builder ────────────────────────────────────────────────────────────
 
@@ -112,6 +155,7 @@ BehaviorBuilder.__index = BehaviorBuilder
 
 export type BehaviorBuilder = typeof(setmetatable({} :: {
     _Config : BuiltBehavior,
+    _Dirty  : DirtySet,
 }, BehaviorBuilder))
 
 -- ─── Constructor ─────────────────────────────────────────────────────────────
@@ -154,7 +198,7 @@ function BehaviorBuilder.new(): BehaviorBuilder
         HomingMaxDuration            = DEFAULTS.HomingMaxDuration,
         HomingAcquisitionRadius      = DEFAULTS.HomingAcquisitionRadius,
 
-        SpeedThresholds              = {},  -- fresh per builder
+        SpeedThresholds              = {},
         SupersonicProfile            = DEFAULTS.SupersonicProfile,
         SubsonicProfile              = DEFAULTS.SubsonicProfile,
 
@@ -180,7 +224,7 @@ function BehaviorBuilder.new(): BehaviorBuilder
         MaxBounces                   = DEFAULTS.MaxBounces,
         BounceSpeedThreshold         = DEFAULTS.BounceSpeedThreshold,
         Restitution                  = DEFAULTS.Restitution,
-        MaterialRestitution          = {},  -- fresh per builder
+        MaterialRestitution          = {},
         NormalPerturbation           = DEFAULTS.NormalPerturbation,
         ResetPierceOnBounce          = DEFAULTS.ResetPierceOnBounce,
 
@@ -207,13 +251,13 @@ function BehaviorBuilder.new(): BehaviorBuilder
         VisualizeCasts               = DEFAULTS.VisualizeCasts,
     }
 
-    return setmetatable({ _Config = Config }, BehaviorBuilder)
+    return setmetatable({ _Config = Config, _Dirty = {} }, BehaviorBuilder)
 end
 
 -- ─── Namespace Openers ───────────────────────────────────────────────────────
 
 local function open(self: BehaviorBuilder, Builder: any): any
-    return setmetatable({ _Root = self, _Config = self._Config }, Builder)
+    return setmetatable({ _Root = self, _Config = self._Config, _Dirty = self._Dirty }, Builder)
 end
 
 function BehaviorBuilder.Physics(self: BehaviorBuilder)       return open(self, PhysicsBuilder)       end
@@ -234,10 +278,167 @@ function BehaviorBuilder.SpeedProfiles(self: BehaviorBuilder) return open(self, 
 function BehaviorBuilder.Trajectory(self: BehaviorBuilder)    return open(self, TrajectoryBuilder)    end
 function BehaviorBuilder.LOD(self: BehaviorBuilder)           return open(self, LODBuilder)           end
 
--- BatchTravel is a single boolean toggle — no sub-builder needed.
 function BehaviorBuilder.BatchTravel(self: BehaviorBuilder, Value: boolean): BehaviorBuilder
     assert(type(Value) == "boolean", "BehaviorBuilder:BatchTravel — expected boolean")
     self._Config.BatchTravel = Value
+    self._Dirty.BatchTravel  = true
+    return self
+end
+
+-- ─── Clone ───────────────────────────────────────────────────────────────────
+
+--[[
+    Returns an independent BehaviorBuilder whose _Config and _Dirty are deep
+    copies of this builder's. Subsequent changes to either builder do not
+    affect the other.
+
+    Use this to produce variants from a shared archetype without mutating it:
+
+        local Base   = BehaviorBuilder.Sniper()
+        local Varnt  = Base:Clone():Physics():MaxDistance(2000):Done():Build()
+        -- Base is unchanged; only Varnt has MaxDistance = 2000
+]]
+function BehaviorBuilder.Clone(self: BehaviorBuilder): BehaviorBuilder
+    local NewConfig = cloneConfig(self._Config)
+    local NewDirty  = table.clone(self._Dirty)
+    return setmetatable({ _Config = NewConfig, _Dirty = NewDirty }, BehaviorBuilder)
+end
+
+-- ─── Impose ──────────────────────────────────────────────────────────────────
+
+--[[
+    Copies only the explicitly-set fields from `other` onto this builder.
+
+    "Explicitly set" means a field that had a setter called on `other` — tracked
+    via `other._Dirty`. Fields still sitting at their defaults on `other` are
+    never copied, so a modifier cannot silently clobber values it never touched.
+
+    Returns self for chaining. Does not mutate `other`.
+
+        local APMod = BehaviorBuilder.new()
+            :Pierce():Max(5):SpeedRetention(0.95):Done()
+
+        -- APMod._Dirty = { MaxPierceCount=true, PenetrationSpeedRetention=true }
+        -- All other fields on APMod are defaults and will NOT be copied.
+
+        local APSniper = BehaviorBuilder.Sniper():Clone():Impose(APMod):Build()
+        -- Only MaxPierceCount and PenetrationSpeedRetention were written.
+        -- MaxDistance(1500), HighFidelitySegmentSize(0.2), etc. are untouched.
+
+    Stacking modifiers works naturally — each Impose only writes its own dirty set:
+
+        local APHollow = BehaviorBuilder.Sniper():Clone()
+            :Impose(APMod)
+            :Impose(HollowMod)
+            :Build()
+]]
+function BehaviorBuilder.Impose(self: BehaviorBuilder, Other: BehaviorBuilder): BehaviorBuilder
+    assert(
+        type(Other) == "table" and type(Other._Dirty) == "table" and type(Other._Config) == "table",
+        "BehaviorBuilder:Impose — expected a BehaviorBuilder"
+    )
+
+    for Field in Other._Dirty do
+        if TABLE_FIELDS[Field] then
+            -- Deep-clone table values so self and Other never share a reference.
+            local SrcValue = (Other._Config :: any)[Field]
+            if SrcValue ~= nil then
+                (self._Config :: any)[Field] = table.clone(SrcValue)
+            else
+                (self._Config :: any)[Field] = nil
+            end
+        else
+            (self._Config :: any)[Field] = (Other._Config :: any)[Field]
+        end
+        -- Propagate dirty so further :Impose() or :Clone() calls include this field.
+        self._Dirty[Field] = true
+    end
+
+    return self
+end
+
+-- ─── Merge ───────────────────────────────────────────────────────────────────
+
+--[[
+    Returns a new builder that is a clone of self with all provided modifiers
+    applied in order. Neither self nor any modifier is mutated.
+
+    Equivalent to self:Clone():Impose(a):Impose(b):..., but reads more naturally
+    when combining a preset base with one or more modifiers at the call site.
+
+        local Behavior = BehaviorBuilder.Sniper()
+            :Merge(APMod, HollowMod)
+            :Build()
+]]
+function BehaviorBuilder.Merge(self: BehaviorBuilder, ...: BehaviorBuilder): BehaviorBuilder
+    local Result = self:Clone()
+    for _, Mod in { ... } do
+        Result:Impose(Mod)
+    end
+    return Result
+end
+
+-- ─── Inherit ─────────────────────────────────────────────────────────────────
+
+--[[
+    Creates a new builder pre-populated from a frozen VetraBehavior table,
+    with every field marked dirty.
+
+    This is the inverse of :Build() — it lets you round-trip a frozen behavior
+    back into a mutable builder so you can tweak individual fields without
+    reconstructing from scratch.
+
+    Every field is marked dirty so that :Impose() / :Merge() on the resulting
+    builder treats all values as intentional rather than default.
+
+        -- Received from a registry, config file, or API
+        local existing = BehaviorRegistry:Get("Sniper")
+
+        -- Round-trip: unfreeze → tweak → refreeze
+        local tweaked = BehaviorBuilder.Inherit(existing)
+            :Physics():MaxDistance(2000):Done()
+            :Build()
+]]
+function BehaviorBuilder.Inherit(Frozen: BuiltBehavior): BehaviorBuilder
+    assert(type(Frozen) == "table", "BehaviorBuilder.Inherit — expected a frozen VetraBehavior table")
+
+    -- Copy every field from the frozen table into a fresh config.
+    -- cloneConfig handles RaycastParams and table-valued fields correctly.
+    local Config = cloneConfig(Frozen :: any)
+
+    -- Mark every field dirty so Impose/Merge treats all values as intentional.
+    local Dirty: DirtySet = {}
+    for Key in Config :: any do
+        Dirty[Key] = true
+    end
+
+    return setmetatable({ _Config = Config, _Dirty = Dirty }, BehaviorBuilder)
+end
+
+-- ─── When ────────────────────────────────────────────────────────────────────
+
+--[[
+    Conditionally applies a block of builder calls without breaking the
+    fluent chain. If condition is falsy the builder is returned unchanged.
+
+    The callback receives self and must return nothing — it is called for
+    its side effects on the builder, not for a return value.
+
+        local Behavior = BehaviorBuilder.Sniper()
+            :When(isRaining,   function(b) b:Wind():Response(1.5):Done() end)
+            :When(isHeavyAmmo, function(b) b:Pierce():Max(5):Done() end)
+            :When(isDebug,     function(b) b:Debug():Visualize(true):Done() end)
+            :Build()
+]]
+function BehaviorBuilder.When(
+    self: BehaviorBuilder,
+    Condition: any,
+    Fn: (BehaviorBuilder) -> ()
+): BehaviorBuilder
+    assert(type(Fn) == "function", "BehaviorBuilder:When — expected function as second argument")
+    if Condition then
+        Fn(self)
+    end
     return self
 end
 
@@ -254,8 +455,6 @@ function BehaviorBuilder.Build(self: BehaviorBuilder): BuiltBehavior?
         return nil
     end
 
-    -- Shallow-clone so the builder's _Config stays mutable for reuse.
-    -- Tables with mutable inner state get their own clone.
     local Final = table.clone(self._Config)
     Final.MaterialRestitution = table.clone(self._Config.MaterialRestitution)
     Final.SpeedThresholds     = table.clone(self._Config.SpeedThresholds)
@@ -319,12 +518,6 @@ function BehaviorBuilder.Pistol(): BehaviorBuilder
             :Filter(function(_ctx, _result, _vel) return true end)
         :Done()
 end
-
--- ─── Enum Exposure ───────────────────────────────────────────────────────────
--- Expose DragModelEnum as BehaviorBuilder.DragModel so consumers write
--- BehaviorBuilder.DragModel.G7 instead of the raw string "G7".
-
-BehaviorBuilder.DragModel = Types.DragModelEnum
 
 -- ─── Module Return ───────────────────────────────────────────────────────────
 
