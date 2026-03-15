@@ -38,7 +38,7 @@ local PiercePhysics = require(Physics.Pierce)
 local DragPhysics   = require(Physics.Drag)
 local HomingPhysics = require(Physics.Homing)
 local Fragmentation = require(Physics.Fragmentation)
-local CoriolisPhysics = require(Physics.Coriolis)  -- [CORIOLIS]
+local CoriolisPhysics = require(Physics.Coriolis)  
 local PureGyroDrift = require(Physics.Pure.GyroDrift)
 local TumblePhysics = require(Physics.Tumble)
 local PureTumble    = require(Physics.Pure.Tumble)
@@ -273,18 +273,7 @@ function SimulateCast.StepProjectile(Solver: any,Cast: any,Delta: number,IsSubSe
 	end
 
 	-- ── Coriolis deflection ───────────────────────────────────────────────────
-	-- Applied after homing (which may have replaced CurrentVelocity) but before
-	-- the raycast direction is computed from FrameDisplacement.
-	--
-	-- We nudge CurrentVelocity directly rather than baking into the trajectory's
-	-- stored Acceleration, because Coriolis is velocity-dependent (a = -2*(Ω×v))
-	-- and must be recomputed every step as v changes. Baking it once would
-	-- permanently apply the step-0 deflection direction to all future steps,
-	-- which is physically wrong and accumulates error rapidly.
-	--
-	-- The dot-product guard is a fast-exit when CoriolisOmega is zero (i.e.
-	-- Coriolis is disabled). It avoids the cross product entirely and costs
-	-- only a single multiply + compare on the common code path.
+
 	local CoriolisOmega = Solver._CoriolisOmega
 	if CoriolisOmega and CoriolisOmega:Dot(CoriolisOmega) > 0 then
 		local CoriolisAccel   = CoriolisPhysics.ComputeAcceleration(CoriolisOmega, CurrentVelocity)
