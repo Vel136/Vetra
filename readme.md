@@ -83,7 +83,7 @@ The parallel solver's frame time is essentially flat from 25 to 2,000 bullets. S
 
 ## Documentation
 
-Full documentation at **[vetra-docs.netlify.app]([https://vetra-docs.netlify.app](https://vel136.github.io/Vetra/))**
+Full documentation at **[https://vel136.github.io/Vetra/]**
 
 - [Getting Started](https://vetra-docs.netlify.app/docs/intro)
 - [Why Your Bullets Miss](https://vetra-docs.netlify.app/docs/guides/why-bullets-miss)
