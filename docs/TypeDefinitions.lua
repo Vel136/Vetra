@@ -265,6 +265,21 @@
 	- `"Custom"` — requires `CustomMachTable = { {mach, cd}, ... }` in the behavior.
 ]=]
 
+-- ─── NetworkMode ─────────────────────────────────────────────────────────────
+
+--[=[
+	@type NetworkMode "ClientAuthoritative" | "ServerAuthority" | "SharedAuthority"
+	@within TypeDefinitions
+
+	Authority mode that controls which side may call `:Fire()` on a VetraNet handle.
+
+	- `"ClientAuthoritative"` — clients send fire requests; server validates. **(Default)**
+	- `"ServerAuthority"` — only server code may initiate bullets; client fire requests are silently dropped.
+	- `"SharedAuthority"` — both client and server may fire; client requests go through validation, server calls bypass it.
+
+	Pass via `NetworkConfig.Mode`. Prefer `Vetra.Enums.NetworkMode` over raw strings.
+]=]
+
 -- ─── TerminationReason ───────────────────────────────────────────────────────
 
 --[=[
@@ -298,6 +313,7 @@
 	.CorrectionRate number? -- Lerp speed for cosmetic drift correction in studs/second. Default: `8`
 	.LatencyBuffer number? -- Extra seconds to delay local cosmetic spawn. `0` = use measured RTT automatically. Default: `0`
 	.ReplicateState boolean? -- Broadcast bullet state every Heartbeat to all clients for cosmetic correction. Default: `true`
+	.Mode NetworkMode? -- Authority mode. Controls which side may call `:Fire()`. Default: `"ClientAuthoritative"`
 ]=]
 
 -- ─── SpatialPartitionConfig ──────────────────────────────────────────────────

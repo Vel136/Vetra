@@ -87,6 +87,9 @@ function ServerHooks.Bind(Ctx: NetworkTypes.ServerHooksContext): { RBXScriptConn
 	local ResolvedConfig    = Ctx.ResolvedConfig
 	local OnValidatedHit    = Ctx.OnValidatedHit
 	local OnFireRejected    = Ctx.OnFireRejected
+	local Mode          = Ctx.Mode
+	local ServerCanFire = (Mode == Enums.NetworkMode.ServerAuthority or Mode == Enums.NetworkMode.SharedAuthority)
+	local ClientCanFire = (Mode == Enums.NetworkMode.ClientAuthoritative or Mode == Enums.NetworkMode.SharedAuthority)
 
 	local Connections : { RBXScriptConnection } = {}
 
@@ -117,10 +120,12 @@ function ServerHooks.Bind(Ctx: NetworkTypes.ServerHooksContext): { RBXScriptConn
 	--   all, so neither __solverData nor this table would help on their own.
 	--   See the _Terminate wrapper below for how Bug B is handled.
 	--
-	-- Weak keys: if a BulletContext becomes unreachable without going through
-	-- normal cleanup (e.g. an unregistered non-network bullet) it is collected
-	-- automatically without intervention.
-	local ContextToCastId: { [any]: number } = setmetatable({}, { __mode = "k" })
+	-- Keyed by BulletContext.Id (number) rather than by table identity.
+	-- VeSignal.FireSafe deep-copies table arguments (SafeCopyArg), so the
+	-- Context received by OnHit/OnTerminated handlers is a COPY of the
+	-- original BulletContext — table identity lookup would always miss.
+	-- BulletContext.Id is a monotonic number that survives copying.
+	local ContextToCastId: { [number]: number } = {}
 
 	-- Internal cleanup: removes the cast from all authority tables.
 	-- Called from both OnTerminated (normal path) and the _Terminate wrapper
@@ -154,13 +159,14 @@ function ServerHooks.Bind(Ctx: NetworkTypes.ServerHooksContext): { RBXScriptConn
 		local ContextMap = solver._CastToBulletContext
 		local BulletCtx  = ContextMap and ContextMap[cast]
 		if BulletCtx then
-			local CastId = ContextToCastId[BulletCtx]
+			local CtxId = BulletCtx.Id
+			local CastId = ContextToCastId[CtxId]
 			if CastId then
 				-- OnTerminated did not run before us (direct termination path).
 				-- Run cleanup now and clear the entry so OnTerminated, if it does
 				-- fire later via a deferred signal, finds nothing and returns early.
 				CleanupCast(CastId)
-				ContextToCastId[BulletCtx] = nil
+				ContextToCastId[CtxId] = nil
 			end
 		end
 		_baseTerm(solver, cast, reason)
@@ -218,7 +224,107 @@ function ServerHooks.Bind(Ctx: NetworkTypes.ServerHooksContext): { RBXScriptConn
 		OutboundBatcher:RemovePlayer(Player)
 	end)
 
+	-- ── FireFromServer: server-initiated fire (ServerAuthority mode) ────────
+	-- Assigns a cast ID, fires the solver, and replicates to all clients.
+	-- Returns the server CastId on success, or 0 on failure.
+	--
+	-- Optional parameters:
+	--   UserData_       — Attached to BulletContext.UserData for game-code routing
+	--                     (e.g. Player, GunInstance, GunData for damage dispatch).
+	--   RaycastOverride — Per-fire RaycastParams (e.g. to exclude the firing
+	--                     player's character). A metatable proxy is created so the
+	--                     frozen BuiltBehavior is never mutated.
+	local function FireFromServer(
+		Origin          : Vector3,
+		Direction       : Vector3,
+		Speed           : number,
+		BehaviorHash    : number,
+		UserData_       : { [string]: any }?,
+		RaycastOverride : RaycastParams?
+	): number
+		if not ServerCanFire then
+			Logger:Error("ServerHooks: FireFromServer called but Mode is ClientAuthoritative")
+			return 0
+		end
+
+		local Behavior = BehaviorRegistry:Get(BehaviorHash)
+		if not Behavior then
+			Logger:Warn(string_format(
+				"ServerHooks: FireFromServer — unknown behavior hash %d",
+				BehaviorHash
+			))
+			return 0
+		end
+
+		-- If RaycastOverride is provided, create a lightweight proxy that
+		-- overrides only RaycastParams while falling through to the frozen
+		-- BuiltBehavior for every other field. Vetra's Fire() reads from
+		-- this proxy and clones the RaycastParams internally via ParamsPooler.
+		local FireBehavior = Behavior
+		if RaycastOverride then
+			FireBehavior = setmetatable({
+				RaycastParams = RaycastOverride,
+			}, { __index = Behavior })
+		end
+
+		local CastId = NextCastId()
+
+		local FireContext = BulletContext.new({
+			Origin    = Origin,
+			Direction = Direction,
+			Speed     = Speed,
+			SolverData = { OwnerId = 0, ServerCastId = CastId },
+		})
+
+		-- Attach UserData for game-code hit routing
+		if UserData_ then
+			FireContext.UserData = UserData_
+		end
+
+		local Context = Solver:Fire(FireContext, FireBehavior)
+
+		if not Context then
+			Logger:Warn(string_format(
+				"ServerHooks: FireFromServer — Solver:Fire returned nil for castId %d",
+				CastId
+			))
+			return 0
+		end
+
+		ContextToCastId[FireContext.Id] = CastId
+
+		-- Replicate to all clients. No shooter echo (server has no local cosmetic).
+		local AllPlayers = Players:GetPlayers()
+		local Timestamp  = workspace:GetServerTimeNow()
+
+		local EncodedFire = BlinkSchema.EncodeFire(
+			Origin,
+			Direction,
+			Speed,
+			BehaviorHash,
+			CastId,
+			Timestamp,
+			0 -- LocalCastId = 0 for all clients (no cosmetic migration needed)
+		)
+		OutboundBatcher:WriteFireForAll(AllPlayers, 0, EncodedFire)
+
+		return CastId
+	end
+
+	Connections._FireFromServer = FireFromServer
+
 	-- ── FireChannel: incoming fire request ──────────────────────────────────
+	-- Skipped entirely in ServerAuthority mode — clients are not permitted to
+	-- initiate fire. Any client fire request is silently ignored.
+	if not ClientCanFire then
+		-- Bind a no-op receiver so the FireChannel listener is still registered
+		-- (avoids "no handler" warnings from FireChannel) but drops all payloads.
+		FireChannel.OnFireReceived(Remotes.Net, function(_Player: Player, _Payload: any)
+			-- Silent drop — client fire not permitted in ServerAuthority mode.
+		end)
+	end
+
+	if ClientCanFire then
 	FireChannel.OnFireReceived(Remotes.Net, function(Player: Player, Payload: any)
 		-- Validate the payload through the full authority chain.
 		local Result = FireValidator.Validate(
@@ -269,7 +375,7 @@ function ServerHooks.Bind(Ctx: NetworkTypes.ServerHooksContext): { RBXScriptConn
 		-- Register in ContextToCastId so OnHit and OnTerminated can resolve the
 		-- ServerCastId without touching __solverData (which may be nil'd before
 		-- deferred signal handlers run — see the table comment above).
-		ContextToCastId[FireContext] = CastId
+		ContextToCastId[FireContext.Id] = CastId
 
 		-- Replicate the validated fire event. Two encodes are needed:
 		--
@@ -307,15 +413,17 @@ function ServerHooks.Bind(Ctx: NetworkTypes.ServerHooksContext): { RBXScriptConn
 		)
 		OutboundBatcher:WriteFireForAll(AllPlayers, Player.UserId, EncodedFireBroadcast)
 	end)
+	end -- if not IsServerAuthority
 
 	-- ── Solver.OnHit: validated hit → broadcast ─────────────────────────────
 	Solver.Signals.OnHit:Connect(function(Context: any, Result: RaycastResult?, Velocity: Vector3, ImpactForce: Vector3)
-		local CastId = ContextToCastId[Context]
+		local CastId = ContextToCastId[Context.Id]
 		if not CastId then return end
 
 		local Owner = OwnershipRegistry:GetOwner(CastId)
-		if not Owner then
+		if not Owner and not ServerCanFire then
 			-- Hit fired by an unregistered cast (e.g. server-spawned non-network bullet).
+			-- In ServerAuthority mode we allow nil Owner — the server fired the bullet.
 			return
 		end
 
@@ -324,6 +432,7 @@ function ServerHooks.Bind(Ctx: NetworkTypes.ServerHooksContext): { RBXScriptConn
 		local Timestamp   = workspace:GetServerTimeNow()
 
 		-- Signal game code (damage, effects, etc.).
+		-- Owner is nil for server-authority bullets — game code should handle that.
 		OnValidatedHit:Fire(Owner, Context, Result, Velocity, ImpactForce)
 
 		-- Queue hit for all clients via OutboundBatcher — flushed at frame end.
@@ -336,9 +445,9 @@ function ServerHooks.Bind(Ctx: NetworkTypes.ServerHooksContext): { RBXScriptConn
 
 	-- ── Solver.OnTerminated: release cast ───────────────────────────────────
 	Solver.Signals.OnTerminated:Connect(function(Context: any)
-		local CastId = ContextToCastId[Context]
+		local CastId = ContextToCastId[Context.Id]
 		if not CastId then return end -- already cleaned up by _Terminate wrapper
-		ContextToCastId[Context] = nil
+		ContextToCastId[Context.Id] = nil
 
 		CleanupCast(CastId)
 	end)

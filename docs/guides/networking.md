@@ -167,6 +167,61 @@ Start generous. Look at your `OnFireRejected` telemetry. If you're seeing a high
 
 ---
 
+## Authority Modes
+
+VetraNet supports three authority modes, configured via `NetworkConfig.Mode`. Always use `Vetra.Enums.NetworkMode` rather than raw strings.
+
+### ClientAuthoritative *(default)*
+
+Clients send fire requests. The server validates each one — rate limit, origin tolerance, behavior hash — and replicates approved bullets to all clients. This is the standard model for player weapons.
+
+```lua
+local Net = Vetra.VetraNet.new(ServerSolver, SharedRegistry, {
+    -- Mode defaults to ClientAuthoritative; no need to set it explicitly
+})
+```
+
+### ServerAuthority
+
+Only server code may initiate bullets. Any fire request that arrives from a client is silently dropped. Use this for NPC projectiles, environmental hazards, or any weapon that should be entirely server-controlled — clients literally cannot spawn a network bullet in this mode, no matter what events they fire.
+
+```lua
+local Net = Vetra.VetraNet.new(ServerSolver, SharedRegistry, {
+    Mode = Vetra.Enums.NetworkMode.ServerAuthority,
+})
+
+-- Somewhere in server weapon/NPC code:
+Net:Fire(origin, direction, speed, SharedRegistry:HashOf("SniperRifle"))
+```
+
+Server-fired bullets replicate to all clients automatically. The `OnValidatedHit` signal still fires on hit — the `owner` parameter will be `nil` (no player owns the bullet), so make sure your damage handler accounts for that.
+
+```lua
+Net.OnValidatedHit:Connect(function(owner, context, result, velocity, impactForce)
+    if owner then
+        -- player bullet hit something
+    else
+        -- server-owned bullet hit something
+    end
+end)
+```
+
+### SharedAuthority
+
+Both client and server may fire. Client requests go through the full validation pipeline. Server calls bypass it. Use this when player weapons and server-owned projectiles share the same handle and behavior registry.
+
+```lua
+local Net = Vetra.VetraNet.new(ServerSolver, SharedRegistry, {
+    Mode = Vetra.Enums.NetworkMode.SharedAuthority,
+})
+
+-- Client fires via Net:Fire() as normal.
+-- Server can also fire:
+Net:Fire(origin, direction, speed, SharedRegistry:HashOf("Mortar"))
+```
+
+---
+
 ## What VetraNet Can't Do
 
 VetraNet validates that bullets followed physics it could have produced. It doesn't validate that the player *should* have been able to fire — that the tool was equipped, that the player was alive, that the cooldown had elapsed. Those are your responsibility to check before or after calling `Net:Fire`.

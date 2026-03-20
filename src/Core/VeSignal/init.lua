@@ -79,8 +79,7 @@ type function WaitSignature(signal: type, signature: type, fallback: type): type
 		print(`Signal<Signature> expects a 'function' type, got '{tag}'`)
 		return fallback
 	end
-	local selfParam: {type} = {signal}
-	local waitParams = {head = selfParam, tail = types.singleton(0) :: type}
+	local waitParams = {head = {signal, types.number} :: {type}}
 	local sigParams = signature:parameters()
 	return types.newfunction(waitParams, sigParams)
 end

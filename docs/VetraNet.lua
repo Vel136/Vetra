@@ -96,6 +96,55 @@
 	| `CorrectionRate` | `number` | `8` | Lerp speed for drift correction (studs per second). |
 	| `LatencyBuffer` | `number` | `0` | Extra seconds to delay local cosmetic spawn. `0` = use measured RTT. |
 	| `ReplicateState` | `boolean` | `true` | Broadcast bullet state every Heartbeat to all clients. |
+	| `Mode` | `NetworkMode` | `"ClientAuthoritative"` | Authority mode — controls which side may call `:Fire()`. See [Enums.NetworkMode]. |
+
+	## NetworkMode
+
+	VetraNet supports three authority modes, set via `NetworkConfig.Mode`.
+	Use `Vetra.Enums.NetworkMode` values rather than raw strings.
+
+	**`ClientAuthoritative`** *(default)*
+
+	Clients send fire requests. The server validates each request (rate limit,
+	origin tolerance, behavior hash) and replicates approved bullets to all
+	clients. Use this for standard player-fired weapons.
+
+	```lua
+	local Net = Vetra.VetraNet.new(ServerSolver, SharedRegistry, {
+	    Mode = Vetra.Enums.NetworkMode.ClientAuthoritative, -- or omit; this is the default
+	})
+	```
+
+	**`ServerAuthority`**
+
+	Only server code may initiate bullets by calling `Net:Fire()`. Any fire
+	request that arrives from a client is silently dropped — clients cannot
+	spawn network bullets at all. Use this for NPC projectiles, environmental
+	hazards, or any weapon whose origin should be entirely server-controlled.
+
+	```lua
+	-- Server
+	local Net = Vetra.VetraNet.new(ServerSolver, SharedRegistry, {
+	    Mode = Vetra.Enums.NetworkMode.ServerAuthority,
+	})
+
+	-- Fire a bullet from server code; replicates to all clients automatically.
+	Net:Fire(origin, direction, speed, behaviorHash)
+	```
+
+	**`SharedAuthority`**
+
+	Both client and server may fire. Client requests go through the full
+	validation pipeline as in `ClientAuthoritative`. Server calls bypass
+	validation and replicate directly. Use this when player weapons and
+	server-owned projectiles share the same handle and behavior registry —
+	for example, a weapon that can also be triggered by a server script.
+
+	```lua
+	local Net = Vetra.VetraNet.new(ServerSolver, SharedRegistry, {
+	    Mode = Vetra.Enums.NetworkMode.SharedAuthority,
+	})
+	```
 ]=]
 local VetraNet = {}
 
@@ -189,6 +238,44 @@ function VetraNet.new(
 	| `"RejectedOriginTolerance"` | Fire origin too far from the server-reconstructed position. |
 	| `"RejectedInvalidSpeed"` | Reported speed exceeds the behavior's `MaxSpeed`. |
 ]=]
+
+-- ─── Server Methods ──────────────────────────────────────────────────────────
+
+--[=[
+	*(Server only — `ServerAuthority` and `SharedAuthority` modes)*
+
+	Fires a server-owned bullet and replicates it to all clients.
+	Bypasses all validation (rate limit, origin tolerance, behavior hash checks)
+	because the server is considered trusted.
+
+	Only available when `Mode` is `ServerAuthority` or `SharedAuthority`.
+	Calling this in `ClientAuthoritative` mode logs an error and returns `0`.
+
+	```lua
+	local Net = Vetra.VetraNet.new(ServerSolver, SharedRegistry, {
+	    Mode = Vetra.Enums.NetworkMode.ServerAuthority,
+	})
+
+	-- Fire from an NPC or scripted event:
+	Net:Fire(
+	    npc.HumanoidRootPart.Position + Vector3.new(0, 1, 0),
+	    (targetPosition - npc.HumanoidRootPart.Position).Unit,
+	    600,
+	    SharedRegistry:HashOf("Rifle")
+	)
+	```
+
+	Returns the server-assigned cast ID on success, or `0` on failure
+	(unknown behavior hash, wrong mode).
+
+	@server
+	@param Origin Vector3 -- World-space fire origin.
+	@param Direction Vector3 -- Unit direction vector.
+	@param Speed number -- Initial bullet speed in studs/second.
+	@param BehaviorHash number -- Numeric hash from `BehaviorRegistry:HashOf(name)`.
+	@return number -- Server cast ID, or `0` on failure.
+]=]
+function VetraNet:Fire(Origin: Vector3, Direction: Vector3, Speed: number, BehaviorHash: number): number end
 
 -- ─── Client Methods ──────────────────────────────────────────────────────────
 

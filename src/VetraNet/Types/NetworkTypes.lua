@@ -80,6 +80,12 @@ export type ValidationResult = {
 	Reason : ValidationReason,
 }
 
+-- ── NetworkMode ───────────────────────────────────────────────────────────────
+
+-- Which side may call :Fire() to initiate a bullet.
+-- Runtime code must use Enums.NetworkMode rather than raw string literals.
+export type NetworkMode = "ClientAuthoritative" | "ServerAuthority" | "SharedAuthority"
+
 -- ── Configuration ─────────────────────────────────────────────────────────────
 
 -- Consumer-facing config accepted by VetraNet.new() and VetraNet.Client.new().
@@ -111,6 +117,12 @@ export type NetworkConfig = {
 	-- Drift correction on other clients will not occur.
 	-- Default: true.
 	ReplicateState         : boolean?,
+
+	-- Authority mode. Defaults to ClientAuthoritative.
+	--   ClientAuthoritative — clients send fire requests; server validates.
+	--   ServerAuthority     — only server may call :Fire(); client requests are dropped.
+	--   SharedAuthority     — both client and server may fire.
+	Mode                   : NetworkMode?,
 }
 
 -- ── Public API Surface Types ──────────────────────────────────────────────────
@@ -126,6 +138,11 @@ export type ServerNetwork = {
 	-- Fires when a fire request is rejected, providing the reason for logging
 	-- or analytics. Reason is never forwarded to the client.
 	OnFireRejected : any,
+
+	-- Only available when Mode = ServerAuthority.
+	-- Fires a server-owned bullet and replicates it to all clients.
+	-- Errors if called in ClientAuthoritative mode.
+	Fire : (self: ServerNetwork, Origin: Vector3, Direction: Vector3, Speed: number, BehaviorHash: number) -> (),
 
 	Destroy : (self: ServerNetwork) -> (),
 }
@@ -168,6 +185,7 @@ export type ServerHooksContext = {
 	ResolvedConfig    : any,
 	OnValidatedHit    : any,
 	OnFireRejected    : any,
+	Mode              : NetworkMode,
 }
 
 return {}

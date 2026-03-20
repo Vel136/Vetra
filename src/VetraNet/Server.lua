@@ -39,6 +39,7 @@ local RateLimiter       = require(AuthorityFolder.RateLimiter)
 local OwnershipRegistry = require(AuthorityFolder.OwnershipRegistry)
 local ServerHooks       = require(Hooks.ServerHooks)
 local Constants         = require(VetraNet.Types.Constants)
+local Enums             = require(VetraNet.Types.Enums)
 
 AuthorityModule.AssertServer("VetraNet.Server")
 
@@ -91,7 +92,8 @@ end
       :Destroy()       — Cleans up all connections, remotes, and frame loops.
 ]]
 function Server.new(Solver: any, BehaviorRegistry_: any, NetworkConfig_: any?): any
-	local ResolvedConfig      = Config.Resolve(NetworkConfig_)
+	local Mode           = (NetworkConfig_ and NetworkConfig_.Mode) or Enums.NetworkMode.ClientAuthoritative
+	local ResolvedConfig = Config.Resolve(NetworkConfig_)
 	local SessionInstance     = Session.new(ResolvedConfig)
 	local RateLimiterInstance = RateLimiter.new(ResolvedConfig.TokensPerSecond, ResolvedConfig.BurstLimit)
 	local OwnershipInstance   = OwnershipRegistry.new()
@@ -114,6 +116,7 @@ function Server.new(Solver: any, BehaviorRegistry_: any, NetworkConfig_: any?): 
 		ResolvedConfig    = ResolvedConfig,
 		OnValidatedHit    = OnValidatedHit,
 		OnFireRejected    = OnFireRejected,
+		Mode              = Mode,
 	})
 
 	local FrameConnection = RunService.Heartbeat:Connect(function(DeltaTime: number)
@@ -140,6 +143,8 @@ function Server.new(Solver: any, BehaviorRegistry_: any, NetworkConfig_: any?): 
 		_Ownership           = OwnershipInstance,
 		_StateBatcher        = StateBatcherInstance,
 		_OutboundBatcher     = OutboundBatcherInstance,
+		_FireFromServer      = Connections._FireFromServer,
+		_Mode                = Mode,
 		_Destroyed           = false,
 	}, ServerMetatable)
 
@@ -148,6 +153,49 @@ function Server.new(Solver: any, BehaviorRegistry_: any, NetworkConfig_: any?): 
 end
 
 -- ─── API ─────────────────────────────────────────────────────────────────────
+
+--[[
+    Fire a server-owned bullet and replicate it to all clients.
+    Only valid when Mode = ServerAuthority. Errors otherwise.
+
+    Parameters:
+      Origin       — World-space fire origin.
+      Direction    — Unit direction vector.
+      Speed        — Initial bullet speed (studs/s).
+      BehaviorHash — u16 key into the shared BehaviorRegistry.
+]]
+function Server:Fire(Origin: Vector3, Direction: Vector3, Speed: number, BehaviorHash: number)
+	if self._Mode ~= Enums.NetworkMode.ServerAuthority and self._Mode ~= Enums.NetworkMode.SharedAuthority then
+		error("VetraNet.Server:Fire() is only available in ServerAuthority or Hybrid mode", 2)
+	end
+	return self._FireFromServer(Origin, Direction, Speed, BehaviorHash)
+end
+
+--[[
+    Fire a server-owned bullet with additional context for game-code routing.
+    Only valid when Mode = ServerAuthority or SharedAuthority.
+
+    Parameters:
+      Origin          — World-space fire origin.
+      Direction       — Unit direction vector.
+      Speed           — Initial bullet speed (studs/s).
+      BehaviorHash    — u16 key into the shared BehaviorRegistry.
+      UserData        — Attached to BulletContext.UserData (e.g. Player, GunInstance).
+      RaycastOverride — Per-fire RaycastParams (e.g. to exclude the firing player's character).
+]]
+function Server:FireWithContext(
+	Origin          : Vector3,
+	Direction       : Vector3,
+	Speed           : number,
+	BehaviorHash    : number,
+	UserData        : { [string]: any }?,
+	RaycastOverride : RaycastParams?
+)
+	if self._Mode ~= Enums.NetworkMode.ServerAuthority and self._Mode ~= Enums.NetworkMode.SharedAuthority then
+		error("VetraNet.Server:FireWithContext() is only available in ServerAuthority or Hybrid mode", 2)
+	end
+	return self._FireFromServer(Origin, Direction, Speed, BehaviorHash, UserData, RaycastOverride)
+end
 
 function Server:Destroy()
 	if self._Destroyed then return end

@@ -136,4 +136,48 @@ Enums.DragModel = {}
 ]=]
 Enums.TerminateReason = {}
 
+-- ─── NetworkMode ──────────────────────────────────────────────────────────────
+
+--[=[
+	@prop NetworkMode { [string]: string }
+	@within Enums
+	@tag enum
+
+	Authority mode for a VetraNet instance. Controls which side may call
+	`:Fire()` to initiate a bullet. Pass a value from this table to the
+	`Mode` field of [TypeDefinitions.NetworkConfig] when constructing a
+	[VetraNet] handle.
+
+	```lua
+	local Net = Vetra.VetraNet.new(ServerSolver, SharedRegistry, {
+	    Mode = Vetra.Enums.NetworkMode.ServerAuthority,
+	})
+	```
+
+	| Key | Value | Who may fire |
+	|-----|-------|--------------|
+	| `ClientAuthoritative` | `"ClientAuthoritative"` | Client sends fire requests; server validates and replicates. **(Default)** |
+	| `ServerAuthority` | `"ServerAuthority"` | Only server code may call `:Fire()`. Client fire requests are silently dropped. |
+	| `SharedAuthority` | `"SharedAuthority"` | Both client and server may initiate bullets. Client requests are validated as normal; server fires bypass validation. |
+
+	**Choosing a mode**
+
+	- `ClientAuthoritative` — standard player-fired weapons. The client fires,
+	  the server validates origin, rate, and behavior, then replicates to all.
+	- `ServerAuthority` — server-controlled projectiles such as NPC attacks,
+	  environmental hazards, or scripted events. No client request is ever
+	  accepted. Call `Net:Fire()` from server code only.
+	- `SharedAuthority` — mixed scenarios where both player weapons and
+	  server-spawned projectiles share the same VetraNet handle and behavior
+	  registry. Player requests go through the full validation pipeline;
+	  server calls bypass it.
+
+	:::caution Default is ClientAuthoritative
+	If `Mode` is omitted from `NetworkConfig`, VetraNet defaults to
+	`ClientAuthoritative`. Explicitly set `Mode = NetworkMode.ServerAuthority`
+	for any handle where clients should never be permitted to fire.
+	:::
+]=]
+Enums.NetworkMode = {}
+
 return Enums

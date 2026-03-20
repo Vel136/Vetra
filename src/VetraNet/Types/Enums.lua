@@ -56,9 +56,32 @@ local ValidationReason = table.freeze({
 	FireRequest        = "RejectedFireRequest",
 })
 
+-- ── NetworkMode ───────────────────────────────────────────────────────────────
+-- Governs which side is permitted to initiate a fire request.
+--
+--   ClientAuthoritative — default. Clients call :Fire() locally; the server
+--                         validates and replicates. Suitable for player-driven
+--                         projectiles (guns, abilities).
+--
+--   ServerAuthority     — server-only fire. Only server code may call :Fire()
+--                         on the ServerNetwork handle. Client fire requests are
+--                         silently dropped. Suitable for NPC projectiles,
+--                         scripted events, or any bullet the server must own.
+--
+--   SharedAuthority     — both sides may fire. Clients send validated fire
+--                         requests as normal, and server code may also call
+--                         :Fire() directly. Useful when player bullets and
+--                         server-owned bullets coexist in the same handle.
+local NetworkMode = table.freeze({
+	ClientAuthoritative = "ClientAuthoritative",
+	ServerAuthority     = "ServerAuthority",
+	SharedAuthority     = "SharedAuthority",
+})
+
 -- ─── Module Return ────────────────────────────────────────────────────────────
 
 return table.freeze({
 	SessionStatus    = SessionStatus,
 	ValidationReason = ValidationReason,
+	NetworkMode      = NetworkMode,
 })
