@@ -4,8 +4,8 @@ sourceDir = ["docs"]
 [docusaurus]
 title = "Vetra"
 tagline = "Every shot lands where physics says it should."
-url = "https://vetra-docs.netlify.app"
-baseUrl = "/"
+url = "https://vel136.github.io"
+baseUrl = "/Vetra/"
 
 [home]
 enabled = true
