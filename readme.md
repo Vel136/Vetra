@@ -5,7 +5,7 @@
 [![Version](https://img.shields.io/badge/version-5.4.4-blue)](https://github.com/Vel136/Vetra/releases)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/XMYMRKcd3g)
-[![Installation][https://create.roblox.com/store/asset/75033515621317]
+
 
 </div>
 
@@ -36,8 +36,11 @@ Vetra is an analytic-trajectory projectile simulation module for Roblox. Where m
 
 ## Installation
 
-Drop the `Vetra` folder into `ReplicatedStorage` and require it from your weapon scripts.
+Get Vetra from the Roblox Creator Store:
 
+**[→ Install Vetra on Roblox](https://create.roblox.com/store/asset/75033515621317/Vetra)**
+
+Then drop the `Vetra` folder into `ReplicatedStorage` and require it from your weapon scripts.
 ```lua
 local Vetra = require(game.ReplicatedStorage.Vetra)
 ```
