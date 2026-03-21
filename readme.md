@@ -5,6 +5,7 @@
 [![Version](https://img.shields.io/badge/version-5.4.4-blue)](https://github.com/Vel136/Vetra/releases)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/XMYMRKcd3g)
+[![Installation][https://create.roblox.com/store/asset/75033515621317]
 
 </div>
 
