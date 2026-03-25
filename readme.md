@@ -30,6 +30,7 @@ Vetra is an analytic-trajectory projectile simulation module for Roblox. Where m
 - **Supersonic / subsonic profiles** — different drag, restitution, and scatter per speed regime
 - **LOD and spatial partitioning** — HOT / WARM / COLD tiers, interest-point driven
 - **Parallel physics** — distributes raycasts across Roblox Actors; ~flat 4–10ms up to 20,000 bullets
+- **Six DOF** — full aerodynamic attitude simulation: lift from angle of attack, pitching moment for static stability, pitch/yaw and roll damping, AoA-dependent drag, and gyroscopic precession; Mach-indexed coefficient tables (CLα, Cmα, Cmq, Clp) for high-fidelity ballistic modelling
 - **VetraNet** — full networking middleware: serialization, rate limiting, origin validation, trajectory reconstruction, cosmetic replication, drift correction — all over one `RemoteEvent`
 - **Typed builder** — `BehaviorBuilder` with build-time validation and frozen output
 - **MIT licensed**
