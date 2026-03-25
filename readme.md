@@ -84,19 +84,19 @@ Parallel solver frame times measured on a live Roblox server, 120-frame samples:
 | 5,000 | 174.7 ms | 5.5 ms | 32× |
 | 20,000 | — | 10.3 ms | — |
 
-The parallel solver's frame time is essentially flat from 25 to 2,000 bullets. See the [Benchmarks](https://vetra-docs.netlify.app/docs/guides/benchmarks) page for full data across all four profiles.
+The parallel solver's frame time is essentially flat from 25 to 2,000 bullets. See the [Benchmarks](https://vel136.github.io/Vetra/docs/guides/benchmarks) page for full data across all four profiles.
 
 ## Documentation
 
-Full documentation at **[https://vel136.github.io/Vetra/]**
+Full documentation at **[vel136.github.io/Vetra](https://vel136.github.io/Vetra/)**
 
-- [Getting Started](https://vetra-docs.netlify.app/docs/intro)
-- [Why Your Bullets Miss](https://vetra-docs.netlify.app/docs/guides/why-bullets-miss)
-- [Making Bullets Feel Real](https://vetra-docs.netlify.app/docs/guides/physics-features)
-- [Networking and Trust](https://vetra-docs.netlify.app/docs/guides/networking)
-- [Performance](https://vetra-docs.netlify.app/docs/guides/performance)
-- [Benchmarks](https://vetra-docs.netlify.app/docs/guides/benchmarks)
-- [FAQ](https://vetra-docs.netlify.app/docs/faq)
+- [Getting Started](https://vel136.github.io/Vetra/docs/intro)
+- [Why Your Bullets Miss](https://vel136.github.io/Vetra/docs/guides/why-bullets-miss)
+- [Making Bullets Feel Real](https://vel136.github.io/Vetra/docs/guides/physics-features)
+- [Networking and Trust](https://vel136.github.io/Vetra/docs/guides/networking)
+- [Performance](https://vel136.github.io/Vetra/docs/guides/performance)
+- [Benchmarks](https://vel136.github.io/Vetra/docs/guides/benchmarks)
+- [FAQ](https://vel136.github.io/Vetra/docs/faq)
 
 ## Community
 
