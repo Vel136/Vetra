@@ -49,6 +49,7 @@ local Behavior = BehaviorBuilder.new()
 | `:SpeedProfiles()` | Thresholds, `:Supersonic()` → profile, `:Subsonic()` → profile |
 | `:Trajectory()` | Provider |
 | `:LOD()` | Distance |
+| `:SixDOF()` | Enabled, LiftCoefficientSlope, PitchingMomentSlope, PitchDampingCoeff, RollDampingCoeff, AoADragFactor, ReferenceArea, ReferenceLength, AirDensity, MomentOfInertia, SpinMOI, MaxAngularSpeed, InitialOrientation, InitialAngularVelocity, CLAlphaMachTable, CmAlphaMachTable, CmqMachTable, ClpMachTable |
 | `:BatchTravel()` | Root-level boolean toggle — no sub-builder |
 | `:Clone()` | Returns an independent copy of this builder |
 | `:Impose(other)` | Copies only the explicitly-set fields from `other` onto self |
@@ -66,6 +67,95 @@ warning immediately at the call site:
 ```
 
 See [Enums.DragModel] for the full value table and descriptions.
+:::
+
+:::tip 6DOF quick-start
+Enable full six-degrees-of-freedom aerodynamics to give bullets real
+pitch, yaw, and roll dynamics driven by lift, pitching moment, damping,
+and gyroscopic precession.
+
+**Minimum required fields when `:SixDOF():Enabled(true)`:**
+
+| Field | Why required |
+|-------|-------------|
+| `BulletMass` (via `:Physics()`) | Converts aerodynamic force vectors into acceleration — F = ma |
+| `ReferenceArea` | Cross-sectional area in studs² — scales all aero forces |
+| `ReferenceLength` | Caliber/diameter in studs — scales pitching moment and damping |
+| `MomentOfInertia` | Transverse MOI — governs pitch/yaw angular response |
+
+Minimal example:
+
+```lua
+local Behavior = BehaviorBuilder.new()
+    :Physics()
+        :BulletMass(0.01)
+        :MinSpeed(10)
+    :Done()
+    :Drag()
+        :Coefficient(0.003)
+    :Done()
+    :SixDOF()
+        :Enabled(true)
+        :ReferenceArea(0.008)
+        :ReferenceLength(0.05)
+        :MomentOfInertia(0.001)
+        :LiftCoefficientSlope(2.0)
+        :PitchingMomentSlope(-0.5)
+        :PitchDampingCoeff(0.02)
+    :Done()
+    :Build()
+```
+
+All other 6DOF fields default to safe values (`0` or `false`). Start
+here and add `AoADragFactor`, `RollDampingCoeff`, and spin fields as needed.
+:::
+
+:::tip 6DOF + gyroscopic precession
+Gyroscopic precession — the bullet nose tracing a slow cone around the
+velocity vector — requires both a non-zero `SpinMOI` and a non-zero spin.
+Seed spin via `:Magnus():SpinVector()` or `:SixDOF():InitialAngularVelocity()`.
+
+```lua
+:Magnus()
+    :SpinVector(Vector3.new(0, 0, 500))   -- 500 rad/s right-hand spin
+:Done()
+:SixDOF()
+    :Enabled(true)
+    :SpinMOI(0.0003)
+    -- ... other required fields
+:Done()
+```
+
+The solver computes precession as `ω_prec = spinAxis × aeroTorque / H`
+where `H = SpinMOI · spinRate`. A larger `SpinMOI` → slower precession;
+a smaller one → faster cone.
+:::
+
+:::tip 6DOF — tuning guide
+**Static stability** — set `PitchingMomentSlope` negative (e.g. `-0.5`).
+This applies a restoring torque whenever the nose deviates from velocity,
+keeping the bullet pointing forward. More negative = stiffer.
+
+**Damping** — set `PitchDampingCoeff` (e.g. `0.02`) to kill wobble.
+Without damping, aerodynamic torques cause permanent coning. Start at
+`0.01`–`0.05` and increase until the bullet settles within a few frames.
+
+**Lift** — `LiftCoefficientSlope` (dCL/dα) scales the Magnus-like lift
+force proportional to AoA. Typical range `1.0`–`4.0`. Set to `0` to
+disable lift entirely and model drag-only nose attitude.
+
+**AoA-dependent drag** — `AoADragFactor` multiplies drag by `1 + k·sin²(AoA)`.
+`3.0` triples drag when broadside. Useful for tumbling or unstable projectiles.
+
+**Roll decay** — `RollDampingCoeff` slowly kills axial spin. Without it,
+a bullet with `SpinVector` set maintains its spin forever.
+
+**Reference values for a typical rifle bullet:**
+- `ReferenceArea` ≈ `0.005`–`0.02` studs²
+- `ReferenceLength` ≈ `0.03`–`0.1` studs
+- `MomentOfInertia` ≈ `0.0005`–`0.005`
+- `SpinMOI` ≈ `0.0001`–`0.001`
+- `BulletMass` ≈ `0.004`–`0.015`
 :::
 
 Builders are **reusable** — call `:Build()` multiple times to produce
@@ -133,6 +223,7 @@ local Behavior = BehaviorBuilder.new()
 | `:SpeedProfiles()` | Thresholds, `:Supersonic()` → profile, `:Subsonic()` → profile |
 | `:Trajectory()` | Provider |
 | `:LOD()` | Distance |
+| `:SixDOF()` | Enabled, LiftCoefficientSlope, PitchingMomentSlope, PitchDampingCoeff, RollDampingCoeff, AoADragFactor, ReferenceArea, ReferenceLength, AirDensity, MomentOfInertia, SpinMOI, MaxAngularSpeed, InitialOrientation, InitialAngularVelocity, CLAlphaMachTable, CmAlphaMachTable, CmqMachTable, ClpMachTable |
 | `:BatchTravel()` | Root-level boolean toggle — no sub-builder |
 | `:Clone()` | Returns an independent copy of this builder |
 | `:Impose(other)` | Copies only the explicitly-set fields from `other` onto self |
@@ -150,6 +241,95 @@ warning immediately at the call site:
 ```
 
 See [Enums.DragModel] for the full value table and descriptions.
+:::
+
+:::tip 6DOF quick-start
+Enable full six-degrees-of-freedom aerodynamics to give bullets real
+pitch, yaw, and roll dynamics driven by lift, pitching moment, damping,
+and gyroscopic precession.
+
+**Minimum required fields when `:SixDOF():Enabled(true)`:**
+
+| Field | Why required |
+|-------|-------------|
+| `BulletMass` (via `:Physics()`) | Converts aerodynamic force vectors into acceleration — F = ma |
+| `ReferenceArea` | Cross-sectional area in studs² — scales all aero forces |
+| `ReferenceLength` | Caliber/diameter in studs — scales pitching moment and damping |
+| `MomentOfInertia` | Transverse MOI — governs pitch/yaw angular response |
+
+Minimal example:
+
+```lua
+local Behavior = BehaviorBuilder.new()
+    :Physics()
+        :BulletMass(0.01)
+        :MinSpeed(10)
+    :Done()
+    :Drag()
+        :Coefficient(0.003)
+    :Done()
+    :SixDOF()
+        :Enabled(true)
+        :ReferenceArea(0.008)
+        :ReferenceLength(0.05)
+        :MomentOfInertia(0.001)
+        :LiftCoefficientSlope(2.0)
+        :PitchingMomentSlope(-0.5)
+        :PitchDampingCoeff(0.02)
+    :Done()
+    :Build()
+```
+
+All other 6DOF fields default to safe values (`0` or `false`). Start
+here and add `AoADragFactor`, `RollDampingCoeff`, and spin fields as needed.
+:::
+
+:::tip 6DOF + gyroscopic precession
+Gyroscopic precession — the bullet nose tracing a slow cone around the
+velocity vector — requires both a non-zero `SpinMOI` and a non-zero spin.
+Seed spin via `:Magnus():SpinVector()` or `:SixDOF():InitialAngularVelocity()`.
+
+```lua
+:Magnus()
+    :SpinVector(Vector3.new(0, 0, 500))   -- 500 rad/s right-hand spin
+:Done()
+:SixDOF()
+    :Enabled(true)
+    :SpinMOI(0.0003)
+    -- ... other required fields
+:Done()
+```
+
+The solver computes precession as `ω_prec = spinAxis × aeroTorque / H`
+where `H = SpinMOI · spinRate`. A larger `SpinMOI` → slower precession;
+a smaller one → faster cone.
+:::
+
+:::tip 6DOF — tuning guide
+**Static stability** — set `PitchingMomentSlope` negative (e.g. `-0.5`).
+This applies a restoring torque whenever the nose deviates from velocity,
+keeping the bullet pointing forward. More negative = stiffer.
+
+**Damping** — set `PitchDampingCoeff` (e.g. `0.02`) to kill wobble.
+Without damping, aerodynamic torques cause permanent coning. Start at
+`0.01`–`0.05` and increase until the bullet settles within a few frames.
+
+**Lift** — `LiftCoefficientSlope` (dCL/dα) scales the Magnus-like lift
+force proportional to AoA. Typical range `1.0`–`4.0`. Set to `0` to
+disable lift entirely and model drag-only nose attitude.
+
+**AoA-dependent drag** — `AoADragFactor` multiplies drag by `1 + k·sin²(AoA)`.
+`3.0` triples drag when broadside. Useful for tumbling or unstable projectiles.
+
+**Roll decay** — `RollDampingCoeff` slowly kills axial spin. Without it,
+a bullet with `SpinVector` set maintains its spin forever.
+
+**Reference values for a typical rifle bullet:**
+- `ReferenceArea` ≈ `0.005`–`0.02` studs²
+- `ReferenceLength` ≈ `0.03`–`0.1` studs
+- `MomentOfInertia` ≈ `0.0005`–`0.005`
+- `SpinMOI` ≈ `0.0001`–`0.001`
+- `BulletMass` ≈ `0.004`–`0.015`
 :::
 
 Builders are **reusable** — call `:Build()` multiple times to produce
@@ -171,12 +351,12 @@ All validation is deferred to `:Build()` rather than per-setter. This means
 the builder never throws mid-chain — all errors are collected and reported
 together when `:Build()` is called. `:Build()` returns `nil` if any error
 is found.
-:::"><link data-rh="true" rel="canonical" href="https://vel136.github.io/Vetra/api/BehaviorBuilder"><link data-rh="true" rel="alternate" href="https://vel136.github.io/Vetra/api/BehaviorBuilder" hreflang="en"><link data-rh="true" rel="alternate" href="https://vel136.github.io/Vetra/api/BehaviorBuilder" hreflang="x-default"><link rel="stylesheet" href="/Vetra/assets/css/styles.f0e219d2.css">
-<script src="/Vetra/assets/js/runtime~main.3b6f95fa.js" defer="defer"></script>
-<script src="/Vetra/assets/js/main.ebee923f.js" defer="defer"></script>
+:::"><link data-rh="true" rel="canonical" href="https://vel136.github.io/Vetra/api/BehaviorBuilder"><link data-rh="true" rel="alternate" href="https://vel136.github.io/Vetra/api/BehaviorBuilder" hreflang="en"><link data-rh="true" rel="alternate" href="https://vel136.github.io/Vetra/api/BehaviorBuilder" hreflang="x-default"><link rel="stylesheet" href="/Vetra/assets/css/styles.5cbed574.css">
+<script src="/Vetra/assets/js/runtime~main.d05ceb0a.js" defer="defer"></script>
+<script src="/Vetra/assets/js/main.5300fe48.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
-<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,t("light"))}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/Vetra/"><b class="navbar__title text--truncate">Vetra</b></a><a class="navbar__item navbar__link" href="/Vetra/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/Vetra/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Vel136/Vetra" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/Vetra/api/Vetra">Core</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/Vetra/api/BehaviorBuilder">Configuration</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/Vetra/api/BehaviorBuilder">​Behavior​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/PhysicsBuilder">​Physics​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/HomingBuilder">​Homing​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/PierceBuilder">​Pierce​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/BounceBuilder">​Bounce​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/HighFidelityBuilder">​High​Fidelity​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/CornerTrapBuilder">​Corner​Trap​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/CosmeticBuilder">​Cosmetic​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/DebugBuilder">​Debug​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/DragBuilder">​Drag​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/WindBuilder">​Wind​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/MagnusBuilder">​Magnus​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/GyroDriftBuilder">​Gyro​Drift​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/TumbleBuilder">​Tumble​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/FragmentationBuilder">​Fragmentation​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/SpeedProfilesBuilder">​Speed​Profiles​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/SpeedProfileBuilder">​Speed​Profile​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/TrajectoryBuilder">​Trajectory​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/LODBuilder">​L​O​D​Builder</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/Vetra/api/VetraNet">Network</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/Vetra/api/TypeDefinitions">Types</a></div></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Behavior</span><span style="display:inline-block">Builder</span></h1><div class="luaClassTags_EipM"></div><div>
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,t("light"))}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/Vetra/"><b class="navbar__title text--truncate">Vetra</b></a><a class="navbar__item navbar__link" href="/Vetra/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/Vetra/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Vel136/Vetra" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/Vetra/api/Vetra">Core</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/Vetra/api/BehaviorBuilder">Configuration</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/Vetra/api/BehaviorBuilder">​Behavior​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/PhysicsBuilder">​Physics​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/HomingBuilder">​Homing​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/PierceBuilder">​Pierce​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/BounceBuilder">​Bounce​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/HighFidelityBuilder">​High​Fidelity​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/CornerTrapBuilder">​Corner​Trap​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/CosmeticBuilder">​Cosmetic​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/DebugBuilder">​Debug​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/DragBuilder">​Drag​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/WindBuilder">​Wind​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/MagnusBuilder">​Magnus​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/GyroDriftBuilder">​Gyro​Drift​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/TumbleBuilder">​Tumble​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/FragmentationBuilder">​Fragmentation​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/SpeedProfilesBuilder">​Speed​Profiles​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/SpeedProfileBuilder">​Speed​Profile​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/SixDOFBuilder">​Six​D​O​F​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/TrajectoryBuilder">​Trajectory​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/LODBuilder">​L​O​D​Builder</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/Vetra/api/VetraNet">Network</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/Vetra/api/TypeDefinitions">Types</a></div></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Behavior</span><span style="display:inline-block">Builder</span></h1><div class="luaClassTags_EipM"></div><div>
 <p>Fluent typed configuration builder for <a href="/Vetra/api/Vetra">Vetra</a>.</p>
 <p>
   Instead of constructing raw behavior tables by hand, chain namespace
@@ -278,6 +458,10 @@ is found.
       <td>Distance</td>
     </tr>
     <tr>
+      <td><code>:SixDOF()</code></td>
+      <td>Enabled, LiftCoefficientSlope, PitchingMomentSlope, PitchDampingCoeff, RollDampingCoeff, AoADragFactor, ReferenceArea, ReferenceLength, AirDensity, MomentOfInertia, SpinMOI, MaxAngularSpeed, InitialOrientation, InitialAngularVelocity, CLAlphaMachTable, CmAlphaMachTable, CmqMachTable, ClpMachTable</td>
+    </tr>
+    <tr>
       <td><code>:BatchTravel()</code></td>
       <td>Root-level boolean toggle — no sub-builder</td>
     </tr>
@@ -322,6 +506,160 @@ is found.
           <pre class="language-lua"><code class="language-lua"><span class="token punctuation">:</span><span class="token function">Drag</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span><span class="token function">Model</span><span class="token punctuation">(</span>Vetra<span class="token punctuation">.</span>Enums<span class="token punctuation">.</span>DragModel<span class="token punctuation">.</span>G7<span class="token punctuation">)</span><span class="token punctuation">:</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 </code></pre>
           <p>See <a href="/Vetra/api/Enums#DragModel">Enums.DragModel</a> for the full value table and descriptions.</p>
+        </div>
+      </div>
+    
+  
+
+
+  
+    
+    
+      <div class="admonition admonition-success alert alert--success">
+        <div class="admonition-heading">
+          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="16" viewBox="0 0 12 16">
+                <path d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path>
+              </svg></span><span class="admonition-title">6DOF quick-start</span></h5>
+        </div>
+        <div class="admonition-content">
+          <p>
+            Enable full six-degrees-of-freedom aerodynamics to give bullets real
+            pitch, yaw, and roll dynamics driven by lift, pitching moment, damping,
+            and gyroscopic precession.
+          </p>
+          <p><strong>Minimum required fields when <code>:SixDOF():Enabled(true)</code>:</strong></p>
+          <table>
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Why required</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>BulletMass</code> (via <code>:Physics()</code>)</td>
+                <td>Converts aerodynamic force vectors into acceleration — F = ma</td>
+              </tr>
+              <tr>
+                <td><code>ReferenceArea</code></td>
+                <td>Cross-sectional area in studs² — scales all aero forces</td>
+              </tr>
+              <tr>
+                <td><code>ReferenceLength</code></td>
+                <td>Caliber/diameter in studs — scales pitching moment and damping</td>
+              </tr>
+              <tr>
+                <td><code>MomentOfInertia</code></td>
+                <td>Transverse MOI — governs pitch/yaw angular response</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>Minimal example:</p>
+          <pre class="language-lua"><code class="language-lua"><span class="token keyword">local</span> Behavior <span class="token operator">=</span> BehaviorBuilder<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">:</span><span class="token function">Physics</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">:</span><span class="token function">BulletMass</span><span class="token punctuation">(</span><span class="token number">0.01</span><span class="token punctuation">)</span>
+        <span class="token punctuation">:</span><span class="token function">MinSpeed</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span>
+    <span class="token punctuation">:</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">:</span><span class="token function">Drag</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">:</span><span class="token function">Coefficient</span><span class="token punctuation">(</span><span class="token number">0.003</span><span class="token punctuation">)</span>
+    <span class="token punctuation">:</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">:</span><span class="token function">SixDOF</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">:</span><span class="token function">Enabled</span><span class="token punctuation">(</span><span class="token keyword">true</span><span class="token punctuation">)</span>
+        <span class="token punctuation">:</span><span class="token function">ReferenceArea</span><span class="token punctuation">(</span><span class="token number">0.008</span><span class="token punctuation">)</span>
+        <span class="token punctuation">:</span><span class="token function">ReferenceLength</span><span class="token punctuation">(</span><span class="token number">0.05</span><span class="token punctuation">)</span>
+        <span class="token punctuation">:</span><span class="token function">MomentOfInertia</span><span class="token punctuation">(</span><span class="token number">0.001</span><span class="token punctuation">)</span>
+        <span class="token punctuation">:</span><span class="token function">LiftCoefficientSlope</span><span class="token punctuation">(</span><span class="token number">2.0</span><span class="token punctuation">)</span>
+        <span class="token punctuation">:</span><span class="token function">PitchingMomentSlope</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">0.5</span><span class="token punctuation">)</span>
+        <span class="token punctuation">:</span><span class="token function">PitchDampingCoeff</span><span class="token punctuation">(</span><span class="token number">0.02</span><span class="token punctuation">)</span>
+    <span class="token punctuation">:</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">:</span><span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+          <p>
+            All other 6DOF fields default to safe values (<code>0</code> or <code>false</code>). Start
+            here and add <code>AoADragFactor</code>, <code>RollDampingCoeff</code>, and spin fields as needed.
+          </p>
+        </div>
+      </div>
+    
+  
+
+
+  
+    
+    
+      <div class="admonition admonition-success alert alert--success">
+        <div class="admonition-heading">
+          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="16" viewBox="0 0 12 16">
+                <path d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path>
+              </svg></span><span class="admonition-title">6DOF + gyroscopic precession</span></h5>
+        </div>
+        <div class="admonition-content">
+          <p>
+            Gyroscopic precession — the bullet nose tracing a slow cone around the
+            velocity vector — requires both a non-zero <code>SpinMOI</code> and a non-zero spin.
+            Seed spin via <code>:Magnus():SpinVector()</code> or <code>:SixDOF():InitialAngularVelocity()</code>.
+          </p>
+          <pre class="language-lua"><code class="language-lua"><span class="token punctuation">:</span><span class="token function">Magnus</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">:</span><span class="token function">SpinVector</span><span class="token punctuation">(</span>Vector3<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">500</span><span class="token punctuation">)</span><span class="token punctuation">)</span>   <span class="token comment">-- 500 rad/s right-hand spin</span>
+<span class="token punctuation">:</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">:</span><span class="token function">SixDOF</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">:</span><span class="token function">Enabled</span><span class="token punctuation">(</span><span class="token keyword">true</span><span class="token punctuation">)</span>
+    <span class="token punctuation">:</span><span class="token function">SpinMOI</span><span class="token punctuation">(</span><span class="token number">0.0003</span><span class="token punctuation">)</span>
+    <span class="token comment">-- ... other required fields</span>
+<span class="token punctuation">:</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+          <p>
+            The solver computes precession as <code>ω_prec = spinAxis × aeroTorque / H</code>
+            where <code>H = SpinMOI · spinRate</code>. A larger <code>SpinMOI</code> → slower precession;
+            a smaller one → faster cone.
+          </p>
+        </div>
+      </div>
+    
+  
+
+
+  
+    
+    
+      <div class="admonition admonition-success alert alert--success">
+        <div class="admonition-heading">
+          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="16" viewBox="0 0 12 16">
+                <path d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path>
+              </svg></span><span class="admonition-title">6DOF — tuning guide</span></h5>
+        </div>
+        <div class="admonition-content">
+          <p>
+            <strong>Static stability</strong> — set <code>PitchingMomentSlope</code> negative (e.g. <code>-0.5</code>).
+            This applies a restoring torque whenever the nose deviates from velocity,
+            keeping the bullet pointing forward. More negative = stiffer.
+          </p>
+          <p>
+            <strong>Damping</strong> — set <code>PitchDampingCoeff</code> (e.g. <code>0.02</code>) to kill wobble.
+            Without damping, aerodynamic torques cause permanent coning. Start at
+            <code>0.01</code>–<code>0.05</code> and increase until the bullet settles within a few frames.
+          </p>
+          <p>
+            <strong>Lift</strong> — <code>LiftCoefficientSlope</code> (dCL/dα) scales the Magnus-like lift
+            force proportional to AoA. Typical range <code>1.0</code>–<code>4.0</code>. Set to <code>0</code> to
+            disable lift entirely and model drag-only nose attitude.
+          </p>
+          <p>
+            <strong>AoA-dependent drag</strong> — <code>AoADragFactor</code> multiplies drag by <code>1 + k·sin²(AoA)</code>.
+            <code>3.0</code> triples drag when broadside. Useful for tumbling or unstable projectiles.
+          </p>
+          <p>
+            <strong>Roll decay</strong> — <code>RollDampingCoeff</code> slowly kills axial spin. Without it,
+            a bullet with <code>SpinVector</code> set maintains its spin forever.
+          </p>
+          <p><strong>Reference values for a typical rifle bullet:</strong></p>
+          <ul>
+            <li><code>ReferenceArea</code> ≈ <code>0.005</code>–<code>0.02</code> studs²</li>
+            <li><code>ReferenceLength</code> ≈ <code>0.03</code>–<code>0.1</code> studs</li>
+            <li><code>MomentOfInertia</code> ≈ <code>0.0005</code>–<code>0.005</code></li>
+            <li><code>SpinMOI</code> ≈ <code>0.0001</code>–<code>0.001</code></li>
+            <li><code>BulletMass</code> ≈ <code>0.004</code>–<code>0.015</code></li>
+          </ul>
         </div>
       </div>
     
@@ -377,14 +715,14 @@ is found.
     
   
 
-</div></header><h2 class="anchor anchorWithStickyNavbar_LWe7" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="new"><code style="text-decoration:none">new</code><a href="#new" class="hash-link" aria-label="Direct link to new" title="Direct link to new">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L103"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->.</code><code class="green_DgR4">new</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
+</div></header><h2 class="anchor anchorWithStickyNavbar_LWe7" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="new"><code style="text-decoration:none">new</code><a href="#new" class="hash-link" aria-label="Direct link to new" title="Direct link to new">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L193"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->.</code><code class="green_DgR4">new</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
 <p>Creates a new builder pre-populated with all default values.</p>
 <p>
   Each call allocates a fresh <code>RaycastParams</code> and reads <code>workspace.Gravity</code>
   at construction time — builders never share mutable references with
   each other.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Inherit"><code style="text-decoration:none">Inherit</code><a href="#Inherit" class="hash-link" aria-label="Direct link to Inherit" title="Direct link to Inherit">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L473"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->.</code><code class="green_DgR4">Inherit</code><code>(</code><div class="inset_uKQm"><div><code>frozen<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/TypeDefinitions#VetraBehavior">VetraBehavior</a></code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Inherit"><code style="text-decoration:none">Inherit</code><a href="#Inherit" class="hash-link" aria-label="Direct link to Inherit" title="Direct link to Inherit">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L587"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->.</code><code class="green_DgR4">Inherit</code><code>(</code><div class="inset_uKQm"><div><code>frozen<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/TypeDefinitions#VetraBehavior">VetraBehavior</a></code><span class="inlineDescription_G7Er">-- <span>
 <p>A frozen behavior table produced by <code>:Build()</code>.</p>
 </span></span></div></div><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code><span class="inlineDescription_G7Er">-- <span>
 <p>Mutable builder pre-populated from the frozen table.</p>
@@ -415,7 +753,7 @@ is found.
   Note that <code>BehaviorBuilder.Inherit</code> is a <strong>static constructor</strong>, not an
   instance method — call it on the class, not on a builder instance.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Sniper"><code style="text-decoration:none">Sniper</code><a href="#Sniper" class="hash-link" aria-label="Direct link to Sniper" title="Direct link to Sniper">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L544"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->.</code><code class="green_DgR4">Sniper</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Sniper"><code style="text-decoration:none">Sniper</code><a href="#Sniper" class="hash-link" aria-label="Direct link to Sniper" title="Direct link to Sniper">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L658"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->.</code><code class="green_DgR4">Sniper</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
 <p>
   Returns a pre-configured builder for a high-velocity, long-range,
   pierce-capable, high-fidelity projectile. No bouncing.
@@ -426,7 +764,7 @@ is found.
   HighFidelitySegmentSize 0.2, HighFidelityFrameBudget 2.
 </p>
 <p>Suitable for rifles and anti-materiel weapons.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Grenade"><code style="text-decoration:none">Grenade</code><a href="#Grenade" class="hash-link" aria-label="Direct link to Grenade" title="Direct link to Grenade">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L559"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->.</code><code class="green_DgR4">Grenade</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Grenade"><code style="text-decoration:none">Grenade</code><a href="#Grenade" class="hash-link" aria-label="Direct link to Grenade" title="Direct link to Grenade">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L673"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->.</code><code class="green_DgR4">Grenade</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
 <p>
   Returns a pre-configured builder for a low-speed, gravity-affected,
   bouncy projectile with corner-trap detection tuned for tight-space ricochets.
@@ -438,7 +776,7 @@ is found.
   HighFidelitySegmentSize 0.4.
 </p>
 <p>Suitable for thrown grenades or bouncing explosives.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Pistol"><code style="text-decoration:none">Pistol</code><a href="#Pistol" class="hash-link" aria-label="Direct link to Pistol" title="Direct link to Pistol">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L572"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->.</code><code class="green_DgR4">Pistol</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Pistol"><code style="text-decoration:none">Pistol</code><a href="#Pistol" class="hash-link" aria-label="Direct link to Pistol" title="Direct link to Pistol">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L686"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->.</code><code class="green_DgR4">Pistol</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
 <p>
   Returns a pre-configured builder for a standard short-to-mid range
   projectile with single pierce and no bounce.
@@ -448,20 +786,20 @@ is found.
   PierceSpeedThreshold 80, PenetrationSpeedRetention 0.75.
 </p>
 <p>Suitable for handguns and SMGs.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Physics"><code style="text-decoration:none">Physics</code><a href="#Physics" class="hash-link" aria-label="Direct link to Physics" title="Direct link to Physics">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L116"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Physics</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/PhysicsBuilder">PhysicsBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Physics"><code style="text-decoration:none">Physics</code><a href="#Physics" class="hash-link" aria-label="Direct link to Physics" title="Direct link to Physics">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L206"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Physics</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/PhysicsBuilder">PhysicsBuilder</a></code></div><div>
 <p>Opens the Physics configuration group.</p>
 <p>
   Available setters: <code>:MaxDistance()</code>, <code>:MaxSpeed()</code>, <code>:MinSpeed()</code>,
   <code>:Gravity()</code>, <code>:Acceleration()</code>, <code>:RaycastParams()</code>, <code>:CastFunction()</code>,
   <code>:BulletMass()</code>. Call <code>:Done()</code> to return to the root builder.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Homing"><code style="text-decoration:none">Homing</code><a href="#Homing" class="hash-link" aria-label="Direct link to Homing" title="Direct link to Homing">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L126"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Homing</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/HomingBuilder">HomingBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Homing"><code style="text-decoration:none">Homing</code><a href="#Homing" class="hash-link" aria-label="Direct link to Homing" title="Direct link to Homing">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L216"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Homing</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/HomingBuilder">HomingBuilder</a></code></div><div>
 <p>Opens the Homing configuration group.</p>
 <p>
   Available setters: <code>:Filter()</code>, <code>:PositionProvider()</code>, <code>:Strength()</code>,
   <code>:MaxDuration()</code>, <code>:AcquisitionRadius()</code>. Call <code>:Done()</code> to return.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Pierce"><code style="text-decoration:none">Pierce</code><a href="#Pierce" class="hash-link" aria-label="Direct link to Pierce" title="Direct link to Pierce">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L141"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Pierce</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/PierceBuilder">PierceBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Pierce"><code style="text-decoration:none">Pierce</code><a href="#Pierce" class="hash-link" aria-label="Direct link to Pierce" title="Direct link to Pierce">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L231"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Pierce</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/PierceBuilder">PierceBuilder</a></code></div><div>
 <p>Opens the Pierce configuration group.</p>
 <p>
   Available setters: <code>:Filter()</code>, <code>:Max()</code>, <code>:SpeedThreshold()</code>,
@@ -485,7 +823,7 @@ is found.
     
   
 
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Bounce"><code style="text-decoration:none">Bounce</code><a href="#Bounce" class="hash-link" aria-label="Direct link to Bounce" title="Direct link to Bounce">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L157"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Bounce</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BounceBuilder">BounceBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Bounce"><code style="text-decoration:none">Bounce</code><a href="#Bounce" class="hash-link" aria-label="Direct link to Bounce" title="Direct link to Bounce">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L247"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Bounce</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BounceBuilder">BounceBuilder</a></code></div><div>
 <p>Opens the Bounce configuration group.</p>
 <p>
   Available setters: <code>:Filter()</code>, <code>:Max()</code>, <code>:SpeedThreshold()</code>,
@@ -512,20 +850,20 @@ is found.
     
   
 
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="HighFidelity"><code style="text-decoration:none">HighFidelity</code><a href="#HighFidelity" class="hash-link" aria-label="Direct link to HighFidelity" title="Direct link to HighFidelity">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L167"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">HighFidelity</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/HighFidelityBuilder">HighFidelityBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="HighFidelity"><code style="text-decoration:none">HighFidelity</code><a href="#HighFidelity" class="hash-link" aria-label="Direct link to HighFidelity" title="Direct link to HighFidelity">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L257"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">HighFidelity</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/HighFidelityBuilder">HighFidelityBuilder</a></code></div><div>
 <p>Opens the HighFidelity configuration group.</p>
 <p>
   Available setters: <code>:SegmentSize()</code>, <code>:FrameBudget()</code>, <code>:AdaptiveScale()</code>,
   <code>:MinSegmentSize()</code>, <code>:MaxBouncesPerFrame()</code>. Call <code>:Done()</code> to return.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="CornerTrap"><code style="text-decoration:none">CornerTrap</code><a href="#CornerTrap" class="hash-link" aria-label="Direct link to CornerTrap" title="Direct link to CornerTrap">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L178"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">CornerTrap</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/CornerTrapBuilder">CornerTrapBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="CornerTrap"><code style="text-decoration:none">CornerTrap</code><a href="#CornerTrap" class="hash-link" aria-label="Direct link to CornerTrap" title="Direct link to CornerTrap">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L268"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">CornerTrap</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/CornerTrapBuilder">CornerTrapBuilder</a></code></div><div>
 <p>Opens the CornerTrap configuration group.</p>
 <p>
   Available setters: <code>:TimeThreshold()</code>, <code>:PositionHistorySize()</code>,
   <code>:DisplacementThreshold()</code>, <code>:EMAAlpha()</code>, <code>:EMAThreshold()</code>,
   <code>:MinProgressPerBounce()</code>. Call <code>:Done()</code> to return.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Cosmetic"><code style="text-decoration:none">Cosmetic</code><a href="#Cosmetic" class="hash-link" aria-label="Direct link to Cosmetic" title="Direct link to Cosmetic">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L193"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Cosmetic</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/CosmeticBuilder">CosmeticBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Cosmetic"><code style="text-decoration:none">Cosmetic</code><a href="#Cosmetic" class="hash-link" aria-label="Direct link to Cosmetic" title="Direct link to Cosmetic">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L283"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Cosmetic</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/CosmeticBuilder">CosmeticBuilder</a></code></div><div>
 <p>Opens the Cosmetic configuration group.</p>
 <p>
   Available setters: <code>:Template()</code>, <code>:Container()</code>, <code>:Provider()</code>.
@@ -551,10 +889,10 @@ is found.
     
   
 
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Debug"><code style="text-decoration:none">Debug</code><a href="#Debug" class="hash-link" aria-label="Direct link to Debug" title="Direct link to Debug">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L202"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Debug</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/DebugBuilder">DebugBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Debug"><code style="text-decoration:none">Debug</code><a href="#Debug" class="hash-link" aria-label="Direct link to Debug" title="Direct link to Debug">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L292"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Debug</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/DebugBuilder">DebugBuilder</a></code></div><div>
 <p>Opens the Debug configuration group.</p>
 <p>Available setters: <code>:Visualize()</code>. Call <code>:Done()</code> to return.</p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Drag"><code style="text-decoration:none">Drag</code><a href="#Drag" class="hash-link" aria-label="Direct link to Drag" title="Direct link to Drag">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L217"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Drag</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/DragBuilder">DragBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Drag"><code style="text-decoration:none">Drag</code><a href="#Drag" class="hash-link" aria-label="Direct link to Drag" title="Direct link to Drag">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L307"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Drag</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/DragBuilder">DragBuilder</a></code></div><div>
 <p>Opens the Drag configuration group.</p>
 <p>
   Available setters: <code>:Coefficient()</code>, <code>:Model()</code>, <code>:SegmentInterval()</code>,
@@ -580,14 +918,14 @@ is found.
     
   
 
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Wind"><code style="text-decoration:none">Wind</code><a href="#Wind" class="hash-link" aria-label="Direct link to Wind" title="Direct link to Wind">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L229"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Wind</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/WindBuilder">WindBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Wind"><code style="text-decoration:none">Wind</code><a href="#Wind" class="hash-link" aria-label="Direct link to Wind" title="Direct link to Wind">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L319"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Wind</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/WindBuilder">WindBuilder</a></code></div><div>
 <p>Opens the Wind configuration group.</p>
 <p>Available setters: <code>:Response()</code>. Call <code>:Done()</code> to return.</p>
 <p>
   <code>Response</code> is a multiplier on the solver's global wind vector set via
   <code>Vetra:SetWind</code>. <code>1.0</code> = fully affected, <code>0.0</code> = immune.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Magnus"><code style="text-decoration:none">Magnus</code><a href="#Magnus" class="hash-link" aria-label="Direct link to Magnus" title="Direct link to Magnus">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L244"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Magnus</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/MagnusBuilder">MagnusBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Magnus"><code style="text-decoration:none">Magnus</code><a href="#Magnus" class="hash-link" aria-label="Direct link to Magnus" title="Direct link to Magnus">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L334"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Magnus</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/MagnusBuilder">MagnusBuilder</a></code></div><div>
 <p>Opens the Magnus configuration group.</p>
 <p>
   Available setters: <code>:SpinVector()</code>, <code>:Coefficient()</code>, <code>:SpinDecayRate()</code>.
@@ -613,14 +951,14 @@ is found.
     
   
 
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="GyroDrift"><code style="text-decoration:none">GyroDrift</code><a href="#GyroDrift" class="hash-link" aria-label="Direct link to GyroDrift" title="Direct link to GyroDrift">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L256"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">GyroDrift</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/GyroDriftBuilder">GyroDriftBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="GyroDrift"><code style="text-decoration:none">GyroDrift</code><a href="#GyroDrift" class="hash-link" aria-label="Direct link to GyroDrift" title="Direct link to GyroDrift">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L346"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">GyroDrift</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/GyroDriftBuilder">GyroDriftBuilder</a></code></div><div>
 <p>Opens the GyroDrift configuration group.</p>
 <p>Available setters: <code>:Rate()</code>, <code>:Axis()</code>. Call <code>:Done()</code> to return.</p>
 <p>
   Setting <code>:Rate()</code> enables drift. <code>Axis</code> defaults to world UP
   (right-hand rifling) when not set.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Tumble"><code style="text-decoration:none">Tumble</code><a href="#Tumble" class="hash-link" aria-label="Direct link to Tumble" title="Direct link to Tumble">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L272"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Tumble</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/TumbleBuilder">TumbleBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Tumble"><code style="text-decoration:none">Tumble</code><a href="#Tumble" class="hash-link" aria-label="Direct link to Tumble" title="Direct link to Tumble">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L362"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Tumble</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/TumbleBuilder">TumbleBuilder</a></code></div><div>
 <p>Opens the Tumble configuration group.</p>
 <p>
   Available setters: <code>:SpeedThreshold()</code>, <code>:DragMultiplier()</code>,
@@ -647,7 +985,7 @@ is found.
     
   
 
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Fragmentation"><code style="text-decoration:none">Fragmentation</code><a href="#Fragmentation" class="hash-link" aria-label="Direct link to Fragmentation" title="Direct link to Fragmentation">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L285"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Fragmentation</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/FragmentationBuilder">FragmentationBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Fragmentation"><code style="text-decoration:none">Fragmentation</code><a href="#Fragmentation" class="hash-link" aria-label="Direct link to Fragmentation" title="Direct link to Fragmentation">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L375"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Fragmentation</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/FragmentationBuilder">FragmentationBuilder</a></code></div><div>
 <p>Opens the Fragmentation configuration group.</p>
 <p>
   Available setters: <code>:OnPierce()</code>, <code>:Count()</code>, <code>:Deviation()</code>.
@@ -657,7 +995,7 @@ is found.
   Each fragment is a fully live cast. It fires <code>OnHit</code> independently and
   can bounce, pierce, and apply drag if its inherited behavior includes those.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="SpeedProfiles"><code style="text-decoration:none">SpeedProfiles</code><a href="#SpeedProfiles" class="hash-link" aria-label="Direct link to SpeedProfiles" title="Direct link to SpeedProfiles">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L310"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">SpeedProfiles</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/SpeedProfilesBuilder">SpeedProfilesBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="SpeedProfiles"><code style="text-decoration:none">SpeedProfiles</code><a href="#SpeedProfiles" class="hash-link" aria-label="Direct link to SpeedProfiles" title="Direct link to SpeedProfiles">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L400"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">SpeedProfiles</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/SpeedProfilesBuilder">SpeedProfilesBuilder</a></code></div><div>
 <p>Opens the SpeedProfiles configuration group.</p>
 <p>
   Available setters: <code>:Thresholds()</code>, <code>:Supersonic()</code>, <code>:Subsonic()</code>.
@@ -676,7 +1014,7 @@ is found.
     <span class="token punctuation">:</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 <span class="token punctuation">:</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 </code></pre>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Trajectory"><code style="text-decoration:none">Trajectory</code><a href="#Trajectory" class="hash-link" aria-label="Direct link to Trajectory" title="Direct link to Trajectory">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L323"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Trajectory</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/TrajectoryBuilder">TrajectoryBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Trajectory"><code style="text-decoration:none">Trajectory</code><a href="#Trajectory" class="hash-link" aria-label="Direct link to Trajectory" title="Direct link to Trajectory">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L413"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Trajectory</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/TrajectoryBuilder">TrajectoryBuilder</a></code></div><div>
 <p>Opens the Trajectory configuration group.</p>
 <p>Available setters: <code>:Provider()</code>. Call <code>:Done()</code> to return.</p>
 <p>
@@ -684,20 +1022,56 @@ is found.
   callback to end the override and terminate the cast.
   Signature: <code>(elapsed: number) -> Vector3?</code>
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="LOD"><code style="text-decoration:none">LOD</code><a href="#LOD" class="hash-link" aria-label="Direct link to LOD" title="Direct link to LOD">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L335"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">LOD</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/LODBuilder">LODBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="LOD"><code style="text-decoration:none">LOD</code><a href="#LOD" class="hash-link" aria-label="Direct link to LOD" title="Direct link to LOD">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L425"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">LOD</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/LODBuilder">LODBuilder</a></code></div><div>
 <p>Opens the LOD configuration group.</p>
 <p>Available setters: <code>:Distance()</code>. Call <code>:Done()</code> to return.</p>
 <p>
   Bullets beyond <code>Distance</code> studs from the LOD origin step at reduced
   frequency. <code>0</code> disables LOD for this cast.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="BatchTravel"><code style="text-decoration:none">BatchTravel</code><a href="#BatchTravel" class="hash-link" aria-label="Direct link to BatchTravel" title="Direct link to BatchTravel">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L346"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">BatchTravel</code><code>(</code><code>value<!-- -->: </code><code class="blue_P4bS">boolean</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="SixDOF"><code style="text-decoration:none">SixDOF</code><a href="#SixDOF" class="hash-link" aria-label="Direct link to SixDOF" title="Direct link to SixDOF">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L449"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">SixDOF</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/SixDOFBuilder">SixDOFBuilder</a></code></div><div>
+<p>Opens the SixDOF configuration group.</p>
+<p>
+  Available setters: <code>:Enabled()</code>, <code>:LiftCoefficientSlope()</code>,
+  <code>:PitchingMomentSlope()</code>, <code>:PitchDampingCoeff()</code>, <code>:RollDampingCoeff()</code>,
+  <code>:AoADragFactor()</code>, <code>:ReferenceArea()</code>, <code>:ReferenceLength()</code>,
+  <code>:AirDensity()</code>, <code>:MomentOfInertia()</code>, <code>:SpinMOI()</code>,
+  <code>:MaxAngularSpeed()</code>, <code>:InitialOrientation()</code>, <code>:InitialAngularVelocity()</code>.
+  Call <code>:Done()</code> to return.
+</p>
+<p>
+  All fields are ignored unless <code>:Enabled(true)</code> is set. When enabled,
+  <code>BulletMass</code>, <code>ReferenceArea</code>, <code>ReferenceLength</code>, and <code>MomentOfInertia</code>
+  are required — <code>:Build()</code> returns <code>nil</code> if any are zero.
+</p>
+
+  
+    
+    
+      <div class="admonition admonition-caution alert alert--warning">
+        <div class="admonition-heading">
+          <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                <path d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path>
+              </svg></span><span class="admonition-title">BulletMass required</span></h5>
+        </div>
+        <div class="admonition-content">
+          <p>
+            Set mass via <code>:Physics():BulletMass()</code> before enabling 6DOF.
+            The solver converts aerodynamic force vectors into accelerations using
+            <code>a = F / m</code> — zero mass causes a division by zero.
+          </p>
+        </div>
+      </div>
+    
+  
+
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="BatchTravel"><code style="text-decoration:none">BatchTravel</code><a href="#BatchTravel" class="hash-link" aria-label="Direct link to BatchTravel" title="Direct link to BatchTravel">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L460"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">BatchTravel</code><code>(</code><code>value<!-- -->: </code><code class="blue_P4bS">boolean</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
 <p>
   Enables or disables batch travel for this cast. When <code>true</code>, travel
   events go to <code>OnTravelBatch</code> instead of individual <code>OnTravel</code> fires.
 </p>
 <p>Default: <code>false</code></p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Clone"><code style="text-decoration:none">Clone</code><a href="#Clone" class="hash-link" aria-label="Direct link to Clone" title="Direct link to Clone">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L369"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Clone</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Clone"><code style="text-decoration:none">Clone</code><a href="#Clone" class="hash-link" aria-label="Direct link to Clone" title="Direct link to Clone">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L483"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Clone</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code><span class="inlineDescription_G7Er">-- <span>
 <p>Independent copy with cloned config and dirty set.</p>
 </span></span></div><div>
 <p>
@@ -715,7 +1089,7 @@ is found.
   directly on the preset builder mutates it for all future <code>:Build()</code> calls,
   which is rarely what you want.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Impose"><code style="text-decoration:none">Impose</code><a href="#Impose" class="hash-link" aria-label="Direct link to Impose" title="Direct link to Impose">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L414"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Impose</code><code>(</code><div class="inset_uKQm"><div><code>other<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Impose"><code style="text-decoration:none">Impose</code><a href="#Impose" class="hash-link" aria-label="Direct link to Impose" title="Direct link to Impose">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L528"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Impose</code><code>(</code><div class="inset_uKQm"><div><code>other<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code><span class="inlineDescription_G7Er">-- <span>
 <p>The modifier to apply. Must be a BehaviorBuilder.</p>
 </span></span></div></div><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code><span class="inlineDescription_G7Er">-- <span>
 <p>self, for chaining.</p>
@@ -768,7 +1142,7 @@ is found.
     
   
 
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Merge"><code style="text-decoration:none">Merge</code><a href="#Merge" class="hash-link" aria-label="Direct link to Merge" title="Direct link to Merge">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L443"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Merge</code><code>(</code><div class="inset_uKQm"><div><code>...<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Merge"><code style="text-decoration:none">Merge</code><a href="#Merge" class="hash-link" aria-label="Direct link to Merge" title="Direct link to Merge">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L557"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Merge</code><code>(</code><div class="inset_uKQm"><div><code>...<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code><span class="inlineDescription_G7Er">-- <span>
 <p>One or more modifier builders to apply in order.</p>
 </span></span></div></div><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code><span class="inlineDescription_G7Er">-- <span>
 <p>New independent builder with all modifiers imposed.</p>
@@ -791,7 +1165,7 @@ is found.
     <span class="token punctuation">:</span><span class="token function">Physics</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span><span class="token function">MaxDistance</span><span class="token punctuation">(</span><span class="token number">2000</span><span class="token punctuation">)</span><span class="token punctuation">:</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span>   <span class="token comment">-- applied after the merge</span>
     <span class="token punctuation">:</span><span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 </code></pre>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="When"><code style="text-decoration:none">When</code><a href="#When" class="hash-link" aria-label="Direct link to When" title="Direct link to When">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L507"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">When</code><code>(</code><div class="inset_uKQm"><div><code>condition<!-- -->: </code><code class="blue_P4bS">any</code><code>,</code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="When"><code style="text-decoration:none">When</code><a href="#When" class="hash-link" aria-label="Direct link to When" title="Direct link to When">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L621"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">When</code><code>(</code><div class="inset_uKQm"><div><code>condition<!-- -->: </code><code class="blue_P4bS">any</code><code>,</code><span class="inlineDescription_G7Er">-- <span>
 <p>Truthy value to gate the block. Falsy = skip.</p>
 </span></span></div><div><code>fn<!-- -->: </code><code class="purple_ieR2">(</code><code>builder<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code><code class="purple_ieR2">)</code><code class="purple_ieR2"> → </code><code class="purple_ieR2">(</code><code class="purple_ieR2">)</code><span class="inlineDescription_G7Er">-- <span>
 <p>Block to apply if condition is truthy.</p>
@@ -823,7 +1197,7 @@ is found.
   Both are equivalent. <code>:When()</code> is purely ergonomic — it keeps construction
   as a single coherent declaration.
 </p>
-</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Build"><code style="text-decoration:none">Build</code><a href="#Build" class="hash-link" aria-label="Direct link to Build" title="Direct link to Build">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L528"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Build</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/TypeDefinitions#VetraBehavior">VetraBehavior?</a></code><span class="inlineDescription_G7Er">-- <span>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Build"><code style="text-decoration:none">Build</code><a href="#Build" class="hash-link" aria-label="Direct link to Build" title="Direct link to Build">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L642"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Build</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/TypeDefinitions#VetraBehavior">VetraBehavior?</a></code><span class="inlineDescription_G7Er">-- <span>
 <p>Frozen behavior table, or nil if validation failed.</p>
 </span></span></div><div>
 <p>
@@ -855,7 +1229,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;static&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 103,
+                &quot;line&quot;: 193,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -871,7 +1245,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 116,
+                &quot;line&quot;: 206,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -887,7 +1261,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 126,
+                &quot;line&quot;: 216,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -903,7 +1277,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 141,
+                &quot;line&quot;: 231,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -919,7 +1293,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 157,
+                &quot;line&quot;: 247,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -935,7 +1309,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 167,
+                &quot;line&quot;: 257,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -951,7 +1325,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 178,
+                &quot;line&quot;: 268,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -967,7 +1341,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 193,
+                &quot;line&quot;: 283,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -983,7 +1357,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 202,
+                &quot;line&quot;: 292,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -999,7 +1373,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 217,
+                &quot;line&quot;: 307,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1015,7 +1389,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 229,
+                &quot;line&quot;: 319,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1031,7 +1405,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 244,
+                &quot;line&quot;: 334,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1047,7 +1421,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 256,
+                &quot;line&quot;: 346,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1063,7 +1437,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 272,
+                &quot;line&quot;: 362,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1079,7 +1453,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 285,
+                &quot;line&quot;: 375,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1095,7 +1469,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 310,
+                &quot;line&quot;: 400,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1111,7 +1485,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 323,
+                &quot;line&quot;: 413,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1127,7 +1501,23 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 335,
+                &quot;line&quot;: 425,
+                &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SixDOF&quot;,
+            &quot;desc&quot;: &quot;Opens the SixDOF configuration group.\n\nAvailable setters: `:Enabled()`, `:LiftCoefficientSlope()`,\n`:PitchingMomentSlope()`, `:PitchDampingCoeff()`, `:RollDampingCoeff()`,\n`:AoADragFactor()`, `:ReferenceArea()`, `:ReferenceLength()`,\n`:AirDensity()`, `:MomentOfInertia()`, `:SpinMOI()`,\n`:MaxAngularSpeed()`, `:InitialOrientation()`, `:InitialAngularVelocity()`.\nCall `:Done()` to return.\n\nAll fields are ignored unless `:Enabled(true)` is set. When enabled,\n`BulletMass`, `ReferenceArea`, `ReferenceLength`, and `MomentOfInertia`\nare required — `:Build()` returns `nil` if any are zero.\n\n:::caution BulletMass required\nSet mass via `:Physics():BulletMass()` before enabling 6DOF.\nThe solver converts aerodynamic force vectors into accelerations using\n`a = F / m` — zero mass causes a division by zero.\n:::&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;SixDOFBuilder&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 449,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1149,7 +1539,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 346,
+                &quot;line&quot;: 460,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1165,7 +1555,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 369,
+                &quot;line&quot;: 483,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1187,7 +1577,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 414,
+                &quot;line&quot;: 528,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1209,7 +1599,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 443,
+                &quot;line&quot;: 557,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1231,7 +1621,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;static&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 473,
+                &quot;line&quot;: 587,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1258,7 +1648,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 507,
+                &quot;line&quot;: 621,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1274,7 +1664,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;method&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 528,
+                &quot;line&quot;: 642,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1290,7 +1680,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;static&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 544,
+                &quot;line&quot;: 658,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1306,7 +1696,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;static&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 559,
+                &quot;line&quot;: 673,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         },
@@ -1322,7 +1712,7 @@ is found.
             ],
             &quot;function_type&quot;: &quot;static&quot;,
             &quot;source&quot;: {
-                &quot;line&quot;: 572,
+                &quot;line&quot;: 686,
                 &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
             }
         }
@@ -1330,11 +1720,11 @@ is found.
     &quot;properties&quot;: [],
     &quot;types&quot;: [],
     &quot;name&quot;: &quot;BehaviorBuilder&quot;,
-    &quot;desc&quot;: &quot;Fluent typed configuration builder for [Vetra].\n\nInstead of constructing raw behavior tables by hand, chain namespace\nmethods and call `:Build()` to produce a validated, frozen `VetraBehavior`.\n\n```lua\nlocal Behavior = BehaviorBuilder.new()\n    :Physics()\n        :MaxDistance(500)\n        :MinSpeed(5)\n    :Done()\n    :Bounce()\n        :Max(3)\n        :Restitution(0.7)\n        :Filter(function(context, result, vel)\n            return result.Instance:HasTag(\&quot;Bouncy\&quot;)\n        end)\n    :Done()\n    :Drag()\n        :Coefficient(0.003)\n        :Model(Vetra.Enums.DragModel.G7)\n    :Done()\n    :Build()\n```\n\n**Namespace overview:**\n\n| Method | Configures |\n|--------|------------|\n| `:Physics()` | MaxDistance, MaxSpeed, MinSpeed, Gravity, Acceleration, RaycastParams, CastFunction, BulletMass |\n| `:Homing()` | Filter, PositionProvider, Strength, MaxDuration, AcquisitionRadius |\n| `:Pierce()` | Filter, Max, SpeedThreshold, SpeedRetention, NormalBias, PenetrationDepth, PenetrationForce, ThicknessLimit |\n| `:Bounce()` | Filter, Max, SpeedThreshold, Restitution, MaterialRestitution, NormalPerturbation, ResetPierceOnBounce |\n| `:HighFidelity()` | SegmentSize, FrameBudget, AdaptiveScale, MinSegmentSize, MaxBouncesPerFrame |\n| `:CornerTrap()` | TimeThreshold, PositionHistorySize, DisplacementThreshold, EMAAlpha, EMAThreshold, MinProgressPerBounce |\n| `:Cosmetic()` | Template, Container, Provider |\n| `:Debug()` | Visualize |\n| `:Drag()` | Coefficient, Model, SegmentInterval, CustomMachTable |\n| `:Wind()` | Response |\n| `:Magnus()` | SpinVector, Coefficient, SpinDecayRate |\n| `:GyroDrift()` | Rate, Axis |\n| `:Tumble()` | SpeedThreshold, DragMultiplier, LateralStrength, OnPierce, RecoverySpeed |\n| `:Fragmentation()` | OnPierce, Count, Deviation |\n| `:SpeedProfiles()` | Thresholds, `:Supersonic()` → profile, `:Subsonic()` → profile |\n| `:Trajectory()` | Provider |\n| `:LOD()` | Distance |\n| `:BatchTravel()` | Root-level boolean toggle — no sub-builder |\n| `:Clone()` | Returns an independent copy of this builder |\n| `:Impose(other)` | Copies only the explicitly-set fields from `other` onto self |\n| `:Merge(a, b, ...)` | Clone + impose multiple modifiers, returns new builder |\n| `:When(cond, fn)` | Conditionally apply a block without breaking the chain |\n| `BehaviorBuilder.Inherit(frozen)` | Create a builder from a frozen `VetraBehavior` table |\n\n:::tip DragModel enum\nUse `Vetra.Enums.DragModel` when passing a drag model to `:Drag():Model()`.\nA wrong integer is silently incorrect; an invalid enum key is a nil-index\nwarning immediately at the call site:\n\n```lua\n:Drag():Model(Vetra.Enums.DragModel.G7):Done()\n```\n\nSee [Enums.DragModel] for the full value table and descriptions.\n:::\n\nBuilders are **reusable** — call `:Build()` multiple times to produce\nindependent frozen tables from the same configuration.\n\n```lua\n-- Produce two independent frozen tables from the same builder\nlocal RifleBehavior  = RifleBuilder:Build()\nlocal SniperBehavior = RifleBuilder:Physics():MaxDistance(2000):Done():Build()\n```\n\n:::tip Presets\nUse [BehaviorBuilder.Sniper], [BehaviorBuilder.Grenade], or [BehaviorBuilder.Pistol]\nas a starting point, then chain additional overrides before calling `:Build()`.\n:::\n\n:::caution Build-time validation\nAll validation is deferred to `:Build()` rather than per-setter. This means\nthe builder never throws mid-chain — all errors are collected and reported\ntogether when `:Build()` is called. `:Build()` returns `nil` if any error\nis found.\n:::&quot;,
+    &quot;desc&quot;: &quot;Fluent typed configuration builder for [Vetra].\n\nInstead of constructing raw behavior tables by hand, chain namespace\nmethods and call `:Build()` to produce a validated, frozen `VetraBehavior`.\n\n```lua\nlocal Behavior = BehaviorBuilder.new()\n    :Physics()\n        :MaxDistance(500)\n        :MinSpeed(5)\n    :Done()\n    :Bounce()\n        :Max(3)\n        :Restitution(0.7)\n        :Filter(function(context, result, vel)\n            return result.Instance:HasTag(\&quot;Bouncy\&quot;)\n        end)\n    :Done()\n    :Drag()\n        :Coefficient(0.003)\n        :Model(Vetra.Enums.DragModel.G7)\n    :Done()\n    :Build()\n```\n\n**Namespace overview:**\n\n| Method | Configures |\n|--------|------------|\n| `:Physics()` | MaxDistance, MaxSpeed, MinSpeed, Gravity, Acceleration, RaycastParams, CastFunction, BulletMass |\n| `:Homing()` | Filter, PositionProvider, Strength, MaxDuration, AcquisitionRadius |\n| `:Pierce()` | Filter, Max, SpeedThreshold, SpeedRetention, NormalBias, PenetrationDepth, PenetrationForce, ThicknessLimit |\n| `:Bounce()` | Filter, Max, SpeedThreshold, Restitution, MaterialRestitution, NormalPerturbation, ResetPierceOnBounce |\n| `:HighFidelity()` | SegmentSize, FrameBudget, AdaptiveScale, MinSegmentSize, MaxBouncesPerFrame |\n| `:CornerTrap()` | TimeThreshold, PositionHistorySize, DisplacementThreshold, EMAAlpha, EMAThreshold, MinProgressPerBounce |\n| `:Cosmetic()` | Template, Container, Provider |\n| `:Debug()` | Visualize |\n| `:Drag()` | Coefficient, Model, SegmentInterval, CustomMachTable |\n| `:Wind()` | Response |\n| `:Magnus()` | SpinVector, Coefficient, SpinDecayRate |\n| `:GyroDrift()` | Rate, Axis |\n| `:Tumble()` | SpeedThreshold, DragMultiplier, LateralStrength, OnPierce, RecoverySpeed |\n| `:Fragmentation()` | OnPierce, Count, Deviation |\n| `:SpeedProfiles()` | Thresholds, `:Supersonic()` → profile, `:Subsonic()` → profile |\n| `:Trajectory()` | Provider |\n| `:LOD()` | Distance |\n| `:SixDOF()` | Enabled, LiftCoefficientSlope, PitchingMomentSlope, PitchDampingCoeff, RollDampingCoeff, AoADragFactor, ReferenceArea, ReferenceLength, AirDensity, MomentOfInertia, SpinMOI, MaxAngularSpeed, InitialOrientation, InitialAngularVelocity, CLAlphaMachTable, CmAlphaMachTable, CmqMachTable, ClpMachTable |\n| `:BatchTravel()` | Root-level boolean toggle — no sub-builder |\n| `:Clone()` | Returns an independent copy of this builder |\n| `:Impose(other)` | Copies only the explicitly-set fields from `other` onto self |\n| `:Merge(a, b, ...)` | Clone + impose multiple modifiers, returns new builder |\n| `:When(cond, fn)` | Conditionally apply a block without breaking the chain |\n| `BehaviorBuilder.Inherit(frozen)` | Create a builder from a frozen `VetraBehavior` table |\n\n:::tip DragModel enum\nUse `Vetra.Enums.DragModel` when passing a drag model to `:Drag():Model()`.\nA wrong integer is silently incorrect; an invalid enum key is a nil-index\nwarning immediately at the call site:\n\n```lua\n:Drag():Model(Vetra.Enums.DragModel.G7):Done()\n```\n\nSee [Enums.DragModel] for the full value table and descriptions.\n:::\n\n:::tip 6DOF quick-start\nEnable full six-degrees-of-freedom aerodynamics to give bullets real\npitch, yaw, and roll dynamics driven by lift, pitching moment, damping,\nand gyroscopic precession.\n\n**Minimum required fields when `:SixDOF():Enabled(true)`:**\n\n| Field | Why required |\n|-------|-------------|\n| `BulletMass` (via `:Physics()`) | Converts aerodynamic force vectors into acceleration — F = ma |\n| `ReferenceArea` | Cross-sectional area in studs² — scales all aero forces |\n| `ReferenceLength` | Caliber/diameter in studs — scales pitching moment and damping |\n| `MomentOfInertia` | Transverse MOI — governs pitch/yaw angular response |\n\nMinimal example:\n\n```lua\nlocal Behavior = BehaviorBuilder.new()\n    :Physics()\n        :BulletMass(0.01)\n        :MinSpeed(10)\n    :Done()\n    :Drag()\n        :Coefficient(0.003)\n    :Done()\n    :SixDOF()\n        :Enabled(true)\n        :ReferenceArea(0.008)\n        :ReferenceLength(0.05)\n        :MomentOfInertia(0.001)\n        :LiftCoefficientSlope(2.0)\n        :PitchingMomentSlope(-0.5)\n        :PitchDampingCoeff(0.02)\n    :Done()\n    :Build()\n```\n\nAll other 6DOF fields default to safe values (`0` or `false`). Start\nhere and add `AoADragFactor`, `RollDampingCoeff`, and spin fields as needed.\n:::\n\n:::tip 6DOF + gyroscopic precession\nGyroscopic precession — the bullet nose tracing a slow cone around the\nvelocity vector — requires both a non-zero `SpinMOI` and a non-zero spin.\nSeed spin via `:Magnus():SpinVector()` or `:SixDOF():InitialAngularVelocity()`.\n\n```lua\n:Magnus()\n    :SpinVector(Vector3.new(0, 0, 500))   -- 500 rad/s right-hand spin\n:Done()\n:SixDOF()\n    :Enabled(true)\n    :SpinMOI(0.0003)\n    -- ... other required fields\n:Done()\n```\n\nThe solver computes precession as `ω_prec = spinAxis × aeroTorque / H`\nwhere `H = SpinMOI · spinRate`. A larger `SpinMOI` → slower precession;\na smaller one → faster cone.\n:::\n\n:::tip 6DOF — tuning guide\n**Static stability** — set `PitchingMomentSlope` negative (e.g. `-0.5`).\nThis applies a restoring torque whenever the nose deviates from velocity,\nkeeping the bullet pointing forward. More negative = stiffer.\n\n**Damping** — set `PitchDampingCoeff` (e.g. `0.02`) to kill wobble.\nWithout damping, aerodynamic torques cause permanent coning. Start at\n`0.01`–`0.05` and increase until the bullet settles within a few frames.\n\n**Lift** — `LiftCoefficientSlope` (dCL/dα) scales the Magnus-like lift\nforce proportional to AoA. Typical range `1.0`–`4.0`. Set to `0` to\ndisable lift entirely and model drag-only nose attitude.\n\n**AoA-dependent drag** — `AoADragFactor` multiplies drag by `1 + k·sin²(AoA)`.\n`3.0` triples drag when broadside. Useful for tumbling or unstable projectiles.\n\n**Roll decay** — `RollDampingCoeff` slowly kills axial spin. Without it,\na bullet with `SpinVector` set maintains its spin forever.\n\n**Reference values for a typical rifle bullet:**\n- `ReferenceArea` ≈ `0.005`–`0.02` studs²\n- `ReferenceLength` ≈ `0.03`–`0.1` studs\n- `MomentOfInertia` ≈ `0.0005`–`0.005`\n- `SpinMOI` ≈ `0.0001`–`0.001`\n- `BulletMass` ≈ `0.004`–`0.015`\n:::\n\nBuilders are **reusable** — call `:Build()` multiple times to produce\nindependent frozen tables from the same configuration.\n\n```lua\n-- Produce two independent frozen tables from the same builder\nlocal RifleBehavior  = RifleBuilder:Build()\nlocal SniperBehavior = RifleBuilder:Physics():MaxDistance(2000):Done():Build()\n```\n\n:::tip Presets\nUse [BehaviorBuilder.Sniper], [BehaviorBuilder.Grenade], or [BehaviorBuilder.Pistol]\nas a starting point, then chain additional overrides before calling `:Build()`.\n:::\n\n:::caution Build-time validation\nAll validation is deferred to `:Build()` rather than per-setter. This means\nthe builder never throws mid-chain — all errors are collected and reported\ntogether when `:Build()` is called. `:Build()` returns `nil` if any error\nis found.\n:::&quot;,
     &quot;source&quot;: {
-        &quot;line&quot;: 90,
+        &quot;line&quot;: 180,
         &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
     }
-}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#BatchTravel" class="table-of-contents__link toc-highlight">:BatchTravel</a></li><li><a href="#Bounce" class="table-of-contents__link toc-highlight">:Bounce</a></li><li><a href="#Build" class="table-of-contents__link toc-highlight">:Build</a></li><li><a href="#Clone" class="table-of-contents__link toc-highlight">:Clone</a></li><li><a href="#CornerTrap" class="table-of-contents__link toc-highlight">:CornerTrap</a></li><li><a href="#Cosmetic" class="table-of-contents__link toc-highlight">:Cosmetic</a></li><li><a href="#Debug" class="table-of-contents__link toc-highlight">:Debug</a></li><li><a href="#Drag" class="table-of-contents__link toc-highlight">:Drag</a></li><li><a href="#Fragmentation" class="table-of-contents__link toc-highlight">:Fragmentation</a></li><li><a href="#GyroDrift" class="table-of-contents__link toc-highlight">:GyroDrift</a></li><li><a href="#HighFidelity" class="table-of-contents__link toc-highlight">:HighFidelity</a></li><li><a href="#Homing" class="table-of-contents__link toc-highlight">:Homing</a></li><li><a href="#Impose" class="table-of-contents__link toc-highlight">:Impose</a></li><li><a href="#LOD" class="table-of-contents__link toc-highlight">:LOD</a></li><li><a href="#Magnus" class="table-of-contents__link toc-highlight">:Magnus</a></li><li><a href="#Merge" class="table-of-contents__link toc-highlight">:Merge</a></li><li><a href="#Physics" class="table-of-contents__link toc-highlight">:Physics</a></li><li><a href="#Pierce" class="table-of-contents__link toc-highlight">:Pierce</a></li><li><a href="#SpeedProfiles" class="table-of-contents__link toc-highlight">:SpeedProfiles</a></li><li><a href="#Trajectory" class="table-of-contents__link toc-highlight">:Trajectory</a></li><li><a href="#Tumble" class="table-of-contents__link toc-highlight">:Tumble</a></li><li><a href="#When" class="table-of-contents__link toc-highlight">:When</a></li><li><a href="#Wind" class="table-of-contents__link toc-highlight">:Wind</a></li><li><a href="#Grenade" class="table-of-contents__link toc-highlight">.Grenade</a></li><li><a href="#Inherit" class="table-of-contents__link toc-highlight">.Inherit</a></li><li><a href="#new" class="table-of-contents__link toc-highlight">.new</a></li><li><a href="#Pistol" class="table-of-contents__link toc-highlight">.Pistol</a></li><li><a href="#Sniper" class="table-of-contents__link toc-highlight">.Sniper</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://discord.gg/XMYMRKcd3g" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord Server<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://discord.com/users/897026279243669504" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord (Direct)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div><div class="col footer__col"><div class="footer__title">Social</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://www.instagram.com/vedevelopment/" target="_blank" rel="noopener noreferrer" class="footer__link-item">Instagram<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://x.com/vedevelopment_" target="_blank" rel="noopener noreferrer" class="footer__link-item">X (Twitter)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://www.tiktok.com/@vedevelopment" target="_blank" rel="noopener noreferrer" class="footer__link-item">TikTok<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 VeDevelopment</div></div></div></footer></div>
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#BatchTravel" class="table-of-contents__link toc-highlight">:BatchTravel</a></li><li><a href="#Bounce" class="table-of-contents__link toc-highlight">:Bounce</a></li><li><a href="#Build" class="table-of-contents__link toc-highlight">:Build</a></li><li><a href="#Clone" class="table-of-contents__link toc-highlight">:Clone</a></li><li><a href="#CornerTrap" class="table-of-contents__link toc-highlight">:CornerTrap</a></li><li><a href="#Cosmetic" class="table-of-contents__link toc-highlight">:Cosmetic</a></li><li><a href="#Debug" class="table-of-contents__link toc-highlight">:Debug</a></li><li><a href="#Drag" class="table-of-contents__link toc-highlight">:Drag</a></li><li><a href="#Fragmentation" class="table-of-contents__link toc-highlight">:Fragmentation</a></li><li><a href="#GyroDrift" class="table-of-contents__link toc-highlight">:GyroDrift</a></li><li><a href="#HighFidelity" class="table-of-contents__link toc-highlight">:HighFidelity</a></li><li><a href="#Homing" class="table-of-contents__link toc-highlight">:Homing</a></li><li><a href="#Impose" class="table-of-contents__link toc-highlight">:Impose</a></li><li><a href="#LOD" class="table-of-contents__link toc-highlight">:LOD</a></li><li><a href="#Magnus" class="table-of-contents__link toc-highlight">:Magnus</a></li><li><a href="#Merge" class="table-of-contents__link toc-highlight">:Merge</a></li><li><a href="#Physics" class="table-of-contents__link toc-highlight">:Physics</a></li><li><a href="#Pierce" class="table-of-contents__link toc-highlight">:Pierce</a></li><li><a href="#SixDOF" class="table-of-contents__link toc-highlight">:SixDOF</a></li><li><a href="#SpeedProfiles" class="table-of-contents__link toc-highlight">:SpeedProfiles</a></li><li><a href="#Trajectory" class="table-of-contents__link toc-highlight">:Trajectory</a></li><li><a href="#Tumble" class="table-of-contents__link toc-highlight">:Tumble</a></li><li><a href="#When" class="table-of-contents__link toc-highlight">:When</a></li><li><a href="#Wind" class="table-of-contents__link toc-highlight">:Wind</a></li><li><a href="#Grenade" class="table-of-contents__link toc-highlight">.Grenade</a></li><li><a href="#Inherit" class="table-of-contents__link toc-highlight">.Inherit</a></li><li><a href="#new" class="table-of-contents__link toc-highlight">.new</a></li><li><a href="#Pistol" class="table-of-contents__link toc-highlight">.Pistol</a></li><li><a href="#Sniper" class="table-of-contents__link toc-highlight">.Sniper</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://discord.gg/XMYMRKcd3g" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord Server<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://discord.com/users/897026279243669504" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord (Direct)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div><div class="col footer__col"><div class="footer__title">Social</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://www.instagram.com/vedevelopment/" target="_blank" rel="noopener noreferrer" class="footer__link-item">Instagram<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://x.com/vedevelopment_" target="_blank" rel="noopener noreferrer" class="footer__link-item">X (Twitter)<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://www.tiktok.com/@vedevelopment" target="_blank" rel="noopener noreferrer" class="footer__link-item">TikTok<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 VeDevelopment</div></div></div></footer></div>
 </body>
 </html>
