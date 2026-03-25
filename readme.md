@@ -2,7 +2,7 @@
 
 **Every shot lands where physics says it should.**
 
-[![Version](https://img.shields.io/badge/version-5.4.4-blue)](https://github.com/Vel136/Vetra/releases)
+[![Version](https://img.shields.io/badge/version-V6-blue)](https://github.com/Vel136/Vetra/releases)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/XMYMRKcd3g)
 
@@ -22,6 +22,7 @@ Vetra is an analytic-trajectory projectile simulation module for Roblox. Where m
 - **Drag** — linear, quadratic, or G-series empirical models (G1, G5, G6, G7, G8, GL, Custom)
 - **Magnus effect** — lateral force on spinning projectiles
 - **Gyroscopic drift** — long-range directional yaw from spin precession
+- **6DOF aerodynamics** — lift, pitching moment, pitch/yaw damping, roll damping, gyroscopic precession
 - **Coriolis deflection** — configurable per map, latitude-accurate with exaggeration scale
 - **Tumble** — destabilisation on speed loss or pierce, chaotic drag multiplier
 - **Fragmentation** — cone-distributed child bullets on pierce

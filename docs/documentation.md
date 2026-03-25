@@ -16,25 +16,13 @@ Actors, and VetraNet — a full authoritative network layer.
 
 ---
 
-
-
-
 ## One Folder. One Require.
-
-
 
 Drop the `Vetra` folder into `ReplicatedStorage` and require it from your weapon scripts.
 
-
-
 ---
 
-
-
-
 ## The Solver Listens. You React.
-
-
 
 ```lua
 local Vetra         = require(ReplicatedStorage.Vetra)
@@ -59,16 +47,9 @@ Signals.OnBounce:Connect(function(context, result, velocity, bounceCount)
 end)
 ```
 
-
-
 ---
 
-
-
-
 ## Define the Physics. Pull the Trigger.
-
-
 
 ```lua
 -- Build a behavior once per weapon type, not per shot
@@ -96,16 +77,9 @@ local context = BulletContext.new({
 Solver:Fire(context, Behavior)
 ```
 
-
-
 ---
 
-
-
-
 ## Don't Start From Scratch
-
-
 
 `BehaviorBuilder` ships with three preset constructors as a starting point:
 
@@ -130,16 +104,9 @@ local Behavior = Vetra.BehaviorBuilder.Sniper()
     :Build()
 ```
 
-
-
 ---
 
-
-
-
-## Every Bullet Carries Its Own Story
-
-
+## Carry State With Every Bullet
 
 Use `UserData` to attach weapon-specific data that travels with the bullet and is available in every
 signal handler:
@@ -154,16 +121,9 @@ Signals.OnHit:Connect(function(context, result, velocity)
 end)
 ```
 
-
-
 ---
 
-
-
-
 ## Your Raycast. Your Rules.
-
-
 
 By default Vetra uses `workspace:Raycast` for every intersection test. `CastFunction` replaces that
 with any function that matches the same signature — `workspace:Spherecast`, `workspace:Blockcast`,
@@ -208,16 +168,9 @@ wrong distance.
 Use `Vetra.new()` if you need a custom cast function.
 :::
 
-
-
 ---
 
-
-
-
 ## 20,000 Bullets. 10ms.
-
-
 
 For high bullet-count scenarios, use the parallel solver to distribute physics computation across
 Roblox Actors:
@@ -243,16 +196,9 @@ to a serial solver and logs an error — your call site receives a working solve
 cannot cross Actor boundaries. Use `Vetra.new()` if you need a custom cast function.
 :::
 
-
-
 ---
 
-
-
-
 ## Stop Trusting the Client
-
-
 
 Wrap a solver with `WithValidator` to enable authoritative hit checks on the server:
 
@@ -266,16 +212,9 @@ local Solver = Vetra.WithValidator(Vetra.new(), {
 })
 ```
 
-
-
 ---
 
-
-
-
 ## Bullets Don't Travel in a Vacuum
-
-
 
 Set `DragCoefficient > 0` to enable drag. Fields not exposed by `BehaviorBuilder` setters are passed
 directly on the behavior table:
@@ -306,16 +245,9 @@ Solver:Fire(context, {
 | `"G2"`, `"G3"`, `"G4"` | Aberdeen / atypical projectile shapes |
 | `"Custom"` | Requires `CustomMachTable = { {mach, cd}, ... }` on the behavior |
 
-
-
 ---
 
-
-
-
-## The Speed of Sound Is a Boundary
-
-
+## Supersonic and Subsonic Profiles
 
 Override drag, restitution, and normal perturbation per speed regime. The solver tracks whether the
 bullet is supersonic (above 343 studs/s) and blends in the matching profile:
@@ -340,16 +272,9 @@ Signals.OnSpeedThresholdCrossed:Connect(function(context, threshold, velocity)
 end)
 ```
 
-
-
 ---
 
-
-
-
 ## Spin Makes It Curve
-
-
 
 A spinning projectile experiences lateral force perpendicular to both its spin axis and velocity —
 the curveball effect. Evaluated together with drag every `DragSegmentInterval` seconds:
@@ -367,16 +292,9 @@ Solver:Fire(context, {
 incrementally — at high speeds even `0.001` produces dramatic deviation.
 :::
 
-
-
 ---
 
-
-
-
-## The Quiet Drift at Long Range
-
-
+## Gyroscopic Drift
 
 Simulate yaw from spin-induced gyroscopic precession. Applied as a lateral acceleration each drag
 recalculation step:
@@ -388,16 +306,9 @@ Solver:Fire(context, {
 })
 ```
 
-
-
 ---
 
-
-
-
 ## When Stability Breaks
-
-
 
 A bullet enters tumble mode when its speed drops below a threshold, multiplying drag and adding
 chaotic lateral forces. It can optionally recover:
@@ -419,16 +330,9 @@ Signals.OnTumbleEnd:Connect(function(context, velocity)
 end)
 ```
 
-
-
 ---
 
-
-
-
 ## One Round. Five Threats.
-
-
 
 Spawn child bullets in a cone on pierce. Each fragment is a fully live cast inheriting the parent's
 behavior:
@@ -448,16 +352,9 @@ Signals.OnBranchSpawned:Connect(function(parentContext, childContext)
 end)
 ```
 
-
-
 ---
 
-
-
-
 ## It Will Find Them
-
-
 
 Steer the bullet toward a dynamic target position each frame. The steering fields are set directly on
 the behavior table — they are not available through the `BehaviorBuilder` `:Homing()` sub-builder
@@ -483,16 +380,9 @@ Signals.OnHomingDisengaged:Connect(function(context, reason)
 end)
 ```
 
-
-
 ---
 
-
-
-
 ## Physics? Optional.
-
-
 
 Replace Vetra's kinematic physics entirely with a custom position function. Useful for scripted
 paths, spline-driven projectiles, or cinematic abilities:
@@ -507,16 +397,9 @@ Solver:Fire(context, {
 })
 ```
 
-
-
 ---
 
-
-
-
-## The Map Has Weather
-
-
+## Wind
 
 ```lua
 Solver:SetWind(Vector3.new(10, 0, 0))  -- 10 studs/s eastward
@@ -526,16 +409,9 @@ Solver:Fire(context, { WindResponse = 0.5 }) -- 50% of wind applied
 Solver:Fire(context, { WindResponse = 0.0 }) -- ignores wind entirely
 ```
 
-
-
 ---
 
-
-
-
 ## Even the Earth Gets a Vote
-
-
 
 Coriolis is a **solver-level environment setting**, not a per-bullet behavior field. Call
 `SetCoriolisConfig` once per map/zone — all bullets fired through that solver are affected equally:
@@ -558,16 +434,9 @@ Solver:SetCoriolisConfig(45, 0)
 | `1000` | Clearly perceptible at ~300 studs |
 | `3000` | Strong, map-defining mechanic |
 
-
-
 ---
 
-
-
-
-## Spend Frames Where They Matter
-
-
+## LOD
 
 Tell the solver where to focus simulation fidelity:
 
@@ -579,16 +448,9 @@ Solver:SetLODOrigin(workspace.CurrentCamera.CFrame.Position)
 Solver:SetInterestPoints({ player1.Character.HumanoidRootPart.Position, ... })
 ```
 
-
-
 ---
 
-
-
-
 ## Intercept. Override. Continue.
-
-
 
 `OnPreBounce`, `OnMidBounce`, `OnPrePenetration`, and `OnMidPenetration` receive a `MutateData`
 callback as their last argument, allowing synchronous override of physics values mid-calculation:
@@ -618,16 +480,9 @@ end)
 `MutateData` is only active during the synchronous handler. Calling it after the handler returns
 logs a warning and has no effect — do not yield inside hook signal handlers.
 
-
-
 ---
 
-
-
-
 ## The Bullet That Refused to Die
-
-
 
 `OnPreTermination` lets you cancel a bullet's death. Each termination reason is tracked separately —
 after **3 consecutive cancels for the same reason**, the bullet is force-terminated regardless:
@@ -640,16 +495,9 @@ Signals.OnPreTermination:Connect(function(context, reason, mutate)
 end)
 ```
 
-
-
 ---
 
-
-
-
 ## The Network Layer You Didn't Have to Write
-
-
 
 VetraNet is Vetra's built-in network middleware. It handles fire-request serialization, server-side
 authority, and client-side cosmetic replication — all over a single `RemoteEvent`.
@@ -693,16 +541,9 @@ local Net = Vetra.VetraNet.new(ClientSolver, SharedRegistry)
 Net:Fire(muzzlePosition, direction, speed, "Rifle")
 ```
 
-
-
 ---
 
-
-
-
 ## See Exactly What the Bullet Saw
-
-
 
 ```lua
 local Behavior = Vetra.BehaviorBuilder.new()
