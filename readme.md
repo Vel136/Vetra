@@ -2,7 +2,7 @@
 
 **Every shot lands where physics says it should.**
 
-[![Version](https://img.shields.io/badge/version-5.4.4-blue)](https://github.com/Vel136/Vetra/releases)
+[![Version](https://img.shields.io/badge/version-6.0.0-blue)](https://github.com/Vel136/Vetra/releases)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/XMYMRKcd3g)
 
