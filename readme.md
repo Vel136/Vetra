@@ -26,6 +26,7 @@ Vetra is an analytic-trajectory projectile simulation module for Roblox. Where m
 - **Coriolis deflection** — configurable per map, latitude-accurate with exaggeration scale
 - **Tumble** — destabilisation on speed loss or pierce, chaotic drag multiplier
 - **Fragmentation** — cone-distributed child bullets on pierce
+- **Hitscan** — single-frame hit resolution that skips kinematics; full pierce, bounce, and signal support with no per-frame cost
 - **Homing** — frame-by-frame steering with strength, duration, and acquisition radius
 - **Trajectory provider** — replace kinematics with any custom position curve
 - **Supersonic / subsonic profiles** — different drag, restitution, and scatter per speed regime
