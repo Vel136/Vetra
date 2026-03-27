@@ -83,8 +83,8 @@ local BulletContext = {}
 	for this bullet if the Behavior does not have its own `RaycastParams` set.
 
 	Priority order in [Vetra:Fire]:
-	1. `Behavior.RaycastParams` — if the user called `:RaycastParams()` on the BehaviorBuilder.
-	2. `BulletContext.RaycastParams` — this field.
+	1. `BulletContext.RaycastParams` — this field (highest priority).
+	2. `Behavior.RaycastParams` — if the user called `:RaycastParams()` on the BehaviorBuilder.
 	3. Default empty `RaycastParams.new()`.
 
 	Useful when you share a single Behavior across many bullet types but need

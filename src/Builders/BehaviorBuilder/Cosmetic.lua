@@ -40,6 +40,14 @@ function CosmeticBuilder.Provider(self: CosmeticBuilder, Callback: BulletProvide
     return self
 end
 
+-- When true (default), the cosmetic bullet Instance is destroyed automatically
+-- when the cast terminates. Set to false to take ownership of cleanup yourself.
+function CosmeticBuilder.AutoDelete(self: CosmeticBuilder, Value: boolean): CosmeticBuilder
+    assert(type(Value) == "boolean", "CosmeticBuilder:AutoDelete — expected boolean")
+    self._Config.AutoDeleteCosmeticBullet = Value
+    return self
+end
+
 function CosmeticBuilder.Done(self: CosmeticBuilder): any
     return self._Root
 end

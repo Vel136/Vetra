@@ -192,6 +192,7 @@ local DEFAULT_BEHAVIOR = {
 	CosmeticBulletTemplate       = nil,
 	CosmeticBulletContainer      = nil,
 	CosmeticBulletProvider       = nil,
+	AutoDeleteCosmeticBullet     = true,
 
 	-- ── 6DOF ─────────────────────────────────────────────────────────────
 	-- When SixDOFEnabled = true the projectile tracks body-frame orientation
@@ -378,7 +379,9 @@ local function Terminate(Solver: any, Cast: any, TerminationReason: string?)
 	Solver._ParamsPooler:Release(Cast.Behavior.RaycastParams)
 
 	if Cast.Runtime.CosmeticBulletObject then
-		Cast.Runtime.CosmeticBulletObject:Destroy()
+		if Cast.Behavior.AutoDeleteCosmeticBullet then
+			Cast.Runtime.CosmeticBulletObject:Destroy()
+		end
 		Cast.Runtime.CosmeticBulletObject = nil
 	end
 
@@ -531,8 +534,8 @@ function Vetra.Fire(self: any, FireBulletContext: any, FireBehavior: any): any
 		EffectiveAcceleration = EffectiveAcceleration + DragDeceleration
 	end
 
-	-- Priority: Behavior.RaycastParams (explicit) → BulletContext.RaycastParams → default empty params
-	local _EffectiveParams = FireBehavior.RaycastParams or FireBulletContext.RaycastParams or DEFAULT_BEHAVIOR.RaycastParams
+	-- Priority: BulletContext.RaycastParams → Behavior.RaycastParams → default empty params
+	local _EffectiveParams = FireBulletContext.RaycastParams or FireBehavior.RaycastParams or DEFAULT_BEHAVIOR.RaycastParams
 	local AcquiredParams = self._ParamsPooler:Acquire(_EffectiveParams)
 	if not AcquiredParams then
 		-- ParamsPooler.Acquire never actually returns nil in current

@@ -192,6 +192,7 @@ local DEFAULT_BEHAVIOR = {
 	CosmeticBulletTemplate       = nil,
 	CosmeticBulletContainer      = nil,
 	CosmeticBulletProvider       = nil,
+	AutoDeleteCosmeticBullet     = true,
 
 	-- ── 6DOF ─────────────────────────────────────────────────────────────
 	-- When SixDOFEnabled = true the projectile tracks body-frame orientation
@@ -377,7 +378,9 @@ local function Terminate(Solver: any, Cast: any, TerminationReason: string?)
 	Solver._ParamsPooler:Release(Cast.Behavior.RaycastParams)
 
 	if Cast.Runtime.CosmeticBulletObject then
-		Cast.Runtime.CosmeticBulletObject:Destroy()
+		if Cast.Behavior.AutoDeleteCosmeticBullet then
+			Cast.Runtime.CosmeticBulletObject:Destroy()
+		end
 		Cast.Runtime.CosmeticBulletObject = nil
 	end
 

@@ -58,7 +58,7 @@
 	.Origin Vector3 -- Required. World-space muzzle position.
 	.Direction Vector3 -- Required. Unit direction vector.
 	.Speed number -- Required. Initial speed in studs/second.
-	.RaycastParams RaycastParams? -- Optional per-bullet raycast filter. Used if `Behavior.RaycastParams` is not set. Default: `nil`
+	.RaycastParams RaycastParams? -- Optional per-bullet raycast filter. Takes priority over `Behavior.RaycastParams` when set. Default: `nil`
 	.SolverData any? -- Internal — used by the solver to attach lifecycle hooks. Do not set from weapon code.
 ]=]
 
@@ -102,7 +102,7 @@
 	.MaxDistance number? -- Max flight distance in studs. Default: `500`
 	.MaxSpeed number? -- Speed ceiling; bullet terminates if exceeded. Default: `math.huge`
 	.MinSpeed number? -- Termination speed threshold in studs/sec. Default: `1`
-	.RaycastParams RaycastParams? -- Raycast filter. If not set, falls back to `BulletContext.RaycastParams`, then an empty `RaycastParams.new()`. Default: `nil`
+	.RaycastParams RaycastParams? -- Raycast filter. Used if `BulletContext.RaycastParams` is not set, before falling back to an empty `RaycastParams.new()`. Default: `nil`
 	.Gravity Vector3? -- Gravitational acceleration (negative Y = downward). Default: workspace gravity downward.
 	.CastFunction ((Vector3, Vector3, RaycastParams) -> RaycastResult?)? -- Custom cast function (serial solver only). Default: `nil`
 	.BulletMass number? -- Bullet mass for penetration and impact-force calculations. Default: `0`
@@ -223,6 +223,7 @@
 	.CosmeticBulletTemplate BasePart? -- Part cloned per fire call. Default: `nil`
 	.CosmeticBulletContainer Instance? -- Parent for the cosmetic object. Defaults to `workspace`. Default: `nil`
 	.CosmeticBulletProvider ((context: BulletContext) -> Instance?)? -- Provider function; takes priority over Template. Default: `nil`
+	.AutoDeleteCosmeticBullet boolean? -- When `true`, the cosmetic Instance is destroyed automatically on termination. Set to `false` to manage cleanup yourself. Default: `true`
 
 	---
 

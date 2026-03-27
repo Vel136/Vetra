@@ -272,6 +272,7 @@ function BehaviorBuilder.new(): BehaviorBuilder
         CosmeticBulletTemplate       = DEFAULTS.CosmeticBulletTemplate,
         CosmeticBulletContainer      = DEFAULTS.CosmeticBulletContainer,
         CosmeticBulletProvider       = DEFAULTS.CosmeticBulletProvider,
+        AutoDeleteCosmeticBullet     = DEFAULTS.AutoDeleteCosmeticBullet,
 
         BatchTravel                  = DEFAULTS.BatchTravel,
         IsHitscan                    = DEFAULTS.IsHitscan,

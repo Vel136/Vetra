@@ -138,6 +138,7 @@ local DEFAULTS: BuiltBehavior = {
     CosmeticBulletTemplate       = nil,
     CosmeticBulletContainer      = nil,
     CosmeticBulletProvider       = nil,
+    AutoDeleteCosmeticBullet     = true,
 
     -- Batch Travel
     BatchTravel                  = false,

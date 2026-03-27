@@ -117,6 +117,7 @@ export type BuiltBehavior = {
     CosmeticBulletTemplate       : BasePart?,
     CosmeticBulletContainer      : Instance?,
     CosmeticBulletProvider       : BulletProvider?,
+    AutoDeleteCosmeticBullet     : boolean,
     -- Batch Travel
     BatchTravel                  : boolean,
     -- Debug

@@ -62,16 +62,14 @@ function PhysicsBuilder:Acceleration(value: Vector3): PhysicsBuilder end
 	`RaycastParams` used for all raycasts during this cast's lifetime.
 
 	**Priority order** — [Vetra:Fire] resolves params using:
-	1. `Behavior.RaycastParams` — this setter, if called.
-	2. `BulletContext.RaycastParams` — per-bullet filter set on the context.
+	1. `BulletContext.RaycastParams` — per-bullet filter (highest priority).
+	2. `Behavior.RaycastParams` — this setter, if called.
 	3. Empty `RaycastParams.new()` — catch-all fallback.
 
-	:::warning Takes priority over BulletContext
-	Calling this setter locks the params for every bullet fired with this
-	behavior, even if individual `BulletContext` objects supply their own
-	`RaycastParams`. Only call this when all bullets from this behavior
-	should share the same filter. Use `BulletContext.RaycastParams` instead
-	when filtering needs to vary per bullet.
+	:::warning Overridden by BulletContext
+	If the `BulletContext` passed to [Vetra:Fire] has its own `RaycastParams`
+	set, it takes priority over this value. This setter acts as the
+	behavior-wide default when no per-bullet filter is provided.
 	:::
 
 	Default: `nil` (not set — defers to BulletContext or the fallback)
@@ -587,6 +585,21 @@ function CosmeticBuilder:Container(value: Instance): CosmeticBuilder end
 	@return CosmeticBuilder
 ]=]
 function CosmeticBuilder:Provider(callback: (any) -> Instance?): CosmeticBuilder end
+
+--[=[
+	Controls whether the cosmetic bullet Instance is destroyed automatically
+	when the cast terminates.
+
+	When `true` (default), the solver calls `:Destroy()` on the cosmetic object
+	at termination. Set to `false` to take ownership of cleanup — useful when
+	you want to play a death animation or pool the object yourself.
+
+	Default: `true`
+
+	@param value boolean
+	@return CosmeticBuilder
+]=]
+function CosmeticBuilder:AutoDelete(value: boolean): CosmeticBuilder end
 
 --[=[
 	Returns the root [BehaviorBuilder].
