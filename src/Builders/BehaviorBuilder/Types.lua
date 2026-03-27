@@ -139,6 +139,8 @@ export type BuiltBehavior = {
     CosmeticBulletProvider       : BulletProvider?,
     -- Batch Travel
     BatchTravel                  : boolean,
+    -- Hitscan
+    IsHitscan                    : boolean,
     -- Debug
     VisualizeCasts               : boolean,
 }

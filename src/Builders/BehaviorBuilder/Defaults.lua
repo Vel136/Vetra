@@ -142,6 +142,9 @@ local DEFAULTS: BuiltBehavior = {
     -- Batch Travel
     BatchTravel                  = false,
 
+    -- Hitscan
+    IsHitscan                    = false,
+
     -- Debug
     VisualizeCasts               = false,
 }

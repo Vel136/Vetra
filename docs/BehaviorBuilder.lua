@@ -49,6 +49,7 @@
 	| `:LOD()` | Distance |
 	| `:SixDOF()` | Enabled, LiftCoefficientSlope, PitchingMomentSlope, PitchDampingCoeff, RollDampingCoeff, AoADragFactor, ReferenceArea, ReferenceLength, AirDensity, MomentOfInertia, SpinMOI, MaxAngularSpeed, InitialOrientation, InitialAngularVelocity, CLAlphaMachTable, CmAlphaMachTable, CmqMachTable, ClpMachTable |
 	| `:BatchTravel()` | Root-level boolean toggle — no sub-builder |
+	| `:Hitscan()` | Root-level boolean toggle — no sub-builder |
 	| `:Clone()` | Returns an independent copy of this builder |
 	| `:Impose(other)` | Copies only the explicitly-set fields from `other` onto self |
 	| `:Merge(a, b, ...)` | Clone + impose multiple modifiers, returns new builder |
@@ -458,6 +459,30 @@ function BehaviorBuilder:SixDOF(): SixDOFBuilder end
 	@return BehaviorBuilder
 ]=]
 function BehaviorBuilder:BatchTravel(value: boolean): BehaviorBuilder end
+
+--[=[
+	Enables or disables hitscan mode for this cast.
+
+	When `true`, the entire bullet path — pierce, bounce, and all signals —
+	resolves synchronously inside [Vetra:Fire]. No per-frame physics stepping
+	occurs: gravity, drag, Magnus, and all kinematic forces are skipped.
+	The bullet travels in straight lines between bounces.
+
+	All signals (`OnHit`, `OnBounce`, `OnPierce`, `OnTerminated`) fire in the
+	normal order before `Fire()` returns.
+
+	Default: `false`
+
+	:::caution No physics forces
+	`DragCoefficient`, `SpinVector`, `MagnusCoefficient`, gravity, and homing
+	do not apply to hitscan casts. For fast projectiles that still need physics,
+	increase speed and reduce `MaxDistance` instead.
+	:::
+
+	@param value boolean
+	@return BehaviorBuilder
+]=]
+function BehaviorBuilder:Hitscan(value: boolean): BehaviorBuilder end
 
 -- ─── Clone / Impose ──────────────────────────────────────────────────────────
 

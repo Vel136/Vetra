@@ -184,6 +184,24 @@ Setting these fields on the behavior table has no runtime effect.
 
 ---
 
+**What is hitscan mode and when should I use it?**
+
+Hitscan mode (`IsHitscan = true` via `:Hitscan(true)`) skips all frame-by-frame physics — no
+kinematics, no drag, no Magnus, no 6DOF — and resolves the entire hit chain (pierce, bounce,
+corner-trap, signals) in a single frame synchronously.
+
+Use it for weapons where the bullet travels faster than perception and physics fidelity is
+irrelevant: SMGs, pistols, shotgun pellets, any fire where the bullet-in-flight is never visible
+to the player. Hitscan still supports the full pierce and bounce stack, respects
+`CanPierceFunction` and `CanBounceFunction`, emits all the standard signals, and reconstructs the
+path correctly for VetraNet server-side validation.
+
+The tradeoff: because distance is consumed in one pass rather than stepped per frame, speed-based
+attenuation (drag, `MinSpeed`) has no effect — those fields are ignored. If bullet drop or
+velocity decay is part of the gameplay contract, use a physics cast instead.
+
+---
+
 ## 6DOF Physics
 
 **What is 6DOF and when should I use it?**

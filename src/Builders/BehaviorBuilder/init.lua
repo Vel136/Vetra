@@ -6,7 +6,7 @@
     MIT License
     Copyright (c) 2026 VeDevelopment
 
-    Version: 5.5
+    Version: 6.1.0
 ]]
 
 --[[
@@ -268,6 +268,7 @@ function BehaviorBuilder.new(): BehaviorBuilder
         CosmeticBulletProvider       = DEFAULTS.CosmeticBulletProvider,
 
         BatchTravel                  = DEFAULTS.BatchTravel,
+        IsHitscan                    = DEFAULTS.IsHitscan,
         VisualizeCasts               = DEFAULTS.VisualizeCasts,
     }
 
@@ -303,6 +304,13 @@ function BehaviorBuilder.BatchTravel(self: BehaviorBuilder, Value: boolean): Beh
     assert(type(Value) == "boolean", "BehaviorBuilder:BatchTravel — expected boolean")
     self._Config.BatchTravel = Value
     self._Dirty.BatchTravel  = true
+    return self
+end
+
+function BehaviorBuilder.Hitscan(self: BehaviorBuilder, Value: boolean): BehaviorBuilder
+    assert(type(Value) == "boolean", "BehaviorBuilder:Hitscan — expected boolean")
+    self._Config.IsHitscan = Value
+    self._Dirty.IsHitscan  = true
     return self
 end
 

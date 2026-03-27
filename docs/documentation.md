@@ -9,7 +9,7 @@ sidebar_label: "Documentation"
 
 Vetra is a projectile simulation module for Roblox. It uses exact kinematic trajectories — no
 per-frame drift, no frame-rate dependency, no client/server divergence — and builds a full physics
-and networking stack on top of that foundation: pierce, bounce, homing, drag (linear, quadratic,
+and networking stack on top of that foundation: pierce, bounce, hitscan, homing, drag (linear, quadratic,
 G-series empirical models), Magnus effect, Coriolis deflection, gyroscopic drift, 6DOF aerodynamics,
 tumble, fragmentation, high-fidelity sub-segment raycasting, LOD, parallel physics via Roblox
 Actors, and VetraNet — a full authoritative network layer.
@@ -396,6 +396,38 @@ Solver:Fire(context, {
     end,
 })
 ```
+
+---
+
+## Zero Physics. Instant Resolution.
+
+Hitscan resolves the entire bullet path — pierce, bounce, all signals — synchronously inside `Fire()`.
+No per-frame physics stepping, no gravity, no drag, no Magnus: the bullet travels in straight lines
+between bounces and terminates before `Fire()` returns.
+
+Use it for weapons where physics don't add anything: railguns, laser shots, instant-hit scanners, or
+any design where the bullet arriving instantly is the point.
+
+```lua
+local Behavior = Vetra.BehaviorBuilder.new()
+    :Hitscan(true)
+    :Physics()
+        :MaxDistance(1000)
+    :Done()
+    :Build()
+
+Solver:Fire(context, Behavior)
+-- By the time Fire() returns, OnHit has already fired.
+```
+
+Pierce and bounce still apply — the full hit chain runs, just synchronously. All signals (`OnHit`,
+`OnBounce`, `OnPierce`, `OnTerminated`) fire in the normal order before `Fire()` returns.
+
+:::caution No physics forces
+`DragCoefficient`, `SpinVector`, `MagnusCoefficient`, gravity, homing — none of these apply to
+hitscan casts. If you need a fast projectile with physics, increase speed and reduce `MaxDistance`
+instead of enabling hitscan.
+:::
 
 ---
 

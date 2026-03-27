@@ -233,7 +233,6 @@ local DEFAULT_BEHAVIOR = {
 	InitialAngularVelocity     = nil,
 
 	BatchTravel                  = false,
-	IsHitscan                    = false,
 	VisualizeCasts               = false,
 }
 
@@ -616,11 +615,10 @@ function Vetra.Fire(self: any, FireBulletContext: any, FireBehavior: any): any
 	Behavior.OriginalFilter          = table.freeze(table.clone(SourceFilter))
 	Behavior.DragCoefficient         = DragCoefficient
 	Behavior.HighFidelitySegmentSize = InitialSegmentSize
-	if self._Coordinator then
-		Behavior.CastFunction = DefaultCast
-	else
-		Behavior.CastFunction = FireBehavior.CastFunction or DefaultCast
-	end
+	
+	
+	Behavior.CastFunction = FireBehavior.CastFunction or DefaultCast
+	
 
 	-- Cosmetics — stored for the provider invocation below.
 	local CosmeticBulletProvider  = FireBehavior.CosmeticBulletProvider
@@ -713,12 +711,13 @@ function Vetra.Fire(self: any, FireBulletContext: any, FireBehavior: any): any
 	end
 
 	FireHelpers.FireOnSegmentOpen(self, Cast, InitialTrajectory)
-
+	
 	if Cast.Behavior.IsHitscan then
 		-- Hitscan resolves synchronously here — no frame-loop involvement.
 		-- This works in both coordinator and non-coordinator mode, since the
 		-- Coordinator's Step() never sees the cast and StepProjectile would
 		-- only reach it a frame late.
+
 		ResolveHitscan.Execute(self, Cast)
 	elseif self._Coordinator then
 		self._Coordinator:AddCast(Cast)
