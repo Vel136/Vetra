@@ -1,0 +1,83 @@
+[moonwave]
+sourceDir = ["docs"]
+
+[docusaurus]
+title = "Vetra"
+tagline = "Every shot lands where physics says it should."
+url = "https://vel136.github.io"
+baseUrl = "/Vetra/"
+
+[home]
+enabled = true
+bannerImage = "https://github.com/Vel136/Vetra/blob/master/docs/banner.svg"
+includeReadme = true
+
+[[classOrder]]
+section = "Core"
+classes = ["Vetra", "BulletContext", "VetraCast"]
+
+[[classOrder]]
+section = "Configuration"
+classes = [
+    "BehaviorBuilder",
+    "PhysicsBuilder",
+    "HomingBuilder",
+    "PierceBuilder",
+    "BounceBuilder",
+    "HighFidelityBuilder",
+    "CornerTrapBuilder",
+    "CosmeticBuilder",
+    "DebugBuilder",
+    "DragBuilder",
+    "WindBuilder",
+    "MagnusBuilder",
+    "GyroDriftBuilder",
+    "TumbleBuilder",
+    "FragmentationBuilder",
+    "SpeedProfilesBuilder",
+    "SpeedProfileBuilder",
+    "SixDOFBuilder",
+    "TrajectoryBuilder",
+    "LODBuilder",
+]
+
+[[classOrder]]
+section = "Network"
+classes = ["VetraNet", "BehaviorRegistry"]
+
+[[classOrder]]
+section = "Types"
+classes = ["TypeDefinitions", "Enums"]
+
+[navbar]
+title = "Vetra"
+
+[footer]
+style = "dark"
+copyright = "Copyright © 2026 VeDevelopment"
+
+[[footer.links]]
+title = "Community"
+
+[[footer.links.items]]
+label = "Discord Server"
+href = "https://discord.gg/XMYMRKcd3g"
+
+[[footer.links.items]]
+label = "Discord (Direct)"
+href = "https://discord.com/users/897026279243669504"
+
+[[footer.links]]
+title = "Social"
+
+[[footer.links.items]]
+label = "Instagram"
+href = "https://www.instagram.com/vedevelopment/"
+
+[[footer.links.items]]
+label = "X (Twitter)"
+href = "https://x.com/vedevelopment_"
+
+[[footer.links.items]]
+label = "TikTok"
+href = "https://www.tiktok.com/@vedevelopment"
