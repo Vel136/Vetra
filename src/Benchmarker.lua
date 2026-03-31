@@ -111,7 +111,6 @@ local DEFAULT_PROFILES: { BehaviorProfile } = {
 	{
 		name     = "Travel-only",
 		behavior = {
-			VisualizeCasts       = true,
 			MaxDistance          = 2000,
 			BounceSpeedThreshold = 9999,
 			MaxBounces           = 0,
