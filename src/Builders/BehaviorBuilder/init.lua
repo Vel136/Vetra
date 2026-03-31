@@ -6,7 +6,7 @@
     MIT License
     Copyright (c) 2026 VeDevelopment
 
-    Version: 6.2.1
+    Version: 6.2.2
 ]]
 
 --[[
