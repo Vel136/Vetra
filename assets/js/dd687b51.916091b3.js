@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[5836],{21393:e=>{e.exports=JSON.parse('[{"value":"Functions","id":"functions","level":2},{"value":":Coefficient","id":"Coefficient","level":3},{"value":":Done","id":"Done","level":3},{"value":":SpinDecayRate","id":"SpinDecayRate","level":3},{"value":":SpinVector","id":"SpinVector","level":3}]')}}]);

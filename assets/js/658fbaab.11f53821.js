@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[8576],{1973:e=>{e.exports=JSON.parse('[{"value":"Functions","id":"functions","level":2},{"value":":Distance","id":"Distance","level":3},{"value":":Done","id":"Done","level":3}]')}}]);
