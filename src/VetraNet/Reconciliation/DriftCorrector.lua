@@ -16,7 +16,7 @@
     teleport jitter whenever the state batch arrives slightly late or with
     a reordered packet. Exponential blending amortises the correction over
     several frames — the cosmetic bullet moves smoothly toward the authoritative
-    position without a discrete jump. The blend alpha = deltaTime × CorrectionRate
+    position without a discrete jump. The blend alpha = deltaTime x CorrectionRate
     ensures corrections scale correctly regardless of frame rate.
 
     Why a drift threshold?

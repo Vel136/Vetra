@@ -288,7 +288,7 @@ There's no parallel-specific penalty beyond the extra math per step.
 
 Once you have roughly 50+ bullets in flight simultaneously. Below that, the Actor messaging
 overhead costs as much as the work being parallelised. Above it, the parallel version scales
-dramatically better, at 1,000 bullets it's roughly 10× faster, at 5,000 it's 32×. See the
+dramatically better, at 1,000 bullets it's roughly 10x faster, at 5,000 it's 32x. See the
 [Benchmarks](./guides/benchmarks) page for the full data.
 
 ---

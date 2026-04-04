@@ -15,12 +15,12 @@
     wind) or are re-approximated on a fixed interval and written as a new
     constant (drag, Magnus).
 
-    Coriolis cannot do this: its acceleration equals -2*(Ω×v), and v changes
-    every step. Baking in Ω×v₀ as a constant would give the right deflection
+    Coriolis cannot do this: its acceleration equals -2*(Ωxv), and v changes
+    every step. Baking in Ωxv₀ as a constant would give the right deflection
     on step 1 and increasingly wrong deflection on every step after, because
     v has changed but the baked term has not.
 
-    The correct integration is a per-step velocity nudge: compute -2*(Ω×v)
+    The correct integration is a per-step velocity nudge: compute -2*(Ωxv)
     for the current velocity, multiply by delta time, add to CurrentVelocity.
     This is what SimulateCast and the parallel Step module both do.
 ]]
@@ -60,7 +60,7 @@ end
 
 
 function Coriolis.ComputeAcceleration(omega: Vector3, velocity: Vector3): Vector3
-	-- a = -2 * (Ω × v)
+	-- a = -2 * (Ω x v)
 	-- The negative sign is load-bearing: without it deflection is in the
 	-- wrong direction (the "anti-Coriolis" direction, which does not exist
 	-- in nature for a prograde-rotating planet like Earth).

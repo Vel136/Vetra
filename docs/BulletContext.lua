@@ -1,4 +1,4 @@
-﻿--[=[
+--[=[
 	@class BulletContext
 
 	The public-facing object that weapon code interacts with for every

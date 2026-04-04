@@ -1,4 +1,4 @@
-﻿--[=[
+--[=[
 	@class BehaviorRegistry
 
 	Pre-registered behavior hash table shared between server and client.

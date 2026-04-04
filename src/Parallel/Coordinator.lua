@@ -515,7 +515,7 @@ function Coordinator:Step(FrameDelta: number)
 
 		if EventCount == 0 then continue end
 
-		-- One shallow clone per shard: converts N×M individual SharedTable
+		-- One shallow clone per shard: converts NxM individual SharedTable
 		-- field reads into a single atomic snapshot.
 		local ShardSnapshot = SharedTable.clone(ShardTable)
 

@@ -12,10 +12,10 @@
     causes lift, topspin causes drop.
 
     Physics:
-        F_magnus = Cm * (SpinVector × Velocity)
+        F_magnus = Cm * (SpinVector x Velocity)
 
     Where:
-        SpinVector        — axis of spin (direction) × angular velocity (magnitude, rad/s)
+        SpinVector        — axis of spin (direction) x angular velocity (magnitude, rad/s)
         Velocity          — current projectile velocity
         Cm (coefficient)  — scales force magnitude, tuned per projectile
 

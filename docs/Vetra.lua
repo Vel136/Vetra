@@ -1,4 +1,4 @@
-﻿--[=[
+--[=[
 	@class Vetra
 
 	Analytic-trajectory projectile simulation engine for Roblox.

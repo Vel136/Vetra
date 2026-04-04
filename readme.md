@@ -79,11 +79,11 @@ Parallel solver frame times measured on a live Roblox server, 120-frame samples:
 
 | Active bullets | Serial | Parallel | Speedup |
 |---------------:|:------:|:--------:|:-------:|
-| 50 | 10.3 ms | 4.2 ms | 2.5× |
-| 200 | 14.0 ms | 4.2 ms | 3.4× |
-| 1,000 | 45.2 ms | 4.2 ms | 10.8× |
-| 5,000 | 174.7 ms | 5.5 ms | 32× |
-| 20,000 |, | 10.3 ms |, |
+| 50 | 10.3 ms | 4.2 ms | 2.5x |
+| 200 | 14.0 ms | 4.2 ms | 3.4x |
+| 1,000 | 45.2 ms | 4.2 ms | 10.8x |
+| 5,000 | 174.7 ms | 5.5 ms | 32x |
+| 20,000 | - | 10.3 ms | - |
 
 The parallel solver's frame time is essentially flat from 25 to 2,000 bullets. See the [Benchmarks](https://vel136.github.io/Vetra/docs/guides/benchmarks) page for full data across all four profiles.
 

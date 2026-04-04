@@ -111,10 +111,10 @@ The benchmarks tell the story clearly. With travel-only bullets (pure raycasts, 
 
 | Bullets | Serial | Parallel | Speedup |
 |--------:|:------:|:--------:|:-------:|
-| 50 | 10.3 ms | 4.2 ms | 2.5× |
-| 200 | 14.0 ms | 4.2 ms | 3.4× |
-| 1,000 | 45.2 ms | 4.2 ms | **10.8×** |
-| 5,000 | 174.7 ms | 5.5 ms | **32×** |
+| 50 | 10.3 ms | 4.2 ms | 2.5x |
+| 200 | 14.0 ms | 4.2 ms | 3.4x |
+| 1,000 | 45.2 ms | 4.2 ms | **10.8x** |
+| 5,000 | 174.7 ms | 5.5 ms | **32x** |
 | 20,000 |, | 10.3 ms |, |
 
 The parallel solver's frame time is essentially flat from 25 to 2,000 bullets, hovering around 4ms. That's the signature of work filling unused core capacity. The serial solver, by contrast, hits 45ms at 1,000 bullets and 174ms at 5,000. Adding a `CanBounceFunction` or `CanPierceFunction` costs almost nothing in the parallel path because callbacks are batch-flushed rather than per-cast round-trips.
@@ -159,7 +159,7 @@ Also: `OnTravel` runs on the `Fire` path, not `FireSafe`. Handlers **must not th
 | 25–200 bullets, no callbacks | `Vetra.newParallel()` already faster |
 | 25–200 bullets, with callbacks | Either; difference is within noise |
 | 200+ bullets with any callbacks | `Vetra.newParallel()`, gap grows fast from here |
-| 1,000+ bullets | `Vetra.newParallel()`, serial is 10× slower |
+| 1,000+ bullets | `Vetra.newParallel()`, serial is 10x slower |
 | High-fidelity on many bullets | Increase `FrameBudget` per cast, reduce `ShardCount` to leave headroom |
 | Dense maps with complex geometry | Increase `DragSegmentInterval` to lower drag-recalc frequency |
 | Server tracking player positions | `SetInterestPoints` every Heartbeat, not every RenderStepped |

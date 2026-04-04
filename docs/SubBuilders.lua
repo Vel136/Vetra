@@ -1,4 +1,4 @@
-﻿-- ─── PhysicsBuilder ──────────────────────────────────────────────────────────
+-- ─── PhysicsBuilder ──────────────────────────────────────────────────────────
 
 --[=[
 	@class PhysicsBuilder
@@ -728,7 +728,7 @@ function WindBuilder:Done(): BehaviorBuilder end
 local MagnusBuilder = {}
 
 --[=[
-	Spin axis × angular velocity in rad/s. `Vector3.zero` disables the effect.
+	Spin axis x angular velocity in rad/s. `Vector3.zero` disables the effect.
 
 	Default: `Vector3.zero`
 

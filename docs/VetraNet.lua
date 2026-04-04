@@ -1,4 +1,4 @@
-﻿--[=[
+--[=[
 	@class VetraNet
 
 	Full-stack network middleware for Vetra. Handles fire-request
@@ -214,7 +214,7 @@ function VetraNet.new(
 	`(owner: Player, context: BulletContext, result: RaycastResult?, velocity: Vector3, impactForce: number)`
 
 	- `result` is `nil` for speed/distance expiry events (no surface was struck).
-	- `impactForce` is computed as `BulletMass × velocity.Magnitude`. Returns `0`
+	- `impactForce` is computed as `BulletMass x velocity.Magnitude`. Returns `0`
 	  when `BulletMass` is not set on the behavior.
 ]=]
 

@@ -130,7 +130,7 @@ local Behavior = BehaviorBuilder.new()
 ```
 
 :::caution Start small
-`MagnusCoefficient` is extremely sensitive. The force is `Cm × (SpinVector × Velocity)`, at 600 studs/s with a spin rate of 300, even `0.0001` produces visible drift. Start at `0.00005` and work up incrementally. Going straight to `0.001` will produce dramatic swerving that looks more like a homing missile than a bullet.
+`MagnusCoefficient` is extremely sensitive. The force is `Cm x (SpinVector x Velocity)`, at 600 studs/s with a spin rate of 300, even `0.0001` produces visible drift. Start at `0.00005` and work up incrementally. Going straight to `0.001` will produce dramatic swerving that looks more like a homing missile than a bullet.
 :::
 
 ---
@@ -225,7 +225,7 @@ In a real weapon at real-world distances and velocities, the Coriolis effect is 
 This is a **map-level setting**, not a bullet-level one. Every bullet fired through the same solver is affected equally, it's a property of the simulated environment, not the weapon.
 
 ```lua
--- Arctic map, latitude 75°, 1200× exaggeration
+-- Arctic map, latitude 75°, 1200x exaggeration
 Solver:SetCoriolisConfig(75, 1200)
 
 -- Equatorial map, latitude 0°, east/west drift only

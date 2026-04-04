@@ -59,7 +59,7 @@ export type BenchmarkConfig = {
 	BulletCounts              : { number }?,
 	--- At this count and above, the serial solver is skipped.
 	ParallelOnlyThreshold     : number?,
-	--- Heartbeat frames to sample per (solver × count × profile) cell.
+	--- Heartbeat frames to sample per (solver x count x profile) cell.
 	SampleFrames              : number?,
 	--- Frames to wait after seeding bullets before sampling begins.
 	WarmupFrames              : number?,
@@ -376,7 +376,7 @@ local function PrintSummary(AllResults: { ResultPair })
 			local Winner = if Ratio < 0.95 then "PARALLEL" elseif Ratio > 1.05 then "SERIAL" else "EQUAL"
 
 			print(string.format(
-				"  %-22s ×%-5d  %-10s  %-12s  %-12s  %-8s",
+				"  %-22s x%-5d  %-10s  %-12s  %-12s  %-8s",
 				Serial.profile:sub(1, 22),
 				Serial.bulletCount,
 				Winner,
@@ -386,7 +386,7 @@ local function PrintSummary(AllResults: { ResultPair })
 				))
 		else
 			print(string.format(
-				"  %-22s ×%-5d  %-10s  %-12s  %-12s  %-8s",
+				"  %-22s x%-5d  %-10s  %-12s  %-12s  %-8s",
 				Parallel.profile:sub(1, 22),
 				Parallel.bulletCount,
 				"PARALLEL",

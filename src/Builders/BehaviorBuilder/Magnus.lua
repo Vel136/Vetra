@@ -15,7 +15,7 @@ export type MagnusBuilder = typeof(setmetatable({} :: {
     _Config : BuiltBehavior,
 }, MagnusBuilder))
 
--- Spin axis × angular velocity in rad/s. Vector3.zero disables Magnus effect.
+-- Spin axis x angular velocity in rad/s. Vector3.zero disables Magnus effect.
 function MagnusBuilder.SpinVector(self: MagnusBuilder, Value: Vector3): MagnusBuilder
     assert(t.Vector3(Value), "MagnusBuilder:SpinVector — expected Vector3")
     self._Config.SpinVector = Value

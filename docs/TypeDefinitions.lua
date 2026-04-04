@@ -1,4 +1,4 @@
-﻿--[=[
+--[=[
 	@class TypeDefinitions
 
 	Shared Luau type definitions used across Vetra and VetraNet.
@@ -130,7 +130,7 @@
 	---
 
 	**Magnus Effect**
-	.SpinVector Vector3? -- Spin axis (direction) × angular velocity (magnitude, rad/s). `Vector3.zero` = disabled. Default: `Vector3.zero`
+	.SpinVector Vector3? -- Spin axis (direction) x angular velocity (magnitude, rad/s). `Vector3.zero` = disabled. Default: `Vector3.zero`
 	.MagnusCoefficient number? -- Magnus lift coefficient. Typical range: 0.00005–0.001. `0` = disabled. Default: `0`
 	.SpinDecayRate number? -- Rate at which `SpinVector` magnitude decreases per second. `0` = no decay. Default: `0`
 

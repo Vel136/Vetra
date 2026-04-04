@@ -1,4 +1,4 @@
-﻿--[=[
+--[=[
 	@class BehaviorBuilder
 
 	Fluent typed configuration builder for [Vetra].
@@ -125,7 +125,7 @@
 	:Done()
 	```
 
-	The solver computes precession as `ω_prec = spinAxis × aeroTorque / H`
+	The solver computes precession as `ω_prec = spinAxis x aeroTorque / H`
 	where `H = SpinMOI · spinRate`. A larger `SpinMOI` → slower precession;
 	a smaller one → faster cone.
 	:::

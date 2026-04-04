@@ -106,9 +106,9 @@ return table.freeze({
 	-- arriving the same frame collapse DeltaTime to near-zero, making alpha ~0).
 	STATE_BATCH_HEADER_BYTES = 12,
 
-	-- Maximum bullet count per state batch. 128 × 28 = 3 584 bytes, well
+	-- Maximum bullet count per state batch. 128 x 28 = 3 584 bytes, well
 	-- within Roblox's ~64 KB remote payload limit. Chosen to cover the
-	-- realistic peak of a crowded server fight (8 players × ~16 bullets each)
+	-- realistic peak of a crowded server fight (8 players x ~16 bullets each)
 	-- with comfortable headroom for simultaneous explosions.
 	MAX_STATE_BATCH_SIZE = 128,
 
@@ -116,7 +116,7 @@ return table.freeze({
 	-- Named constants for every primitive byte width. BlinkSchema uses these
 	-- to pre-compute buffer sizes at module load rather than inline literals,
 	-- which would rot silently if the layout changed.
-	BYTES_VECTOR3   = 12,   -- 3 × f32 (x, y, z)
+	BYTES_VECTOR3   = 12,   -- 3 x f32 (x, y, z)
 	BYTES_F32       =  4,
 	BYTES_F64       =  8,
 	BYTES_TIMESTAMP =  8,   -- f64 — workspace:GetServerTimeNow() sub-millisecond

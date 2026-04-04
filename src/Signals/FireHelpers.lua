@@ -46,7 +46,7 @@ function FireHelpers.FireOnHit(Solver: any, Cast: any, HitResult: RaycastResult?
 		Context:_UpdateState(HitResult.Position, HitVelocity, Cast.Runtime.DistanceCovered, Cast.Runtime.TotalRuntime, Or, Av, AoA)
 	end
 
-	-- ImpactForce = mass × Δvelocity (impulse approximation: bullet goes from
+	-- ImpactForce = mass x Δvelocity (impulse approximation: bullet goes from
 	-- HitVelocity to zero on terminal impact). Zero when BulletMass is 0.
 	local BulletMass   = Cast.Behavior.BulletMass
 	local ImpactForce  = (BulletMass and BulletMass > 0)
@@ -102,10 +102,10 @@ function FireHelpers.FireOnBounce(Solver: any, Cast: any, Result: RaycastResult,
 	Context:_UpdateState(Result.Position, PostVelocity, Cast.Runtime.DistanceCovered, Cast.Runtime.TotalRuntime, Or, Av, AoA)
 
 	-- BounceForce = force transferred to the surface on impact.
-	-- The more inelastic the bounce (low Restitution × MaterialMultiplier),
+	-- The more inelastic the bounce (low Restitution x MaterialMultiplier),
 	-- the more momentum is transferred to the surface.
 	-- ΔV = PreVelocity - PostVelocity (change in bullet momentum direction).
-	-- BounceForce = mass × ΔV (impulse transferred to surface).
+	-- BounceForce = mass x ΔV (impulse transferred to surface).
 	local BulletMass   = Cast.Behavior.BulletMass
 	local BounceForce  = (BulletMass and BulletMass > 0)
 		and ((PreVelocity - PostVelocity) * BulletMass)

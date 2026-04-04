@@ -1,4 +1,4 @@
-﻿--[=[
+--[=[
 	@class VetraCast
 
 	The internal representation of one in-flight projectile. Returned by

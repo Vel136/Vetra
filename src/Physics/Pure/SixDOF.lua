@@ -18,7 +18,7 @@
         • Pitching moment ∝ Cmα · α — restoring torque about the lateral axis.
         • Pitch damping ∝ −Cq · angularVelocity — dissipates oscillation.
         • Roll damping ∝ −Cp · rollRate — spin decay through aerodynamic friction.
-        • Gyroscopic precession: ω_prec = (spinAxis × M_aero) / (I_spin · spinRate)
+        • Gyroscopic precession: ω_prec = (spinAxis x M_aero) / (I_spin · spinRate)
 
     Integration:
         Orientation is updated via Rodrigues rotation of the current CFrame by
@@ -153,7 +153,7 @@ function SixDOF.ComputeLiftForce(
 	local LateralAxis = SixDOF.PitchPlaneAxis(BodyForward, Velocity)
 	if LateralAxis:Dot(LateralAxis) < MIN_MAG_SQ then return ZERO_VEC end
 
-	-- Lift direction is velocity × lateralAxis (into the pitch plane, toward body axis)
+	-- Lift direction is velocity x lateralAxis (into the pitch plane, toward body axis)
 	local LiftDir = Velocity.Unit:Cross(LateralAxis)
 	if LiftDir:Dot(LiftDir) < MIN_MAG_SQ then return ZERO_VEC end
 	LiftDir = LiftDir.Unit
@@ -403,7 +403,7 @@ end
     (pitching moment) acts on it, the response is a precession — the spin
     axis slowly rotates perpendicular to the applied torque.
 
-    τ_precession = (AeroTorque × SpinAxis) / (I_spin · SpinRate)
+    τ_precession = (AeroTorque x SpinAxis) / (I_spin · SpinRate)
 
     This is a simplified model that produces realistic coning motion without
     requiring the full Euler rigid-body solver.
@@ -421,8 +421,8 @@ function SixDOF.ComputeGyroscopicPrecession(
 
 	local AngularMomentum = SpinMOI * SpinRate
 
-	-- Precession: ω_prec = spinAxis × τ / H  where H = I·ω_spin
-	-- Derived from dH/dt = τ → I·SpinRate · d(spinAxis)/dt = τ → ω_prec × spinAxis = τ/H
+	-- Precession: ω_prec = spinAxis x τ / H  where H = I·ω_spin
+	-- Derived from dH/dt = τ → I·SpinRate · d(spinAxis)/dt = τ → ω_prec x spinAxis = τ/H
 	return BodyForward:Cross(AeroTorque) / AngularMomentum
 end
 
@@ -517,7 +517,7 @@ function SixDOF.Step(
 	-- Transverse torques (pitching moment + pitch damping) are divided by
 	-- the transverse MOI. Roll damping acts about the longitudinal axis and
 	-- must be divided by SpinMOI — combining them with one MOI would scale
-	-- roll decay by the wrong factor (typically ~10× off for rifle bullets).
+	-- roll decay by the wrong factor (typically ~10x off for rifle bullets).
 	local TransverseTorque   = PitchMoment + PitchDamp
 	local NewAngularVelocity = SixDOF.IntegrateAngularVelocity(
 		AngularVelocity, TransverseTorque, MomentOfInertia, MaxAngularSpeed, Delta

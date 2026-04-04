@@ -316,7 +316,7 @@ chaotic lateral forces. It can optionally recover:
 ```lua
 Solver:Fire(context, {
     TumbleSpeedThreshold  = 100,   -- begin tumbling below 100 studs/s
-    TumbleDragMultiplier  = 4.0,   -- drag × 4 while tumbling
+    TumbleDragMultiplier  = 4.0,   -- drag x 4 while tumbling
     TumbleLateralStrength = 5,     -- chaotic lateral accel in studs/s²
     TumbleOnPierce        = true,  -- begin tumbling immediately on first pierce
     TumbleRecoverySpeed   = nil,   -- nil = permanent; set a number to auto-recover

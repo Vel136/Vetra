@@ -6,7 +6,7 @@ sidebar_position: 5
 
 Numbers first, then everything else.
 
-At 5,000 simultaneous bouncing bullets, the serial solver costs **174ms** per frame. The parallel solver costs **5ms**. That's not a rounding error, that's a 32× difference. On a game with a 16ms frame budget, the serial solver stops being viable well before that point. The parallel solver barely notices.
+At 5,000 simultaneous bouncing bullets, the serial solver costs **174ms** per frame. The parallel solver costs **5ms**. That's not a rounding error, that's a 32x difference. On a game with a 16ms frame budget, the serial solver stops being viable well before that point. The parallel solver barely notices.
 
 These aren't cherry-picked. The data below is the raw output of Vetra's own benchmarker, captured on a live Roblox server with 64 shards, 120 frames sampled per cell.
 
@@ -21,7 +21,7 @@ Three behavior profiles, tested across 13 bullet counts each. Every cell is 120 
 - **Bounce (callback)**, identical, but with a `CanBounceFunction` that returns `true`. Callbacks must flush on the main thread after each parallel pass, so this measures the real cost of user-facing code.
 - **Pierce (callback)**, bullets pierce up to 5 times with a `CanPierceFunction`. Same callback flush model as bounce.
 
-Frame time is wall-clock Heartbeat duration. Throughput is average active casts × (1000 / avg ms). Treat everything as relative, not absolute, Roblox's server scheduler adds its own noise floor.
+Frame time is wall-clock Heartbeat duration. Throughput is average active casts x (1000 / avg ms). Treat everything as relative, not absolute, Roblox's server scheduler adds its own noise floor.
 
 ---
 
@@ -31,15 +31,15 @@ No callbacks. No bounce resolution. Just bullets moving through space, each firi
 
 | Bullets | Serial avg | Parallel avg | Ratio | Parallel throughput |
 |--------:|:----------:|:------------:|:-----:|--------------------:|
-| 10 | 4.767 ms | 4.334 ms | 0.91× | 2,307 steps/s |
-| 25 | 6.874 ms | 4.317 ms | 0.63× | 5,791 steps/s |
-| 50 | 10.345 ms | 4.157 ms | **0.40×** | 12,028 steps/s |
-| 100 | 10.187 ms | 4.169 ms | 0.41× | 23,988 steps/s |
-| 200 | 14.041 ms | 4.159 ms | **0.30×** | 48,086 steps/s |
-| 500 | 25.885 ms | 4.159 ms | 0.16× | 120,215 steps/s |
-| 1,000 | 45.2 ms | 4.168 ms | **0.09×** | 239,899 steps/s |
-| 2,000 | 74.321 ms | 4.206 ms | 0.06× | 475,481 steps/s |
-| 5,000 | 174.671 ms | 5.453 ms | **0.03×** | 916,962 steps/s |
+| 10 | 4.767 ms | 4.334 ms | 0.91x | 2,307 steps/s |
+| 25 | 6.874 ms | 4.317 ms | 0.63x | 5,791 steps/s |
+| 50 | 10.345 ms | 4.157 ms | **0.40x** | 12,028 steps/s |
+| 100 | 10.187 ms | 4.169 ms | 0.41x | 23,988 steps/s |
+| 200 | 14.041 ms | 4.159 ms | **0.30x** | 48,086 steps/s |
+| 500 | 25.885 ms | 4.159 ms | 0.16x | 120,215 steps/s |
+| 1,000 | 45.2 ms | 4.168 ms | **0.09x** | 239,899 steps/s |
+| 2,000 | 74.321 ms | 4.206 ms | 0.06x | 475,481 steps/s |
+| 5,000 | 174.671 ms | 5.453 ms | **0.03x** | 916,962 steps/s |
 | 7,500 |, | 8.581 ms |, | 874,040 steps/s |
 | 10,000 |, | 6.617 ms |, | 1,511,333 steps/s |
 | 15,000 |, | 7.888 ms |, | 1,901,513 steps/s |
@@ -47,7 +47,7 @@ No callbacks. No bounce resolution. Just bullets moving through space, each firi
 
 The parallel solver's frame time is essentially **flat from 25 to 2,000 bullets**, hovering between 4.1 and 4.3ms. That's the signature of work being distributed across enough cores that adding more bullets just fills unused capacity. The step from 5,000 to 20,000 bullets costs only 5ms more. At 20,000 active bullets, the parallel solver is still well within a 60fps frame budget.
 
-The serial solver has no such ceiling. At 1,000 bullets it's already at 45ms, nearly 3× over budget. At 5,000 it's at 174ms. That's 10 frames of latency from one game system.
+The serial solver has no such ceiling. At 1,000 bullets it's already at 45ms, nearly 3x over budget. At 5,000 it's at 174ms. That's 10 frames of latency from one game system.
 
 ---
 
@@ -57,15 +57,15 @@ When bullets bounce, each frame involves more work per cast: velocity reflection
 
 | Bullets | Serial avg | Parallel avg | Ratio | Parallel throughput |
 |--------:|:----------:|:------------:|:-----:|--------------------:|
-| 10 | 4.159 ms | 4.365 ms | 1.05× | 2,291 steps/s |
-| 25 | 4.168 ms | 4.165 ms | 1.00× | 6,003 steps/s |
-| 50 | 4.364 ms | 4.334 ms | 0.99× | 11,536 steps/s |
-| 100 | 4.159 ms | 4.270 ms | 1.03× | 23,421 steps/s |
-| 200 | 4.714 ms | 4.386 ms | **0.93×** | 45,596 steps/s |
-| 500 | 7.432 ms | 4.198 ms | **0.57×** | 119,095 steps/s |
-| 1,000 | 8.389 ms | 4.298 ms | 0.51× | 232,646 steps/s |
-| 2,000 | 13.844 ms | 4.334 ms | **0.31×** | 461,467 steps/s |
-| 5,000 | 24.159 ms | 4.327 ms | 0.18× | 1,155,485 steps/s |
+| 10 | 4.159 ms | 4.365 ms | 1.05x | 2,291 steps/s |
+| 25 | 4.168 ms | 4.165 ms | 1.00x | 6,003 steps/s |
+| 50 | 4.364 ms | 4.334 ms | 0.99x | 11,536 steps/s |
+| 100 | 4.159 ms | 4.270 ms | 1.03x | 23,421 steps/s |
+| 200 | 4.714 ms | 4.386 ms | **0.93x** | 45,596 steps/s |
+| 500 | 7.432 ms | 4.198 ms | **0.57x** | 119,095 steps/s |
+| 1,000 | 8.389 ms | 4.298 ms | 0.51x | 232,646 steps/s |
+| 2,000 | 13.844 ms | 4.334 ms | **0.31x** | 461,467 steps/s |
+| 5,000 | 24.159 ms | 4.327 ms | 0.18x | 1,155,485 steps/s |
 | 7,500 |, | 4.629 ms |, | 1,620,096 steps/s |
 | 10,000 |, | 5.265 ms |, | 1,899,199 steps/s |
 | 15,000 |, | 7.574 ms |, | 1,980,502 steps/s |
@@ -85,24 +85,24 @@ Adding a `CanBounceFunction` or `CanPierceFunction` means the parallel solver ha
 
 | Bullets | Serial avg | Parallel avg | Ratio |
 |--------:|:----------:|:------------:|:-----:|
-| 10–100 | ~4.2 ms | ~4.2 ms | ≈1.00× |
-| 200 | 4.391 ms | 4.149 ms | 0.95× |
-| 500 | 6.084 ms | 4.176 ms | **0.69×** |
-| 1,000 | 8.454 ms | 4.161 ms | 0.49× |
-| 2,000 | 12.142 ms | 4.260 ms | **0.35×** |
-| 5,000 | 23.262 ms | 4.164 ms | 0.18× |
+| 10–100 | ~4.2 ms | ~4.2 ms | ≈1.00x |
+| 200 | 4.391 ms | 4.149 ms | 0.95x |
+| 500 | 6.084 ms | 4.176 ms | **0.69x** |
+| 1,000 | 8.454 ms | 4.161 ms | 0.49x |
+| 2,000 | 12.142 ms | 4.260 ms | **0.35x** |
+| 5,000 | 23.262 ms | 4.164 ms | 0.18x |
 | 20,000 |, | 10.283 ms |, |
 
 **Pierce (callback):**
 
 | Bullets | Serial avg | Parallel avg | Ratio |
 |--------:|:----------:|:------------:|:-----:|
-| 10–100 | ~4.2 ms | ~4.2 ms | ≈1.00× |
-| 200 | 4.639 ms | 4.160 ms | **0.90×** |
-| 500 | 6.866 ms | 4.275 ms | 0.62× |
-| 1,000 | 8.285 ms | 4.167 ms | **0.50×** |
-| 2,000 | 11.872 ms | 4.165 ms | 0.35× |
-| 5,000 | 25.069 ms | 4.204 ms | 0.17× |
+| 10–100 | ~4.2 ms | ~4.2 ms | ≈1.00x |
+| 200 | 4.639 ms | 4.160 ms | **0.90x** |
+| 500 | 6.866 ms | 4.275 ms | 0.62x |
+| 1,000 | 8.285 ms | 4.167 ms | **0.50x** |
+| 2,000 | 11.872 ms | 4.165 ms | 0.35x |
+| 5,000 | 25.069 ms | 4.204 ms | 0.17x |
 | 20,000 |, | 9.900 ms |, |
 
 The callback flush cost is nearly invisible in the data. Bounce-with-callback vs bounce-without-callback is indistinguishable at every bullet count. The parallel solver handles the main-thread sync without meaningful overhead because it's a deferred batch flush, not a per-cast round-trip.

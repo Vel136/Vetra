@@ -1,4 +1,4 @@
-﻿--[=[
+--[=[
 	@class Enums
 
 	Named constant tables for every value that appears in Vetra's public API.
