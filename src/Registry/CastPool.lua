@@ -4,17 +4,17 @@
 
 -- ─── CastPool ────────────────────────────────────────────────────────────────
 --[[
-    Pre-allocated cast object pool.
+    Pre-allocated cast object pool backed by Fluix.
 
     Problem: Fire() previously allocated a fresh Cast table tree on every call
     and let Terminate() discard it to GC. At high fire rates (miniguns, AOE
     explosions spawning many fragments) this creates measurable GC pressure —
     hundreds of table allocations and collections per second.
 
-    Solution: Keep a free list of Cast tables that have already been allocated.
-    Acquire() pops from the list (or allocates if empty). Release() resets all
-    fields and pushes back onto the list. The allocator runs at most once per
-    unique Cast table for the lifetime of the solver.
+    Solution: Keep a pool of Cast tables that have already been allocated.
+    Acquire() pops from the pool (or allocates if empty). Release() marks the
+    cast dead and returns it. The full reset happens inside the Acquire Apply
+    callback — same timing as before — so Release stays cheap.
 
     Reset strategy — why we reset field-by-field rather than table.clear():
         Cast.Runtime is a nested table that itself contains nested tables
@@ -31,12 +31,12 @@
         metatable once at Acquire() time and stamps it onto every pooled object,
         eliminating that allocation entirely.
 
-    Pool size:
-        Bounded by MAX_POOL_SIZE. If the free list is full when Release() is
-        called, the cast is simply discarded — no error, no leak. If the free
-        list is empty when Acquire() is called, a fresh cast is allocated. The
-        pool grows organically up to the cap during bursts and shrinks back as
-        demand falls.
+    Reset timing:
+        Fluix calls Reset (a lightweight tombstone) at Release time.
+        The full ResetRuntime — which needs Fire()-specific parameters
+        (InitialTrajectory, InitialSegmentSize, IsSupersonic) — runs inside
+        the Acquire Apply callback, preserving the original acquire-time reset
+        behaviour and keeping Release as cheap as a single field write.
 ]]
 
 -- ─── Module References ───────────────────────────────────────────────────────
@@ -54,28 +54,28 @@ local Core  = Vetra.Core
 
 local LogService = require(Core.Logger)
 local Constants  = require(Core.Constants)
-local Enums		 = require(Core.Enums)
+local Enums      = require(Core.Enums)
+local Fluix      = require(Core.Fluix)
+
 -- ─── Logger ──────────────────────────────────────────────────────────────────
 
 local Logger = LogService.new(Identity, false)
 
 -- ─── Constants ───────────────────────────────────────────────────────────────
 
--- Maximum number of Cast tables kept in the free list between firings.
--- Beyond this cap, released casts are discarded rather than pooled.
--- 128 covers most realistic simultaneous-fire scenarios without holding
--- excessive memory when activity is low.
+-- Maximum number of Cast tables kept in the pool between firings.
+-- Beyond this cap Fluix will not grow the pool further.
 local MAX_POOL_SIZE = 2048
 
--- ─── Private ─────────────────────────────────────────────────────────────────
+-- ─── Private — Cast Tree Allocation ─────────────────────────────────────────
 
--- Construct the inner Runtime table shell. Fields are populated by ResetCast.
+-- Construct the inner Runtime table shell. Fields are populated by ResetRuntime.
 -- Called only when the pool is empty and a fresh allocation is unavoidable.
 local function NewRuntime(): any
 	return {
 		TotalRuntime             = 0,
 		DistanceCovered          = 0,
-		Trajectories             = {},       -- array of trajectory tables
+		Trajectories             = {},
 		ActiveTrajectory         = nil,
 		TerminationCancelCounts  = {},
 		PierceCount              = 0,
@@ -84,43 +84,38 @@ local function NewRuntime(): any
 		BounceCount              = 0,
 		BouncesThisFrame         = 0,
 		LastBounceTime           = -math.huge,
-		BouncePositionHistory    = {},        -- ring buffer of recent contact positions
-		BouncePositionHead       = 0,         -- ring buffer write cursor
+		BouncePositionHistory    = {},
+		BouncePositionHead       = 0,
 		VelocityDirectionEMA     = Vector3.zero,
-		FirstBouncePosition      = nil,           -- set once on first bounce by RecordBounceState
-		CornerBounceCount        = 0,             -- pass 4 bounce counter
+		FirstBouncePosition      = nil,
+		CornerBounceCount        = 0,
 		BounceCallbackThread     = nil,
 		CanHomeCallbackThread    = nil,
 		CastFunctionThread       = nil,
-
-		HomingProviderThread 	  = nil,
-		TrajectoryProviderThread  = nil,
-		HomingElapsed             = 0,
-		HomingDisengaged          = false,
-		HomingAcquired            = false,
-		LastDragRecalculateTime        = 0,
-		CrossedThresholds         = {},
-		IsSupersonic              = false,
-		IsActivelyResimulating    = false,
-		CancelResimulation        = false,
-		CurrentSegmentSize        = 0,
-		IsLOD                     = false,
-		LODFrameAccumulator       = 0,
-		LODDeltaAccumulator       = 0,
-		SpatialFrameAccumulator   = 0,
-		SpatialDeltaAccumulator   = 0,
-		CosmeticBulletObject      = nil,
-		ParentCastId              = nil,
-		PenetrationForceRemaining = nil,
-		IsTumbling                = false,
-		TumbleRandom              = nil,
-
-		-- [6DOF] Angular state — tracked only when Behavior.SixDOFEnabled = true.
-		-- When 6DOF is disabled these remain at their initial values and are
-		-- never read by the simulation loop. Zero cost for 3DOF casts.
-		Orientation               = CFrame.identity,   -- body-frame rotation
-		AngularVelocity           = Vector3.zero,       -- rad/s, world frame
-		AngleOfAttack             = 0,                  -- cached α (radians), for telemetry
+		HomingProviderThread     = nil,
+		TrajectoryProviderThread = nil,
+		HomingElapsed            = 0,
+		HomingDisengaged         = false,
+		HomingAcquired           = false,
+		LastDragRecalculateTime  = 0,
+		CrossedThresholds        = {},
+		IsSupersonic             = false,
+		IsActivelyResimulating   = false,
+		CancelResimulation       = false,
+		CurrentSegmentSize       = 0,
+		IsLOD                    = false,
+		LODFrameAccumulator      = 0,
+		LODDeltaAccumulator      = 0,
+		SpatialFrameAccumulator  = 0,
+		SpatialDeltaAccumulator  = 0,
+		CosmeticBulletObject     = nil,
+		ParentCastId             = nil,
+		PenetrationForceRemaining= nil,
+		IsTumbling               = false,
+		TumbleRandom             = nil,
+		Orientation              = CFrame.identity,
+		AngularVelocity          = Vector3.zero,
+		AngleOfAttack            = 0,
 	}
 end
 
@@ -147,7 +142,7 @@ local function NewBehavior(): any
 		TumbleRecoverySpeed        = nil,
 		SpeedThresholds            = nil,
 		SupersonicProfile          = nil,
-		SpinVector        		   = Vector3.zero,
+		SpinVector                 = Vector3.zero,
 		MagnusCoefficient          = 0,
 		SpinDecayRate              = 0,
 		SubsonicProfile            = nil,
@@ -187,8 +182,6 @@ local function NewBehavior(): any
 		LODDistance                = 0,
 		BatchTravel                = false,
 		VisualizeCasts             = false,
-
-		-- [6DOF] Aerodynamic configuration — all default to disabled (0 / false).
 		SixDOFEnabled              = false,
 		LiftCoefficientSlope       = 0,
 		PitchingMomentSlope        = 0,
@@ -206,7 +199,7 @@ local function NewBehavior(): any
 	}
 end
 
--- Allocate a brand new Cast table tree. Called only when pool is empty.
+-- Allocate a brand new Cast table tree. Called only when the pool is empty.
 local function NewCast(): any
 	return {
 		Alive     = false,
@@ -219,84 +212,83 @@ local function NewCast(): any
 	}
 end
 
--- Reset all Runtime fields to their initial values, reusing the existing
--- nested tables (Trajectories, PiercedInstances, etc.) rather than
--- replacing them. This is the critical path — every field must be listed
--- explicitly. A missed field means stale state bleeds into the next cast.
-local function ResetRuntime(Runtime: any, Behavior: any, InitialTrajectory: any, InitialSegmentSize: number, IsSupersonic: boolean)
-	-- Reset callback fields that Fire() assigns with bare assignment (no nil fallback).
-	-- Without this, a pooled cast that had a pierce/bounce function would bleed it
-	-- into a new cast that passes nil for those fields.
-	Behavior.CanPierceFunction = nil
-	Behavior.CanBounceFunction = nil
-	Runtime.TotalRuntime            = 0
-	Runtime.DistanceCovered         = 0
-	-- Reuse the Trajectories array: clear it and insert the new initial segment.
-	table.clear(Runtime.Trajectories)
-	Runtime.Trajectories[1]         = InitialTrajectory
-	Runtime.ActiveTrajectory        = InitialTrajectory
-	-- Clear the cancel count map without replacing it.
-	table.clear(Runtime.TerminationCancelCounts)
-	Runtime.PierceCount             = 0
-	table.clear(Runtime.PiercedInstances)
-	Runtime.PierceCallbackThread    = nil
-	Runtime.BounceCount             = 0
-	Runtime.BouncesThisFrame        = 0
-	Runtime.LastBounceTime          = -math.huge
-	table.clear(Runtime.BouncePositionHistory)
-	Runtime.BouncePositionHead      = 0
-	Runtime.VelocityDirectionEMA    = Constants.ZERO_VECTOR
-	Runtime.FirstBouncePosition     = nil
-	Runtime.CornerBounceCount       = 0
-	Runtime.BounceCallbackThread    = nil
-	Runtime.CanHomeCallbackThread   = nil
-	Runtime.CastFunctionThread      = nil
-	Runtime.HomingElapsed              = 0
-	Runtime.HomingDisengaged           = false
-	Runtime.HomingAcquired             = false
-	Runtime.HomingProviderThread       = nil
-	Runtime.TrajectoryProviderThread   = nil
-	Runtime.LastDragRecalculateTime         = 0
-	table.clear(Runtime.CrossedThresholds)
-	Runtime.IsSupersonic               = IsSupersonic
-	Runtime.IsActivelyResimulating     = false
-	Runtime.CancelResimulation         = false
-	Runtime.CurrentSegmentSize         = InitialSegmentSize
-	Runtime.IsLOD                      = false
-	Runtime.LODFrameAccumulator        = 0
-	Runtime.LODDeltaAccumulator        = 0
-	Runtime.SpatialFrameAccumulator    = 0
-	Runtime.SpatialDeltaAccumulator    = 0
-	Runtime.CosmeticBulletObject       = nil
-	Runtime.ParentCastId               = nil
-	Runtime.PenetrationForceRemaining  = nil
-	Runtime.IsTumbling                 = false
-	Runtime.TumbleRandom               = nil
-
-	-- [6DOF] Reset angular state to defaults. Fire() overwrites these with
-	-- Behavior.InitialOrientation / InitialAngularVelocity when 6DOF is enabled.
-	Runtime.Orientation                = CFrame.identity
-	Runtime.AngularVelocity            = Vector3.zero
-	Runtime.AngleOfAttack              = 0
+-- Lightweight tombstone called by Fluix at Release time.
+-- Marks the cast dead; the full field reset happens at Acquire time via Apply.
+local function _TombstoneCast(Cast: any)
+	Cast.Alive = false
 end
 
--- ─── Module ──────────────────────────────────────────────────────────────────
+-- Reset all Runtime fields to their initial values, reusing existing nested
+-- tables (Trajectories, PiercedInstances, etc.) rather than replacing them.
+-- Every field must be listed explicitly — a missed field means stale state
+-- bleeds into the next cast.
+local function ResetRuntime(Runtime: any, Behavior: any, InitialTrajectory: any, InitialSegmentSize: number, IsSupersonic: boolean)
+	-- Reset callback fields that Fire() assigns with bare assignment (no nil fallback).
+	Behavior.CanPierceFunction          = nil
+	Behavior.CanBounceFunction          = nil
+	Runtime.TotalRuntime                = 0
+	Runtime.DistanceCovered             = 0
+	table.clear(Runtime.Trajectories)
+	Runtime.Trajectories[1]             = InitialTrajectory
+	Runtime.ActiveTrajectory            = InitialTrajectory
+	table.clear(Runtime.TerminationCancelCounts)
+	Runtime.PierceCount                 = 0
+	table.clear(Runtime.PiercedInstances)
+	Runtime.PierceCallbackThread        = nil
+	Runtime.BounceCount                 = 0
+	Runtime.BouncesThisFrame            = 0
+	Runtime.LastBounceTime              = -math.huge
+	table.clear(Runtime.BouncePositionHistory)
+	Runtime.BouncePositionHead          = 0
+	Runtime.VelocityDirectionEMA        = Constants.ZERO_VECTOR
+	Runtime.FirstBouncePosition         = nil
+	Runtime.CornerBounceCount           = 0
+	Runtime.BounceCallbackThread        = nil
+	Runtime.CanHomeCallbackThread       = nil
+	Runtime.CastFunctionThread          = nil
+	Runtime.HomingElapsed               = 0
+	Runtime.HomingDisengaged            = false
+	Runtime.HomingAcquired              = false
+	Runtime.HomingProviderThread        = nil
+	Runtime.TrajectoryProviderThread    = nil
+	Runtime.LastDragRecalculateTime     = 0
+	table.clear(Runtime.CrossedThresholds)
+	Runtime.IsSupersonic                = IsSupersonic
+	Runtime.IsActivelyResimulating      = false
+	Runtime.CancelResimulation          = false
+	Runtime.CurrentSegmentSize          = InitialSegmentSize
+	Runtime.IsLOD                       = false
+	Runtime.LODFrameAccumulator         = 0
+	Runtime.LODDeltaAccumulator         = 0
+	Runtime.SpatialFrameAccumulator     = 0
+	Runtime.SpatialDeltaAccumulator     = 0
+	Runtime.CosmeticBulletObject        = nil
+	Runtime.ParentCastId                = nil
+	Runtime.PenetrationForceRemaining   = nil
+	Runtime.IsTumbling                  = false
+	Runtime.TumbleRandom                = nil
+	Runtime.Orientation                 = CFrame.identity
+	Runtime.AngularVelocity             = Vector3.zero
+	Runtime.AngleOfAttack               = 0
+end
 
 -- ─── Pool Construction ───────────────────────────────────────────────────────
 
--- Create a new pool instance. Each Solver gets its own pool so pools
+-- Create a new Fluix-backed pool. Each Solver gets its own pool so pools
 -- never share state across solver instances.
 function CastPool.new(): any
-	return {
-		_FreeList = {},
-		_Size     = 0,
-	}
+	return Fluix.new({
+		Factory = NewCast,
+		Reset   = _TombstoneCast,
+		MinSize = 8,
+		MaxSize = MAX_POOL_SIZE,
+	})
 end
 
 -- ─── Acquire ─────────────────────────────────────────────────────────────────
 
--- Pop a Cast table from the pool and stamp it with the provided state.
--- If the pool is empty, allocates a fresh Cast table tree.
+-- Pop a Cast from the pool and stamp it with the provided state via an Apply
+-- callback. If the pool is empty, Fluix allocates a fresh Cast tree.
 --
 -- InitialTrajectory, InitialSegmentSize, and IsSupersonic are the only
 -- Runtime fields that cannot be defaulted to zero — they depend on the
@@ -314,61 +306,24 @@ function CastPool.Acquire(
 	IsSupersonic     : boolean,
 	SharedMetatable  : any
 ): any
-	local FreeList = Pool._FreeList
-	local Cast: any
-
-	if Pool._Size > 0 then
-		-- Pop from the top of the free list (LIFO — most recently released
-		-- cast is most likely still warm in CPU cache).
-		Cast          = FreeList[Pool._Size]
-		FreeList[Pool._Size] = nil
-		Pool._Size    -= 1
-	else
-		-- Pool exhausted — allocate a fresh shell.
-		Cast = NewCast()
-	end
-
-	-- Stamp top-level identity fields.
-	Cast.Alive     = true
-	Cast.Paused    = false
-	Cast.StartTime = StartTime
-	Cast.Id        = Id
-
-	-- Reset all Runtime fields, reusing nested tables.
-	-- Also resets Behavior callback fields that Fire() assigns without a nil fallback.
-	ResetRuntime(Cast.Runtime, Cast.Behavior, InitialTrajectory, InitialSegmentSize, IsSupersonic)
-
-	-- Behavior fields are written directly by Fire() after Acquire() returns,
-	-- so we only need to clear the fields that Fire() might not overwrite —
-	-- specifically UserData, which is consumer-owned and must be empty for
-	-- each new cast.
-	table.clear(Cast.UserData)
-
-	-- Stamp the shared metatable. This replaces the per-cast metatable
-	-- allocation that previously happened inside Fire().
-	setmetatable(Cast, SharedMetatable)
-
-	return Cast
+	return Pool:Acquire(function(Cast: any)
+		Cast.Alive     = true
+		Cast.Paused    = false
+		Cast.StartTime = StartTime
+		Cast.Id        = Id
+		ResetRuntime(Cast.Runtime, Cast.Behavior, InitialTrajectory, InitialSegmentSize, IsSupersonic)
+		table.clear(Cast.UserData)
+		setmetatable(Cast, SharedMetatable)
+	end)
 end
 
 -- ─── Release ─────────────────────────────────────────────────────────────────
 
 -- Return a terminated Cast to the pool for reuse.
--- Does NOT reset fields here — Reset happens at Acquire() time, not Release()
--- time. This keeps Release() as cheap as possible since it sits in the
--- hot path of Terminate(), which fires on every cast termination.
---
--- If the pool is already at capacity, the cast is silently discarded.
--- The consumer holds no other reference to it after Terminate() returns,
--- so it will be collected normally by GC.
+-- Fluix calls _TombstoneCast (sets Alive = false) then enqueues the object.
+-- Full reset happens at the next Acquire — Release stays cheap.
 function CastPool.Release(Pool: any, Cast: any)
-	if Pool._Size >= MAX_POOL_SIZE then
-		-- Pool full — let GC handle this one.
-		return
-	end
-
-	Pool._Size             += 1
-	Pool._FreeList[Pool._Size] = Cast
+	Pool:Release(Cast)
 end
 
 -- ─── Module Return ───────────────────────────────────────────────────────────
@@ -382,7 +337,7 @@ local CastPoolMetatable = table.freeze({
 			"CastPool: write to protected key '%s' = '%s'",
 			tostring(Key),
 			tostring(Value)
-			))
+		))
 	end,
 })
 

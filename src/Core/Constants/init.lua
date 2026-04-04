@@ -156,6 +156,22 @@ return table.freeze({
 	-- How many frames between grid rebuilds.
 	SPATIAL_DEFAULT_UPDATE_INTERVAL = 3,
 
+	-- Integer key encoding for the spatial grid.
+	-- Three cell coordinates are packed into one number so the grid table
+	-- uses integer keys instead of "cx,cy,cz" strings — eliminates string
+	-- allocation and interning on every cell lookup and MarkRadius iteration.
+	--
+	-- Layout (little-endian axis order):
+	--   key = (cx + OFFSET) + (cy + OFFSET) * STRIDE + (cz + OFFSET) * STRIDE²
+	--
+	-- STRIDE = 2^16 → ±32,767 cells per axis.
+	-- At the default 50-stud cell size this covers ±1,638,350 studs — well
+	-- beyond any practical Roblox world. STRIDE² = 2^32 fits exactly in a
+	-- double-precision float (53-bit mantissa), so no precision is lost.
+	SPATIAL_CELL_STRIDE    = 65536,
+	SPATIAL_CELL_OFFSET    = 32768,
+	SPATIAL_CELL_STRIDE_SQ = 65536 * 65536,
+
 	THRESHOLD_DIRECTION = {
 		Ascending  = true,
 		Descending = false,

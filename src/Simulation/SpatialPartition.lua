@@ -48,34 +48,44 @@ local Logger = LogService.new(Identity, false)
 
 -- ─── Private Helpers ─────────────────────────────────────────────────────────
 
--- Convert a world-space position to a cell coordinate string key.
--- math.floor ensures negative coordinates map correctly:
---   position -1 with cellSize 50 → cell -1, not 0.
-local function ToCellKey(Position: Vector3, CellSize: number): string
-	local cx = math.floor(Position.X / CellSize)
-	local cy = math.floor(Position.Y / CellSize)
-	local cz = math.floor(Position.Z / CellSize)
-	return cx .. "," .. cy .. "," .. cz
+-- Cached encoding constants — read once at module load to avoid table lookups
+-- on the hot path (GetTier is called every simulated bullet step).
+local CELL_STRIDE    = Constants.SPATIAL_CELL_STRIDE
+local CELL_OFFSET    = Constants.SPATIAL_CELL_OFFSET
+local CELL_STRIDE_SQ = Constants.SPATIAL_CELL_STRIDE_SQ
+
+-- Convert a world-space position to an integer cell key.
+-- Packs (cx, cy, cz) into a single number:
+--   key = (cx + OFFSET) + (cy + OFFSET) * STRIDE + (cz + OFFSET) * STRIDE²
+-- Integer keys skip string allocation and interning on every grid lookup.
+local function ToCellKey(Position: Vector3, CellSize: number): number
+	local cx = math.floor(Position.X / CellSize) + CELL_OFFSET
+	local cy = math.floor(Position.Y / CellSize) + CELL_OFFSET
+	local cz = math.floor(Position.Z / CellSize) + CELL_OFFSET
+	return cx + cy * CELL_STRIDE + cz * CELL_STRIDE_SQ
 end
 
 -- Mark a cubic radius of cells around a world position with the given tier.
 -- Only writes to cells that have not yet been assigned a better (lower N) tier.
 -- This ensures HOT cells written first are never overwritten by WARM.
+-- BaseX and BaseXY are hoisted out of inner loops to minimise multiplications.
 local function MarkRadius(
-	Grid        : { [string]: number },
+	Grid        : { [number]: number },
 	Position    : Vector3,
 	CellSize    : number,
 	Radius      : number,
 	Tier        : number
 )
-	local OriginCX = math.floor(Position.X / CellSize)
-	local OriginCY = math.floor(Position.Y / CellSize)
-	local OriginCZ = math.floor(Position.Z / CellSize)
+	local OriginCX = math.floor(Position.X / CellSize) + CELL_OFFSET
+	local OriginCY = math.floor(Position.Y / CellSize) + CELL_OFFSET
+	local OriginCZ = math.floor(Position.Z / CellSize) + CELL_OFFSET
 
 	for dx = -Radius, Radius do
+		local BaseX = OriginCX + dx
 		for dy = -Radius, Radius do
+			local BaseXY = BaseX + (OriginCY + dy) * CELL_STRIDE
 			for dz = -Radius, Radius do
-				local Key         = (OriginCX + dx) .. "," .. (OriginCY + dy) .. "," .. (OriginCZ + dz)
+				local Key          = BaseXY + (OriginCZ + dz) * CELL_STRIDE_SQ
 				local ExistingTier = Grid[Key]
 				-- Lower N = higher priority. Never downgrade an existing tier.
 				if ExistingTier == nil or Tier < ExistingTier then
@@ -91,8 +101,8 @@ end
 -- Build a fresh spatial grid from the solver's current interest points.
 -- Called by StepProjectile every UpdateInterval frames.
 --
--- The grid is a flat { [cellKey] = tier } table. Cells not present in the
--- table have no interest nearby; callers should apply FallbackTier.
+-- The grid is a flat { [number] = tier } table keyed by packed integer cell
+-- coordinates. Cells not present have no interest nearby; callers apply FallbackTier.
 function SpatialPartition.Rebuild(Solver: any)
 	local Config          = Solver._SpatialConfig
 	local InterestPoints  = Solver._InterestPoints

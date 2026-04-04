@@ -15,7 +15,7 @@
 	```
 	Client                              Server
 	──────                              ──────
-	Net:Fire(origin, dir, speed, name)
+	Net:Fire(context, "Rifle")
 	  → FireChannel.SendFire()          ← FireChannel decode
 	  → cosmetic spawned locally (+ latency buffer)
 	                                    ← FireValidator: origin, speed, behavior hash
@@ -78,7 +78,8 @@
 	local Net = Vetra.VetraNet.new(ClientSolver, SharedRegistry)
 
 	-- Fire a bullet over the network
-	Net:Fire(muzzlePosition, direction, speed, "Rifle")
+	local Context = BulletContext.new({ Origin = muzzlePosition, Direction = direction, Speed = speed })
+	Net:Fire(Context, "Rifle")
 	```
 
 	## NetworkConfig
@@ -129,7 +130,8 @@
 	})
 
 	-- Fire a bullet from server code; replicates to all clients automatically.
-	Net:Fire(origin, direction, speed, behaviorHash)
+	local Context = BulletContext.new({ Origin = origin, Direction = direction, Speed = speed })
+	Net:Fire(Context, behaviorHash)
 	```
 
 	**`SharedAuthority`**
@@ -251,31 +253,33 @@ function VetraNet.new(
 	Only available when `Mode` is `ServerAuthority` or `SharedAuthority`.
 	Calling this in `ClientAuthoritative` mode logs an error and returns `0`.
 
+	The caller creates a `BulletContext` with the desired fire parameters.
+	`UserData` and `RaycastParams` set on the context are forwarded to the
+	solver automatically — no separate call needed.
+
 	```lua
 	local Net = Vetra.VetraNet.new(ServerSolver, SharedRegistry, {
 	    Mode = Vetra.Enums.NetworkMode.ServerAuthority,
 	})
 
 	-- Fire from an NPC or scripted event:
-	Net:Fire(
-	    npc.HumanoidRootPart.Position + Vector3.new(0, 1, 0),
-	    (targetPosition - npc.HumanoidRootPart.Position).Unit,
-	    600,
-	    SharedRegistry:HashOf("Rifle")
-	)
+	local origin    = npc.HumanoidRootPart.Position + Vector3.new(0, 1, 0)
+	local direction = (targetPosition - origin).Unit
+	local Context   = BulletContext.new({ Origin = origin, Direction = direction, Speed = 600 })
+	Context.UserData = { Npc = npc }
+
+	Net:Fire(Context, SharedRegistry:GetHash("Rifle"))
 	```
 
 	Returns the server-assigned cast ID on success, or `0` on failure
 	(unknown behavior hash, wrong mode).
 
 	@server
-	@param Origin Vector3 -- World-space fire origin.
-	@param Direction Vector3 -- Unit direction vector.
-	@param Speed number -- Initial bullet speed in studs/second.
-	@param BehaviorHash number -- Numeric hash from `BehaviorRegistry:HashOf(name)`.
+	@param Context BulletContext -- Caller-created context carrying origin, direction, speed, UserData, and RaycastParams.
+	@param BehaviorHash number -- Numeric hash from `BehaviorRegistry:GetHash(name)`.
 	@return number -- Server cast ID, or `0` on failure.
 ]=]
-function VetraNet:Fire(Origin: Vector3, Direction: Vector3, Speed: number, BehaviorHash: number): number end
+function VetraNet:Fire(Context: any, BehaviorHash: number): number end
 
 -- ─── Client Methods ──────────────────────────────────────────────────────────
 
@@ -285,13 +289,16 @@ function VetraNet:Fire(Origin: Vector3, Direction: Vector3, Speed: number, Behav
 	Serializes and sends a fire request to the server, then spawns a
 	local cosmetic bullet after the configured latency buffer.
 
+	The caller creates a `BulletContext` with the desired fire parameters.
+	`RaycastParams` set on the context is used for the local cosmetic solver.
+
 	```lua
-	Net:Fire(
-	    tool.Handle.Position,  -- muzzle position
-	    direction.Unit,        -- unit direction
-	    250,                   -- speed in studs/s
-	    "Rifle"                -- registered behavior name
-	)
+	local Context = BulletContext.new({
+	    Origin    = tool.Handle.Position,
+	    Direction = direction.Unit,
+	    Speed     = 250,
+	})
+	Net:Fire(Context, "Rifle")
 	```
 
 	The cosmetic bullet is spawned locally with a small delay (latency buffer)
@@ -302,12 +309,37 @@ function VetraNet:Fire(Origin: Vector3, Direction: Vector3, Speed: number, Behav
 	in the client registry.
 
 	@client
-	@param Origin Vector3 -- World-space fire origin.
-	@param Direction Vector3 -- Unit direction vector.
-	@param Speed number -- Initial bullet speed in studs/second.
+	@param Context BulletContext -- Caller-created context carrying origin, direction, speed, and RaycastParams.
 	@param BehaviorName string -- Registered behavior name (must match server registry).
 ]=]
-function VetraNet:Fire(Origin: Vector3, Direction: Vector3, Speed: number, BehaviorName: string) end
+function VetraNet:Fire(Context: any, BehaviorName: string) end
+
+--[=[
+	*(Server only)*
+
+	Sets a predicate that gates which players receive replicated fire, hit,
+	and state messages. The function is called once per candidate player on
+	every broadcast; return `true` to include them, `false` to exclude.
+
+	Pass `nil` to clear the filter and revert to all-player broadcast (default).
+
+	The shooter's own fire echo is **never filtered** — the shooter always
+	receives confirmation of their own cast regardless of the predicate.
+
+	```lua
+	-- Replicate only to players on the Blue team
+	Net:SetPlayerFilter(function(player)
+	    return player.Team == Teams.Blue
+	end)
+
+	-- Clear the filter — back to full broadcast
+	Net:SetPlayerFilter(nil)
+	```
+
+	@server
+	@param Fn ((player: Player) -> boolean)? -- Predicate, or `nil` to disable.
+]=]
+function VetraNet:SetPlayerFilter(Fn: ((player: Player) -> boolean)?) end
 
 -- ─── Shared Methods ──────────────────────────────────────────────────────────
 

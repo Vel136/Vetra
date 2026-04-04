@@ -2,53 +2,31 @@
 --!optimize 2
 --!strict
 
-local Constants = require(script.Parent.Constants)
+--[[
+	MIT License
+
+	Copyright (c) 2026 Ve Development
+
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
+
+	The above copyright notice and this permission notice shall be included in all
+	copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
+]]
 
 -- Version 2.2
-
---[=[
-	Signal Module
-	Design Philosophy:
-	  - Pay only for what you use
-	  - Error handling & reentrancy are the user's responsibility
-	    (FireSafe is provided as an opt-in escape hatch for untrusted listeners)
-	  - Threading preference is declared at connect time (ConnectAsync/OnceAsync),
-	    but can be overridden at fire time (FireSync / FireAsync)
-	  - Priority is declared at connect time and maintained via binary insertion.
-	    The Connections array is ALWAYS kept in descending priority order,
-	    so the fire path remains a plain O(n) linear scan — zero extra cost.
-	  - Re-entrancy: if a fire is triggered while one is already in progress,
-	    it is automatically deferred via task.defer so the current iteration
-	    always completes over a consistent snapshot of the connections array.
-	  - Compaction: dead connections are removed immediately on disconnect
-	    (if not currently firing), keeping the array clean for nested fires.
-	  - Snapshot semantics: ALL connections present at the moment Fire is called
-	    will run, even if disconnected mid-fire. Connections removed BEFORE
-	    Fire is called are not in the snapshot and will not run.
-	  - AsyncCount: tracks the number of async connections so Fire can skip
-	    the scratch-array snapshot entirely when all connections are sync.
-	  - Type safety: Signal<Signature> uses a function type as its parameter,
-	    giving named parameters and return-type awareness at call sites.
-	    Requires the new Luau type solver.
-	  - Scratch arrays (ScratchFns, ScratchAsync) are stored per-signal as a
-	    deliberate allocation optimization. Their correctness depends on the
-	    re-entrancy guard keeping Firing > 0 for the full duration of a fire —
-	    never weaken or remove the guard without auditing this coupling.
-
-	v2.2 optimizations over v2.1:
-	  - AsyncCount field: Fire fast-path skips scratch snapshot entirely when
-	    all connections are sync (the overwhelmingly common case).
-	  - Connect cold path: replaced table_clone(ConnectionClass) + 5 field
-	    overwrites with a direct table literal — fewer allocations.
-	  - CompactConnections call-site guard: Fire/FireSync/FireAsync/FireSafe
-	    only call CompactConnections when ActiveCount < array length, avoiding
-	    the function-call overhead on the clean path.
-	  - FindInsertIndex fast-path: Priority == 0 appends directly, skipping
-	    the binary search for the default (and most common) priority.
-	  - FireSync tight loop: inline dead-connection nil check removed from the
-	    sync-only fast path (snapshot already filters them out implicitly via
-	    the array being compact at fire time).
-]=]
 
 -- NOTICE: Requires the new Luau type solver.
 
@@ -79,7 +57,8 @@ type function WaitSignature(signal: type, signature: type, fallback: type): type
 		print(`Signal<Signature> expects a 'function' type, got '{tag}'`)
 		return fallback
 	end
-	local waitParams = {head = {signal, types.number} :: {type}}
+	local selfParam: {type} = {signal}
+	local waitParams = {head = selfParam}
 	local sigParams = signature:parameters()
 	return types.newfunction(waitParams, sigParams)
 end
@@ -128,6 +107,10 @@ export type Signal<Signature = () -> ()> = {
 	read FireSafe:     FireSignature<any, Signature, (self: any, ...any) -> ()>,
 	read Wait:         WaitSignature<any, Signature, (self: any, Timeout: number, Priority: number?) -> ...any>,
 	read WaitPriority: WaitSignature<any, Signature, (self: any, Priority: number?) -> ...any>,
+	read ConnectIf:        (self: Signal<Signature>, Predicate: (...any) -> boolean, Fn: Signature, Priority: number?) -> Connection<Signature>,
+	read ConnectIfAsync:   (self: Signal<Signature>, Predicate: (...any) -> boolean, Fn: Signature, Priority: number?) -> Connection<Signature>,
+	read OnceTimeout:      (self: Signal<Signature>, Fn: Signature, Timeout: number, Priority: number?) -> Connection<Signature>,
+	read OnceAsyncTimeout: (self: Signal<Signature>, Fn: Signature, Timeout: number, Priority: number?) -> Connection<Signature>,
 	read GetListenerCount: (self: Signal<Signature>) -> number,
 	read HasListeners:     (self: Signal<Signature>) -> boolean,
 	read DisconnectAll: (self: Signal<Signature>) -> (),
@@ -160,6 +143,7 @@ type InternalSignal = {
 
 local ConnectionPool: { InternalConnection } = {}
 local PoolSize = 0
+local MAX_POOL_SIZE = 1000
 
 -- Thread pools --
 
@@ -294,7 +278,7 @@ local function Connection_Disconnect(self: InternalConnection)
 		CompactConnections(Sig.Connections, Sig.ActiveCount)
 	end
 
-	if PoolSize < Constants.MAX_SIGNAL_POOL_SIZE then
+	if PoolSize < MAX_POOL_SIZE then
 		PoolSize += 1
 		ConnectionPool[PoolSize] = self
 	end
@@ -506,17 +490,16 @@ function SignalClass.FireSafe(self: InternalSignal, ...: any)
 		CompactConnections(self.Connections, self.ActiveCount)
 	end
 end
-
 local ConnectionClass = {
 	Signal     = nil,
-	Fn         = function() end,
+	Fn         = function() end
+		,
 	Priority   = 0,
 	IsAsync    = false,
 	Connected  = true,
 	Disconnect = Connection_Disconnect,
 	Destroy    = Connection_Disconnect,
 }
-
 function SignalClass.Connect(self: InternalSignal, Fn: (...any) -> (), Priority: number?): InternalConnection
 	local P = Priority or 0
 	local Connections = self.Connections
@@ -559,6 +542,20 @@ function SignalClass.ConnectAsync(self: InternalSignal, Fn: (...any) -> (), Prio
 	return Conn
 end
 
+function SignalClass.ConnectIf(self: InternalSignal, Predicate: (...any) -> boolean, Fn: (...any) -> (), Priority: number?): InternalConnection
+	return self:Connect(function(...)
+		if not Predicate(...) then return end
+		Fn(...)
+	end, Priority)
+end
+
+function SignalClass.ConnectIfAsync(self: InternalSignal, Predicate: (...any) -> boolean, Fn: (...any) -> (), Priority: number?): InternalConnection
+	return self:ConnectAsync(function(...)
+		if not Predicate(...) then return end
+		Fn(...)
+	end, Priority)
+end
+
 function SignalClass.Once(self: InternalSignal, Fn: (...any) -> (), Priority: number?): InternalConnection
 	local Conn: InternalConnection
 	local fired = false
@@ -580,6 +577,40 @@ function SignalClass.OnceAsync(self: InternalSignal, Fn: (...any) -> (), Priorit
 		Conn:Disconnect()
 		Fn(...)
 	end, Priority)
+	return Conn
+end
+
+function SignalClass.OnceTimeout(self: InternalSignal, Fn: (...any) -> (), Timeout: number, Priority: number?): InternalConnection
+	local Conn: InternalConnection
+	local done = false
+	Conn = self:Connect(function(...)
+		if done then return end
+		done = true
+		Conn:Disconnect()
+		Fn(...)
+	end, Priority)
+	task.delay(Timeout, function()
+		if done then return end
+		done = true
+		Conn:Disconnect()
+	end)
+	return Conn
+end
+
+function SignalClass.OnceAsyncTimeout(self: InternalSignal, Fn: (...any) -> (), Timeout: number, Priority: number?): InternalConnection
+	local Conn: InternalConnection
+	local done = false
+	Conn = self:ConnectAsync(function(...)
+		if done then return end
+		done = true
+		Conn:Disconnect()
+		Fn(...)
+	end, Priority)
+	task.delay(Timeout, function()
+		if done then return end
+		done = true
+		Conn:Disconnect()
+	end)
 	return Conn
 end
 
@@ -636,7 +667,7 @@ function SignalClass.DisconnectAll(self: InternalSignal)
 	for i = 1, Count do
 		local Conn = Connections[i]
 		Conn.Connected = false
-		if PoolSize < Constants.MAX_SIGNAL_POOL_SIZE then
+		if PoolSize < MAX_POOL_SIZE then
 			PoolSize += 1
 			ConnectionPool[PoolSize] = Conn
 		end
@@ -683,6 +714,49 @@ function Module.wrap<Signature>(RobloxSignal: RBXScriptSignal): Signal<Signature
 	end)
 	signal.Proxy = conn
 	return signal
+end
+
+function Module.any<Signature>(...: Signal<Signature>): Signal<Signature>
+	local combined = Module.new() :: any
+	local inputs = { ... }
+	local conns = {}
+	for i, sig in ipairs(inputs) do
+		conns[i] = (sig :: any):Connect(function(...)
+			combined:Fire(...)
+		end)
+	end
+	local innerDestroy = combined.Destroy
+	combined.Destroy = function(self)
+		for _, c in ipairs(conns) do c:Disconnect() end
+		innerDestroy(self)
+	end
+	return combined
+end
+
+function Module.all<Signature>(...: Signal<Signature>): Signal<Signature>
+	local combined = Module.new() :: any
+	local inputs = { ... }
+	local n = #inputs
+	local fired = {}
+	local firedCount = 0
+	local conns = {}
+	for i, sig in ipairs(inputs) do
+		conns[i] = (sig :: any):Connect(function(...)
+			if not fired[i] then
+				fired[i] = true
+				firedCount += 1
+			end
+			if firedCount == n then
+				combined:Fire(...)
+			end
+		end)
+	end
+	local innerDestroy = combined.Destroy
+	combined.Destroy = function(self)
+		for _, c in ipairs(conns) do c:Disconnect() end
+		innerDestroy(self)
+	end
+	return combined
 end
 
 return setmetatable(Module, {
