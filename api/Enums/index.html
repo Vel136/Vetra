@@ -46,8 +46,8 @@ than a silent wrong value or a validation error at `:Build()` time.
 If an enum value is ever renamed, every reference site produces an error
 rather than silently passing the wrong value.
 :::"><link data-rh="true" rel="canonical" href="https://vel136.github.io/Vetra/api/Enums"><link data-rh="true" rel="alternate" href="https://vel136.github.io/Vetra/api/Enums" hreflang="en"><link data-rh="true" rel="alternate" href="https://vel136.github.io/Vetra/api/Enums" hreflang="x-default"><link rel="stylesheet" href="/Vetra/assets/css/styles.f0e219d2.css">
-<script src="/Vetra/assets/js/runtime~main.6000ad5b.js" defer="defer"></script>
-<script src="/Vetra/assets/js/main.27e49a8f.js" defer="defer"></script>
+<script src="/Vetra/assets/js/runtime~main.6908c342.js" defer="defer"></script>
+<script src="/Vetra/assets/js/main.12f39e36.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,t("light"))}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/Vetra/"><b class="navbar__title text--truncate">Vetra</b></a><a class="navbar__item navbar__link" href="/Vetra/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/Vetra/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Vel136/Vetra" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/Vetra/api/Vetra">Core</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/Vetra/api/BehaviorBuilder">Configuration</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/Vetra/api/VetraNet">Network</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/Vetra/api/TypeDefinitions">Types</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/TypeDefinitions">​Type​Definitions</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/Vetra/api/Enums">​Enums</a></li></ul></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Enums</span></h1><div class="luaClassTags_EipM"></div><div>
@@ -107,7 +107,7 @@ rather than silently passing the wrong value.
     <span class="token punctuation">:</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
     <span class="token punctuation">:</span><span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 </code></pre>
-<p><strong>Analytic models</strong> — mathematically defined drag curves:</p>
+<p><strong>Analytic models</strong>, mathematically defined drag curves:</p>
 <table>
   <thead>
     <tr>
@@ -120,7 +120,7 @@ rather than silently passing the wrong value.
     <tr>
       <td><code>Quadratic</code></td>
       <td><code>1</code></td>
-      <td>Deceleration ∝ speed² — default; most accurate for subsonic bullets</td>
+      <td>Deceleration ∝ speed², default; most accurate for subsonic bullets</td>
     </tr>
     <tr>
       <td><code>Linear</code></td>
@@ -130,14 +130,14 @@ rather than silently passing the wrong value.
     <tr>
       <td><code>Exponential</code></td>
       <td><code>3</code></td>
-      <td>Deceleration ∝ eˢᵖᵉᵉᵈ — exotic high-drag shapes</td>
+      <td>Deceleration ∝ eˢᵖᵉᵉᵈ, exotic high-drag shapes</td>
     </tr>
   </tbody>
 </table>
 <p>
-  <strong>G-series empirical models</strong> — Mach-indexed Cd lookup tables derived from
+  <strong>G-series empirical models</strong>, Mach-indexed Cd lookup tables derived from
   ballistic reference projectiles. The <code>DragCoefficient</code> field acts as a scalar
-  multiplier on top of the table value — <code>1.0</code> is physically accurate, lower
+  multiplier on top of the table value, <code>1.0</code> is physically accurate, lower
   values give a more arcade feel:
 </p>
 <table>
@@ -152,47 +152,47 @@ rather than silently passing the wrong value.
     <tr>
       <td><code>G1</code></td>
       <td><code>4</code></td>
-      <td>Flat-base spitzer — general-purpose standard</td>
+      <td>Flat-base spitzer, general-purpose standard</td>
     </tr>
     <tr>
       <td><code>G2</code></td>
       <td><code>5</code></td>
-      <td>Aberdeen J projectile — large-calibre / atypical shapes</td>
+      <td>Aberdeen J projectile, large-calibre / atypical shapes</td>
     </tr>
     <tr>
       <td><code>G3</code></td>
       <td><code>6</code></td>
-      <td>Finnish reference projectile — rarely used in practice</td>
+      <td>Finnish reference projectile, rarely used in practice</td>
     </tr>
     <tr>
       <td><code>G4</code></td>
       <td><code>7</code></td>
-      <td>Seldom-used reference — included for completeness</td>
+      <td>Seldom-used reference, included for completeness</td>
     </tr>
     <tr>
       <td><code>G5</code></td>
       <td><code>8</code></td>
-      <td>Boat-tail spitzer — mid-range rifles</td>
+      <td>Boat-tail spitzer, mid-range rifles</td>
     </tr>
     <tr>
       <td><code>G6</code></td>
       <td><code>9</code></td>
-      <td>Semi-spitzer flat-base — shotgun slugs / blunt rounds</td>
+      <td>Semi-spitzer flat-base, shotgun slugs / blunt rounds</td>
     </tr>
     <tr>
       <td><code>G7</code></td>
       <td><code>10</code></td>
-      <td>Long boat-tail — modern long-range / sniper standard</td>
+      <td>Long boat-tail, modern long-range / sniper standard</td>
     </tr>
     <tr>
       <td><code>G8</code></td>
       <td><code>11</code></td>
-      <td>Flat-base semi-spitzer — hollow points / pistols</td>
+      <td>Flat-base semi-spitzer, hollow points / pistols</td>
     </tr>
     <tr>
       <td><code>GL</code></td>
       <td><code>12</code></td>
-      <td>Lead round ball — cannons / muskets / buckshot</td>
+      <td>Lead round ball, cannons / muskets / buckshot</td>
     </tr>
   </tbody>
 </table>
@@ -238,7 +238,7 @@ rather than silently passing the wrong value.
 </div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="TerminateReason"><code style="text-decoration:none">TerminateReason</code><a href="#TerminateReason" class="hash-link" aria-label="Direct link to TerminateReason" title="Direct link to TerminateReason">​</a></h3><span class="docTag__6UZ" style="border-color:#218c74;color:#218c74">enum</span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/Enums.lua#L137"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Enums<!-- -->.<!-- -->TerminateReason<!-- -->:<!-- --> </code> <code class="purple_ieR2">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS">string</code><code class="purple_ieR2">}</code></div><div>
 <p>
   Reason strings passed to <code>OnPreTermination</code> signal handlers. Compare
-  against these rather than hardcoding raw strings — if a value is ever
+  against these rather than hardcoding raw strings, if a value is ever
   renamed, every reference site produces a detectable nil rather than silently
   passing the wrong string.
 </p>
@@ -246,12 +246,12 @@ rather than silently passing the wrong value.
 
 Signals<span class="token punctuation">.</span>OnPreTermination<span class="token punctuation">:</span><span class="token function">Connect</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>context<span class="token punctuation">,</span> reason<span class="token punctuation">,</span> mutate<span class="token punctuation">)</span>
     <span class="token keyword">if</span> reason <span class="token operator">==</span> Vetra<span class="token punctuation">.</span>Enums<span class="token punctuation">.</span>TerminateReason<span class="token punctuation">.</span>Hit <span class="token keyword">then</span>
-        <span class="token comment">-- bullet struck a surface — optionally cancel termination</span>
+        <span class="token comment">-- bullet struck a surface, optionally cancel termination</span>
         <span class="token keyword">if</span> context<span class="token punctuation">.</span>UserData<span class="token punctuation">.</span>HasShield <span class="token keyword">then</span>
             <span class="token function">mutate</span><span class="token punctuation">(</span><span class="token keyword">true</span><span class="token punctuation">,</span> <span class="token keyword">nil</span><span class="token punctuation">)</span>  <span class="token comment">-- cancelled</span>
         <span class="token keyword">end</span>
     <span class="token keyword">elseif</span> reason <span class="token operator">==</span> Vetra<span class="token punctuation">.</span>Enums<span class="token punctuation">.</span>TerminateReason<span class="token punctuation">.</span>CornerTrap <span class="token keyword">then</span>
-        <span class="token comment">-- corner-trap detection triggered — termination cannot be cancelled</span>
+        <span class="token comment">-- corner-trap detection triggered, termination cannot be cancelled</span>
     <span class="token keyword">end</span>
 <span class="token keyword">end</span><span class="token punctuation">)</span>
 </code></pre>
@@ -353,16 +353,16 @@ Signals<span class="token punctuation">.</span>OnPreTermination<span class="toke
 <p><strong>Choosing a mode</strong></p>
 <ul>
   <li>
-    <code>ClientAuthoritative</code> — standard player-fired weapons. The client fires,
+    <code>ClientAuthoritative</code>, standard player-fired weapons. The client fires,
     the server validates origin, rate, and behavior, then replicates to all.
   </li>
   <li>
-    <code>ServerAuthority</code> — server-controlled projectiles such as NPC attacks,
+    <code>ServerAuthority</code>, server-controlled projectiles such as NPC attacks,
     environmental hazards, or scripted events. No client request is ever
     accepted. Call <code>Net:Fire()</code> from server code only.
   </li>
   <li>
-    <code>SharedAuthority</code> — mixed scenarios where both player weapons and
+    <code>SharedAuthority</code>, mixed scenarios where both player weapons and
     server-spawned projectiles share the same VetraNet handle and behavior
     registry. Player requests go through the full validation pipeline;
     server calls bypass it.
@@ -394,7 +394,7 @@ Signals<span class="token punctuation">.</span>OnPreTermination<span class="toke
     &quot;properties&quot;: [
         {
             &quot;name&quot;: &quot;DragModel&quot;,
-            &quot;desc&quot;: &quot;Integer identifiers for the drag model used to compute aerodynamic\ndeceleration each `DragSegmentInterval` seconds.\n\nStored as integers rather than strings so the physics hot path uses integer\ncomparison rather than string comparison. `BehaviorBuilder.DragModel` is a\ndirect re-export of this table.\n\nPass values from this table to `:Drag():Model()` and\n`:SpeedProfiles():Supersonic():DragModel()`.\n\n```lua\nlocal Behavior = BehaviorBuilder.new()\n    :Drag()\n        :Coefficient(0.003)\n        :Model(BehaviorBuilder.DragModel.G7)\n    :Done()\n    :Build()\n```\n\n**Analytic models** — mathematically defined drag curves:\n\n| Key | Value | Description |\n|-----|-------|-------------|\n| `Quadratic` | `1` | Deceleration ∝ speed² — default; most accurate for subsonic bullets |\n| `Linear` | `2` | Deceleration ∝ speed |\n| `Exponential` | `3` | Deceleration ∝ eˢᵖᵉᵉᵈ — exotic high-drag shapes |\n\n**G-series empirical models** — Mach-indexed Cd lookup tables derived from\nballistic reference projectiles. The `DragCoefficient` field acts as a scalar\nmultiplier on top of the table value — `1.0` is physically accurate, lower\nvalues give a more arcade feel:\n\n| Key | Value | Description |\n|-----|-------|-------------|\n| `G1` | `4` | Flat-base spitzer — general-purpose standard |\n| `G2` | `5` | Aberdeen J projectile — large-calibre / atypical shapes |\n| `G3` | `6` | Finnish reference projectile — rarely used in practice |\n| `G4` | `7` | Seldom-used reference — included for completeness |\n| `G5` | `8` | Boat-tail spitzer — mid-range rifles |\n| `G6` | `9` | Semi-spitzer flat-base — shotgun slugs / blunt rounds |\n| `G7` | `10` | Long boat-tail — modern long-range / sniper standard |\n| `G8` | `11` | Flat-base semi-spitzer — hollow points / pistols |\n| `GL` | `12` | Lead round ball — cannons / muskets / buckshot |\n\n**User-supplied:**\n\n| Key | Value | Description |\n|-----|-------|-------------|\n| `Custom` | `13` | Requires `CustomMachTable = { {mach, cd}, ... }` on the behavior |\n\n:::tip Choosing a model\nFor most modern rifles and pistols, `G7` or `G8` respectively are the most\nphysically accurate choices. `Quadratic` is the default and is sufficient\nfor gameplay-tuned weapons where exact ballistic fidelity isn&#x27;t required.\n`GL` gives a distinctly heavy, arcing feel suited to cannons or muskets.\n:::&quot;,
+            &quot;desc&quot;: &quot;Integer identifiers for the drag model used to compute aerodynamic\ndeceleration each `DragSegmentInterval` seconds.\n\nStored as integers rather than strings so the physics hot path uses integer\ncomparison rather than string comparison. `BehaviorBuilder.DragModel` is a\ndirect re-export of this table.\n\nPass values from this table to `:Drag():Model()` and\n`:SpeedProfiles():Supersonic():DragModel()`.\n\n```lua\nlocal Behavior = BehaviorBuilder.new()\n    :Drag()\n        :Coefficient(0.003)\n        :Model(BehaviorBuilder.DragModel.G7)\n    :Done()\n    :Build()\n```\n\n**Analytic models**, mathematically defined drag curves:\n\n| Key | Value | Description |\n|-----|-------|-------------|\n| `Quadratic` | `1` | Deceleration ∝ speed², default; most accurate for subsonic bullets |\n| `Linear` | `2` | Deceleration ∝ speed |\n| `Exponential` | `3` | Deceleration ∝ eˢᵖᵉᵉᵈ, exotic high-drag shapes |\n\n**G-series empirical models**, Mach-indexed Cd lookup tables derived from\nballistic reference projectiles. The `DragCoefficient` field acts as a scalar\nmultiplier on top of the table value, `1.0` is physically accurate, lower\nvalues give a more arcade feel:\n\n| Key | Value | Description |\n|-----|-------|-------------|\n| `G1` | `4` | Flat-base spitzer, general-purpose standard |\n| `G2` | `5` | Aberdeen J projectile, large-calibre / atypical shapes |\n| `G3` | `6` | Finnish reference projectile, rarely used in practice |\n| `G4` | `7` | Seldom-used reference, included for completeness |\n| `G5` | `8` | Boat-tail spitzer, mid-range rifles |\n| `G6` | `9` | Semi-spitzer flat-base, shotgun slugs / blunt rounds |\n| `G7` | `10` | Long boat-tail, modern long-range / sniper standard |\n| `G8` | `11` | Flat-base semi-spitzer, hollow points / pistols |\n| `GL` | `12` | Lead round ball, cannons / muskets / buckshot |\n\n**User-supplied:**\n\n| Key | Value | Description |\n|-----|-------|-------------|\n| `Custom` | `13` | Requires `CustomMachTable = { {mach, cd}, ... }` on the behavior |\n\n:::tip Choosing a model\nFor most modern rifles and pistols, `G7` or `G8` respectively are the most\nphysically accurate choices. `Quadratic` is the default and is sufficient\nfor gameplay-tuned weapons where exact ballistic fidelity isn&#x27;t required.\n`GL` gives a distinctly heavy, arcing feel suited to cannons or muskets.\n:::&quot;,
             &quot;lua_type&quot;: &quot;{ [string]: number }&quot;,
             &quot;tags&quot;: [
                 &quot;enum&quot;
@@ -406,7 +406,7 @@ Signals<span class="token punctuation">.</span>OnPreTermination<span class="toke
         },
         {
             &quot;name&quot;: &quot;TerminateReason&quot;,
-            &quot;desc&quot;: &quot;Reason strings passed to `OnPreTermination` signal handlers. Compare\nagainst these rather than hardcoding raw strings — if a value is ever\nrenamed, every reference site produces a detectable nil rather than silently\npassing the wrong string.\n\n```lua\nlocal Signals = Solver:GetSignals()\n\nSignals.OnPreTermination:Connect(function(context, reason, mutate)\n    if reason == Vetra.Enums.TerminateReason.Hit then\n        -- bullet struck a surface — optionally cancel termination\n        if context.UserData.HasShield then\n            mutate(true, nil)  -- cancelled\n        end\n    elseif reason == Vetra.Enums.TerminateReason.CornerTrap then\n        -- corner-trap detection triggered — termination cannot be cancelled\n    end\nend)\n```\n\n| Key | Value | When fired |\n|-----|-------|------------|\n| `Hit` | `\&quot;hit\&quot;` | Bullet struck a surface and was not pierced or bounced |\n| `Distance` | `\&quot;distance\&quot;` | `MaxDistance` was reached |\n| `Speed` | `\&quot;speed\&quot;` | Speed dropped below `MinSpeed` or exceeded `MaxSpeed` |\n| `CornerTrap` | `\&quot;corner_trap\&quot;` | Corner-trap detection terminated the cast |\n| `Manual` | `\&quot;manual\&quot;` | `VetraCast:Terminate()` was called, or the solver was destroyed |\n\n:::caution CornerTrap cannot be cancelled\n`OnPreTermination` with `reason = TerminateReason.CornerTrap` fires the\nmutate callback, but cancelling a corner-trap termination has no effect —\nthe bullet is force-terminated regardless. The callback fires for\nobservability only.\n:::&quot;,
+            &quot;desc&quot;: &quot;Reason strings passed to `OnPreTermination` signal handlers. Compare\nagainst these rather than hardcoding raw strings, if a value is ever\nrenamed, every reference site produces a detectable nil rather than silently\npassing the wrong string.\n\n```lua\nlocal Signals = Solver:GetSignals()\n\nSignals.OnPreTermination:Connect(function(context, reason, mutate)\n    if reason == Vetra.Enums.TerminateReason.Hit then\n        -- bullet struck a surface, optionally cancel termination\n        if context.UserData.HasShield then\n            mutate(true, nil)  -- cancelled\n        end\n    elseif reason == Vetra.Enums.TerminateReason.CornerTrap then\n        -- corner-trap detection triggered, termination cannot be cancelled\n    end\nend)\n```\n\n| Key | Value | When fired |\n|-----|-------|------------|\n| `Hit` | `\&quot;hit\&quot;` | Bullet struck a surface and was not pierced or bounced |\n| `Distance` | `\&quot;distance\&quot;` | `MaxDistance` was reached |\n| `Speed` | `\&quot;speed\&quot;` | Speed dropped below `MinSpeed` or exceeded `MaxSpeed` |\n| `CornerTrap` | `\&quot;corner_trap\&quot;` | Corner-trap detection terminated the cast |\n| `Manual` | `\&quot;manual\&quot;` | `VetraCast:Terminate()` was called, or the solver was destroyed |\n\n:::caution CornerTrap cannot be cancelled\n`OnPreTermination` with `reason = TerminateReason.CornerTrap` fires the\nmutate callback, but cancelling a corner-trap termination has no effect —\nthe bullet is force-terminated regardless. The callback fires for\nobservability only.\n:::&quot;,
             &quot;lua_type&quot;: &quot;{ [string]: string }&quot;,
             &quot;tags&quot;: [
                 &quot;enum&quot;
@@ -418,7 +418,7 @@ Signals<span class="token punctuation">.</span>OnPreTermination<span class="toke
         },
         {
             &quot;name&quot;: &quot;NetworkMode&quot;,
-            &quot;desc&quot;: &quot;Authority mode for a VetraNet instance. Controls which side may call\n`:Fire()` to initiate a bullet. Pass a value from this table to the\n`Mode` field of [TypeDefinitions.NetworkConfig] when constructing a\n[VetraNet] handle.\n\n```lua\nlocal Net = Vetra.VetraNet.new(ServerSolver, SharedRegistry, {\n    Mode = Vetra.Enums.NetworkMode.ServerAuthority,\n})\n```\n\n| Key | Value | Who may fire |\n|-----|-------|--------------|\n| `ClientAuthoritative` | `\&quot;ClientAuthoritative\&quot;` | Client sends fire requests; server validates and replicates. **(Default)** |\n| `ServerAuthority` | `\&quot;ServerAuthority\&quot;` | Only server code may call `:Fire()`. Client fire requests are silently dropped. |\n| `SharedAuthority` | `\&quot;SharedAuthority\&quot;` | Both client and server may initiate bullets. Client requests are validated as normal; server fires bypass validation. |\n\n**Choosing a mode**\n\n- `ClientAuthoritative` — standard player-fired weapons. The client fires,\n  the server validates origin, rate, and behavior, then replicates to all.\n- `ServerAuthority` — server-controlled projectiles such as NPC attacks,\n  environmental hazards, or scripted events. No client request is ever\n  accepted. Call `Net:Fire()` from server code only.\n- `SharedAuthority` — mixed scenarios where both player weapons and\n  server-spawned projectiles share the same VetraNet handle and behavior\n  registry. Player requests go through the full validation pipeline;\n  server calls bypass it.\n\n:::caution Default is ClientAuthoritative\nIf `Mode` is omitted from `NetworkConfig`, VetraNet defaults to\n`ClientAuthoritative`. Explicitly set `Mode = NetworkMode.ServerAuthority`\nfor any handle where clients should never be permitted to fire.\n:::&quot;,
+            &quot;desc&quot;: &quot;Authority mode for a VetraNet instance. Controls which side may call\n`:Fire()` to initiate a bullet. Pass a value from this table to the\n`Mode` field of [TypeDefinitions.NetworkConfig] when constructing a\n[VetraNet] handle.\n\n```lua\nlocal Net = Vetra.VetraNet.new(ServerSolver, SharedRegistry, {\n    Mode = Vetra.Enums.NetworkMode.ServerAuthority,\n})\n```\n\n| Key | Value | Who may fire |\n|-----|-------|--------------|\n| `ClientAuthoritative` | `\&quot;ClientAuthoritative\&quot;` | Client sends fire requests; server validates and replicates. **(Default)** |\n| `ServerAuthority` | `\&quot;ServerAuthority\&quot;` | Only server code may call `:Fire()`. Client fire requests are silently dropped. |\n| `SharedAuthority` | `\&quot;SharedAuthority\&quot;` | Both client and server may initiate bullets. Client requests are validated as normal; server fires bypass validation. |\n\n**Choosing a mode**\n\n- `ClientAuthoritative`, standard player-fired weapons. The client fires,\n  the server validates origin, rate, and behavior, then replicates to all.\n- `ServerAuthority`, server-controlled projectiles such as NPC attacks,\n  environmental hazards, or scripted events. No client request is ever\n  accepted. Call `Net:Fire()` from server code only.\n- `SharedAuthority`, mixed scenarios where both player weapons and\n  server-spawned projectiles share the same VetraNet handle and behavior\n  registry. Player requests go through the full validation pipeline;\n  server calls bypass it.\n\n:::caution Default is ClientAuthoritative\nIf `Mode` is omitted from `NetworkConfig`, VetraNet defaults to\n`ClientAuthoritative`. Explicitly set `Mode = NetworkMode.ServerAuthority`\nfor any handle where clients should never be permitted to fire.\n:::&quot;,
             &quot;lua_type&quot;: &quot;{ [string]: string }&quot;,
             &quot;tags&quot;: [
                 &quot;enum&quot;

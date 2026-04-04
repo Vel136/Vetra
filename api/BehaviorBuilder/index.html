@@ -50,8 +50,8 @@ local Behavior = BehaviorBuilder.new()
 | `:Trajectory()` | Provider |
 | `:LOD()` | Distance |
 | `:SixDOF()` | Enabled, LiftCoefficientSlope, PitchingMomentSlope, PitchDampingCoeff, RollDampingCoeff, AoADragFactor, ReferenceArea, ReferenceLength, AirDensity, MomentOfInertia, SpinMOI, MaxAngularSpeed, InitialOrientation, InitialAngularVelocity, CLAlphaMachTable, CmAlphaMachTable, CmqMachTable, ClpMachTable |
-| `:BatchTravel()` | Root-level boolean toggle — no sub-builder |
-| `:Hitscan()` | Root-level boolean toggle — no sub-builder |
+| `:BatchTravel()` | Root-level boolean toggle, no sub-builder |
+| `:Hitscan()` | Root-level boolean toggle, no sub-builder |
 | `:Clone()` | Returns an independent copy of this builder |
 | `:Impose(other)` | Copies only the explicitly-set fields from `other` onto self |
 | `:Merge(a, b, ...)` | Clone + impose multiple modifiers, returns new builder |
@@ -79,10 +79,10 @@ and gyroscopic precession.
 
 | Field | Why required |
 |-------|-------------|
-| `BulletMass` (via `:Physics()`) | Converts aerodynamic force vectors into acceleration — F = ma |
-| `ReferenceArea` | Cross-sectional area in studs² — scales all aero forces |
-| `ReferenceLength` | Caliber/diameter in studs — scales pitching moment and damping |
-| `MomentOfInertia` | Transverse MOI — governs pitch/yaw angular response |
+| `BulletMass` (via `:Physics()`) | Converts aerodynamic force vectors into acceleration, F = ma |
+| `ReferenceArea` | Cross-sectional area in studs², scales all aero forces |
+| `ReferenceLength` | Caliber/diameter in studs, scales pitching moment and damping |
+| `MomentOfInertia` | Transverse MOI, governs pitch/yaw angular response |
 
 Minimal example:
 
@@ -112,8 +112,8 @@ here and add `AoADragFactor`, `RollDampingCoeff`, and spin fields as needed.
 :::
 
 :::tip 6DOF + gyroscopic precession
-Gyroscopic precession — the bullet nose tracing a slow cone around the
-velocity vector — requires both a non-zero `SpinMOI` and a non-zero spin.
+Gyroscopic precession, the bullet nose tracing a slow cone around the
+velocity vector, requires both a non-zero `SpinMOI` and a non-zero spin.
 Seed spin via `:Magnus():SpinVector()` or `:SixDOF():InitialAngularVelocity()`.
 
 ```lua
@@ -132,23 +132,23 @@ where `H = SpinMOI · spinRate`. A larger `SpinMOI` → slower precession;
 a smaller one → faster cone.
 :::
 
-:::tip 6DOF — tuning guide
-**Static stability** — set `PitchingMomentSlope` negative (e.g. `-0.5`).
+:::tip 6DOF, tuning guide
+**Static stability**, set `PitchingMomentSlope` negative (e.g. `-0.5`).
 This applies a restoring torque whenever the nose deviates from velocity,
 keeping the bullet pointing forward. More negative = stiffer.
 
-**Damping** — set `PitchDampingCoeff` (e.g. `0.02`) to kill wobble.
+**Damping**, set `PitchDampingCoeff` (e.g. `0.02`) to kill wobble.
 Without damping, aerodynamic torques cause permanent coning. Start at
 `0.01`–`0.05` and increase until the bullet settles within a few frames.
 
-**Lift** — `LiftCoefficientSlope` (dCL/dα) scales the Magnus-like lift
+**Lift**, `LiftCoefficientSlope` (dCL/dα) scales the Magnus-like lift
 force proportional to AoA. Typical range `1.0`–`4.0`. Set to `0` to
 disable lift entirely and model drag-only nose attitude.
 
-**AoA-dependent drag** — `AoADragFactor` multiplies drag by `1 + k·sin²(AoA)`.
+**AoA-dependent drag**, `AoADragFactor` multiplies drag by `1 + k·sin²(AoA)`.
 `3.0` triples drag when broadside. Useful for tumbling or unstable projectiles.
 
-**Roll decay** — `RollDampingCoeff` slowly kills axial spin. Without it,
+**Roll decay**, `RollDampingCoeff` slowly kills axial spin. Without it,
 a bullet with `SpinVector` set maintains its spin forever.
 
 **Reference values for a typical rifle bullet:**
@@ -159,7 +159,7 @@ a bullet with `SpinVector` set maintains its spin forever.
 - `BulletMass` ≈ `0.004`–`0.015`
 :::
 
-Builders are **reusable** — call `:Build()` multiple times to produce
+Builders are **reusable**, call `:Build()` multiple times to produce
 independent frozen tables from the same configuration.
 
 ```lua
@@ -175,7 +175,7 @@ as a starting point, then chain additional overrides before calling `:Build()`.
 
 :::caution Build-time validation
 All validation is deferred to `:Build()` rather than per-setter. This means
-the builder never throws mid-chain — all errors are collected and reported
+the builder never throws mid-chain, all errors are collected and reported
 together when `:Build()` is called. `:Build()` returns `nil` if any error
 is found.
 :::"><meta data-rh="true" property="og:description" content="Fluent typed configuration builder for [Vetra].
@@ -225,8 +225,8 @@ local Behavior = BehaviorBuilder.new()
 | `:Trajectory()` | Provider |
 | `:LOD()` | Distance |
 | `:SixDOF()` | Enabled, LiftCoefficientSlope, PitchingMomentSlope, PitchDampingCoeff, RollDampingCoeff, AoADragFactor, ReferenceArea, ReferenceLength, AirDensity, MomentOfInertia, SpinMOI, MaxAngularSpeed, InitialOrientation, InitialAngularVelocity, CLAlphaMachTable, CmAlphaMachTable, CmqMachTable, ClpMachTable |
-| `:BatchTravel()` | Root-level boolean toggle — no sub-builder |
-| `:Hitscan()` | Root-level boolean toggle — no sub-builder |
+| `:BatchTravel()` | Root-level boolean toggle, no sub-builder |
+| `:Hitscan()` | Root-level boolean toggle, no sub-builder |
 | `:Clone()` | Returns an independent copy of this builder |
 | `:Impose(other)` | Copies only the explicitly-set fields from `other` onto self |
 | `:Merge(a, b, ...)` | Clone + impose multiple modifiers, returns new builder |
@@ -254,10 +254,10 @@ and gyroscopic precession.
 
 | Field | Why required |
 |-------|-------------|
-| `BulletMass` (via `:Physics()`) | Converts aerodynamic force vectors into acceleration — F = ma |
-| `ReferenceArea` | Cross-sectional area in studs² — scales all aero forces |
-| `ReferenceLength` | Caliber/diameter in studs — scales pitching moment and damping |
-| `MomentOfInertia` | Transverse MOI — governs pitch/yaw angular response |
+| `BulletMass` (via `:Physics()`) | Converts aerodynamic force vectors into acceleration, F = ma |
+| `ReferenceArea` | Cross-sectional area in studs², scales all aero forces |
+| `ReferenceLength` | Caliber/diameter in studs, scales pitching moment and damping |
+| `MomentOfInertia` | Transverse MOI, governs pitch/yaw angular response |
 
 Minimal example:
 
@@ -287,8 +287,8 @@ here and add `AoADragFactor`, `RollDampingCoeff`, and spin fields as needed.
 :::
 
 :::tip 6DOF + gyroscopic precession
-Gyroscopic precession — the bullet nose tracing a slow cone around the
-velocity vector — requires both a non-zero `SpinMOI` and a non-zero spin.
+Gyroscopic precession, the bullet nose tracing a slow cone around the
+velocity vector, requires both a non-zero `SpinMOI` and a non-zero spin.
 Seed spin via `:Magnus():SpinVector()` or `:SixDOF():InitialAngularVelocity()`.
 
 ```lua
@@ -307,23 +307,23 @@ where `H = SpinMOI · spinRate`. A larger `SpinMOI` → slower precession;
 a smaller one → faster cone.
 :::
 
-:::tip 6DOF — tuning guide
-**Static stability** — set `PitchingMomentSlope` negative (e.g. `-0.5`).
+:::tip 6DOF, tuning guide
+**Static stability**, set `PitchingMomentSlope` negative (e.g. `-0.5`).
 This applies a restoring torque whenever the nose deviates from velocity,
 keeping the bullet pointing forward. More negative = stiffer.
 
-**Damping** — set `PitchDampingCoeff` (e.g. `0.02`) to kill wobble.
+**Damping**, set `PitchDampingCoeff` (e.g. `0.02`) to kill wobble.
 Without damping, aerodynamic torques cause permanent coning. Start at
 `0.01`–`0.05` and increase until the bullet settles within a few frames.
 
-**Lift** — `LiftCoefficientSlope` (dCL/dα) scales the Magnus-like lift
+**Lift**, `LiftCoefficientSlope` (dCL/dα) scales the Magnus-like lift
 force proportional to AoA. Typical range `1.0`–`4.0`. Set to `0` to
 disable lift entirely and model drag-only nose attitude.
 
-**AoA-dependent drag** — `AoADragFactor` multiplies drag by `1 + k·sin²(AoA)`.
+**AoA-dependent drag**, `AoADragFactor` multiplies drag by `1 + k·sin²(AoA)`.
 `3.0` triples drag when broadside. Useful for tumbling or unstable projectiles.
 
-**Roll decay** — `RollDampingCoeff` slowly kills axial spin. Without it,
+**Roll decay**, `RollDampingCoeff` slowly kills axial spin. Without it,
 a bullet with `SpinVector` set maintains its spin forever.
 
 **Reference values for a typical rifle bullet:**
@@ -334,7 +334,7 @@ a bullet with `SpinVector` set maintains its spin forever.
 - `BulletMass` ≈ `0.004`–`0.015`
 :::
 
-Builders are **reusable** — call `:Build()` multiple times to produce
+Builders are **reusable**, call `:Build()` multiple times to produce
 independent frozen tables from the same configuration.
 
 ```lua
@@ -350,12 +350,12 @@ as a starting point, then chain additional overrides before calling `:Build()`.
 
 :::caution Build-time validation
 All validation is deferred to `:Build()` rather than per-setter. This means
-the builder never throws mid-chain — all errors are collected and reported
+the builder never throws mid-chain, all errors are collected and reported
 together when `:Build()` is called. `:Build()` returns `nil` if any error
 is found.
 :::"><link data-rh="true" rel="canonical" href="https://vel136.github.io/Vetra/api/BehaviorBuilder"><link data-rh="true" rel="alternate" href="https://vel136.github.io/Vetra/api/BehaviorBuilder" hreflang="en"><link data-rh="true" rel="alternate" href="https://vel136.github.io/Vetra/api/BehaviorBuilder" hreflang="x-default"><link rel="stylesheet" href="/Vetra/assets/css/styles.f0e219d2.css">
-<script src="/Vetra/assets/js/runtime~main.6000ad5b.js" defer="defer"></script>
-<script src="/Vetra/assets/js/main.27e49a8f.js" defer="defer"></script>
+<script src="/Vetra/assets/js/runtime~main.6908c342.js" defer="defer"></script>
+<script src="/Vetra/assets/js/main.12f39e36.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,t("light"))}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/Vetra/"><b class="navbar__title text--truncate">Vetra</b></a><a class="navbar__item navbar__link" href="/Vetra/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/Vetra/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Vel136/Vetra" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/Vetra/api/Vetra">Core</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/Vetra/api/BehaviorBuilder">Configuration</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/Vetra/api/BehaviorBuilder">​Behavior​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/PhysicsBuilder">​Physics​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/HomingBuilder">​Homing​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/PierceBuilder">​Pierce​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/BounceBuilder">​Bounce​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/HighFidelityBuilder">​High​Fidelity​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/CornerTrapBuilder">​Corner​Trap​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/CosmeticBuilder">​Cosmetic​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/DebugBuilder">​Debug​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/DragBuilder">​Drag​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/WindBuilder">​Wind​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/MagnusBuilder">​Magnus​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/GyroDriftBuilder">​Gyro​Drift​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/TumbleBuilder">​Tumble​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/FragmentationBuilder">​Fragmentation​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/SpeedProfilesBuilder">​Speed​Profiles​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/SpeedProfileBuilder">​Speed​Profile​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/SixDOFBuilder">​Six​D​O​F​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/TrajectoryBuilder">​Trajectory​Builder</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Vetra/api/LODBuilder">​L​O​D​Builder</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/Vetra/api/VetraNet">Network</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/Vetra/api/TypeDefinitions">Types</a></div></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Behavior</span><span style="display:inline-block">Builder</span></h1><div class="luaClassTags_EipM"></div><div>
@@ -465,11 +465,11 @@ is found.
     </tr>
     <tr>
       <td><code>:BatchTravel()</code></td>
-      <td>Root-level boolean toggle — no sub-builder</td>
+      <td>Root-level boolean toggle, no sub-builder</td>
     </tr>
     <tr>
       <td><code>:Hitscan()</code></td>
-      <td>Root-level boolean toggle — no sub-builder</td>
+      <td>Root-level boolean toggle, no sub-builder</td>
     </tr>
     <tr>
       <td><code>:Clone()</code></td>
@@ -544,19 +544,19 @@ is found.
             <tbody>
               <tr>
                 <td><code>BulletMass</code> (via <code>:Physics()</code>)</td>
-                <td>Converts aerodynamic force vectors into acceleration — F = ma</td>
+                <td>Converts aerodynamic force vectors into acceleration, F = ma</td>
               </tr>
               <tr>
                 <td><code>ReferenceArea</code></td>
-                <td>Cross-sectional area in studs² — scales all aero forces</td>
+                <td>Cross-sectional area in studs², scales all aero forces</td>
               </tr>
               <tr>
                 <td><code>ReferenceLength</code></td>
-                <td>Caliber/diameter in studs — scales pitching moment and damping</td>
+                <td>Caliber/diameter in studs, scales pitching moment and damping</td>
               </tr>
               <tr>
                 <td><code>MomentOfInertia</code></td>
-                <td>Transverse MOI — governs pitch/yaw angular response</td>
+                <td>Transverse MOI, governs pitch/yaw angular response</td>
               </tr>
             </tbody>
           </table>
@@ -601,8 +601,8 @@ is found.
         </div>
         <div class="admonition-content">
           <p>
-            Gyroscopic precession — the bullet nose tracing a slow cone around the
-            velocity vector — requires both a non-zero <code>SpinMOI</code> and a non-zero spin.
+            Gyroscopic precession, the bullet nose tracing a slow cone around the
+            velocity vector, requires both a non-zero <code>SpinMOI</code> and a non-zero spin.
             Seed spin via <code>:Magnus():SpinVector()</code> or <code>:SixDOF():InitialAngularVelocity()</code>.
           </p>
           <pre class="language-lua"><code class="language-lua"><span class="token punctuation">:</span><span class="token function">Magnus</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
@@ -632,30 +632,30 @@ is found.
         <div class="admonition-heading">
           <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="16" viewBox="0 0 12 16">
                 <path d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path>
-              </svg></span><span class="admonition-title">6DOF — tuning guide</span></h5>
+              </svg></span><span class="admonition-title">6DOF, tuning guide</span></h5>
         </div>
         <div class="admonition-content">
           <p>
-            <strong>Static stability</strong> — set <code>PitchingMomentSlope</code> negative (e.g. <code>-0.5</code>).
+            <strong>Static stability</strong>, set <code>PitchingMomentSlope</code> negative (e.g. <code>-0.5</code>).
             This applies a restoring torque whenever the nose deviates from velocity,
             keeping the bullet pointing forward. More negative = stiffer.
           </p>
           <p>
-            <strong>Damping</strong> — set <code>PitchDampingCoeff</code> (e.g. <code>0.02</code>) to kill wobble.
+            <strong>Damping</strong>, set <code>PitchDampingCoeff</code> (e.g. <code>0.02</code>) to kill wobble.
             Without damping, aerodynamic torques cause permanent coning. Start at
             <code>0.01</code>–<code>0.05</code> and increase until the bullet settles within a few frames.
           </p>
           <p>
-            <strong>Lift</strong> — <code>LiftCoefficientSlope</code> (dCL/dα) scales the Magnus-like lift
+            <strong>Lift</strong>, <code>LiftCoefficientSlope</code> (dCL/dα) scales the Magnus-like lift
             force proportional to AoA. Typical range <code>1.0</code>–<code>4.0</code>. Set to <code>0</code> to
             disable lift entirely and model drag-only nose attitude.
           </p>
           <p>
-            <strong>AoA-dependent drag</strong> — <code>AoADragFactor</code> multiplies drag by <code>1 + k·sin²(AoA)</code>.
+            <strong>AoA-dependent drag</strong>, <code>AoADragFactor</code> multiplies drag by <code>1 + k·sin²(AoA)</code>.
             <code>3.0</code> triples drag when broadside. Useful for tumbling or unstable projectiles.
           </p>
           <p>
-            <strong>Roll decay</strong> — <code>RollDampingCoeff</code> slowly kills axial spin. Without it,
+            <strong>Roll decay</strong>, <code>RollDampingCoeff</code> slowly kills axial spin. Without it,
             a bullet with <code>SpinVector</code> set maintains its spin forever.
           </p>
           <p><strong>Reference values for a typical rifle bullet:</strong></p>
@@ -672,7 +672,7 @@ is found.
   
 
 <p>
-  Builders are <strong>reusable</strong> — call <code>:Build()</code> multiple times to produce
+  Builders are <strong>reusable</strong>, call <code>:Build()</code> multiple times to produce
   independent frozen tables from the same configuration.
 </p>
 <pre class="language-lua"><code class="language-lua"><span class="token comment">-- Produce two independent frozen tables from the same builder</span>
@@ -712,7 +712,7 @@ is found.
         <div class="admonition-content">
           <p>
             All validation is deferred to <code>:Build()</code> rather than per-setter. This means
-            the builder never throws mid-chain — all errors are collected and reported
+            the builder never throws mid-chain, all errors are collected and reported
             together when <code>:Build()</code> is called. <code>:Build()</code> returns <code>nil</code> if any error
             is found.
           </p>
@@ -725,7 +725,7 @@ is found.
 <p>Creates a new builder pre-populated with all default values.</p>
 <p>
   Each call allocates a fresh <code>RaycastParams</code> and reads <code>workspace.Gravity</code>
-  at construction time — builders never share mutable references with
+  at construction time, builders never share mutable references with
   each other.
 </p>
 </div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Inherit"><code style="text-decoration:none">Inherit</code><a href="#Inherit" class="hash-link" aria-label="Direct link to Inherit" title="Direct link to Inherit">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L612"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->.</code><code class="green_DgR4">Inherit</code><code>(</code><div class="inset_uKQm"><div><code>frozen<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/TypeDefinitions#VetraBehavior">VetraBehavior</a></code><span class="inlineDescription_G7Er">-- <span>
@@ -738,13 +738,13 @@ is found.
   table, with every field marked dirty.
 </p>
 <p>
-  This is the inverse of <code>:Build()</code> — it lets you round-trip a frozen behavior
+  This is the inverse of <code>:Build()</code>, it lets you round-trip a frozen behavior
   back into a mutable builder so you can tweak individual fields without
   reconstructing from scratch.
 </p>
 <p>
   Because every field is marked dirty, the resulting builder works correctly
-  with <code>:Impose()</code> and <code>:Merge()</code> — all its values are treated as intentional
+  with <code>:Impose()</code> and <code>:Merge()</code>, all its values are treated as intentional
   rather than defaults.
 </p>
 <pre class="language-lua"><code class="language-lua"><span class="token comment">-- Received from a registry, config file, or another module</span>
@@ -757,7 +757,7 @@ is found.
 </code></pre>
 <p>
   Note that <code>BehaviorBuilder.Inherit</code> is a <strong>static constructor</strong>, not an
-  instance method — call it on the class, not on a builder instance.
+  instance method, call it on the class, not on a builder instance.
 </p>
 </div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Sniper"><code style="text-decoration:none">Sniper</code><a href="#Sniper" class="hash-link" aria-label="Direct link to Sniper" title="Direct link to Sniper">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L683"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->.</code><code class="green_DgR4">Sniper</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
 <p>
@@ -950,7 +950,7 @@ is found.
         <div class="admonition-content">
           <p>
             <code>MagnusCoefficient</code> is highly sensitive. Start at <code>0.00005</code> and increase
-            incrementally — <code>0.0001</code> already produces visible drift at typical speeds.
+            incrementally, <code>0.0001</code> already produces visible drift at typical speeds.
           </p>
         </div>
       </div>
@@ -1048,7 +1048,7 @@ is found.
 <p>
   All fields are ignored unless <code>:Enabled(true)</code> is set. When enabled,
   <code>BulletMass</code>, <code>ReferenceArea</code>, <code>ReferenceLength</code>, and <code>MomentOfInertia</code>
-  are required — <code>:Build()</code> returns <code>nil</code> if any are zero.
+  are required, <code>:Build()</code> returns <code>nil</code> if any are zero.
 </p>
 
   
@@ -1064,7 +1064,7 @@ is found.
           <p>
             Set mass via <code>:Physics():BulletMass()</code> before enabling 6DOF.
             The solver converts aerodynamic force vectors into accelerations using
-            <code>a = F / m</code> — zero mass causes a division by zero.
+            <code>a = F / m</code>, zero mass causes a division by zero.
           </p>
         </div>
       </div>
@@ -1080,7 +1080,7 @@ is found.
 </div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Hitscan"><code style="text-decoration:none">Hitscan</code><a href="#Hitscan" class="hash-link" aria-label="Direct link to Hitscan" title="Direct link to Hitscan">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L485"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Hitscan</code><code>(</code><code>value<!-- -->: </code><code class="blue_P4bS">boolean</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/BehaviorBuilder">BehaviorBuilder</a></code></div><div>
 <p>Enables or disables hitscan mode for this cast.</p>
 <p>
-  When <code>true</code>, the entire bullet path — pierce, bounce, and all signals —
+  When <code>true</code>, the entire bullet path, pierce, bounce, and all signals —
   resolves synchronously inside <a href="/Vetra/api/Vetra#Fire">Vetra:Fire</a>. No per-frame physics stepping
   occurs: gravity, drag, Magnus, and all kinematic forces are skipped.
   The bullet travels in straight lines between bounces.
@@ -1136,12 +1136,12 @@ is found.
 </span></span></div><div>
 <p>Copies only the <strong>explicitly-set</strong> fields from <code>other</code> onto this builder.</p>
 <p>
-  "Explicitly set" means a field whose setter was called on <code>other</code> — tracked
+  "Explicitly set" means a field whose setter was called on <code>other</code>, tracked
   internally via dirty flags. Fields sitting at their defaults on <code>other</code> are
   never copied, so a modifier cannot silently clobber values it never touched.
 </p>
 <p>Returns <code>self</code> for chaining. Does not mutate <code>other</code>.</p>
-<pre class="language-lua"><code class="language-lua"><span class="token comment">-- Define a reusable modifier — only two fields are dirty.</span>
+<pre class="language-lua"><code class="language-lua"><span class="token comment">-- Define a reusable modifier, only two fields are dirty.</span>
 <span class="token keyword">local</span> APMod <span class="token operator">=</span> BehaviorBuilder<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
     <span class="token punctuation">:</span><span class="token function">Pierce</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
         <span class="token punctuation">:</span><span class="token function">Max</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span>
@@ -1152,7 +1152,7 @@ is found.
 <span class="token keyword">local</span> APSniper <span class="token operator">=</span> BehaviorBuilder<span class="token punctuation">.</span><span class="token function">Sniper</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span><span class="token function">Clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span><span class="token function">Impose</span><span class="token punctuation">(</span>APMod<span class="token punctuation">)</span><span class="token punctuation">:</span><span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 <span class="token keyword">local</span> APPistol <span class="token operator">=</span> BehaviorBuilder<span class="token punctuation">.</span><span class="token function">Pistol</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span><span class="token function">Clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span><span class="token function">Impose</span><span class="token punctuation">(</span>APMod<span class="token punctuation">)</span><span class="token punctuation">:</span><span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 </code></pre>
-<p>Modifiers stack cleanly — each <code>:Impose()</code> only writes its own dirty set:</p>
+<p>Modifiers stack cleanly, each <code>:Impose()</code> only writes its own dirty set:</p>
 <pre class="language-lua"><code class="language-lua"><span class="token keyword">local</span> HollowMod <span class="token operator">=</span> BehaviorBuilder<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
     <span class="token punctuation">:</span><span class="token function">Tumble</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span><span class="token function">OnPierce</span><span class="token punctuation">(</span><span class="token keyword">true</span><span class="token punctuation">)</span><span class="token punctuation">:</span><span class="token function">DragMultiplier</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">:</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 
@@ -1174,7 +1174,7 @@ is found.
         <div class="admonition-content">
           <p>
             If two modifiers set the same field, the second <code>:Impose()</code> wins.
-            There is no merge strategy for conflicting values — ordering is the
+            There is no merge strategy for conflicting values, ordering is the
             caller's responsibility.
           </p>
         </div>
@@ -1217,7 +1217,7 @@ is found.
   chain. If <code>condition</code> is falsy the builder is returned unchanged.
 </p>
 <p>
-  The callback receives <code>self</code> and is called for its side effects — it should
+  The callback receives <code>self</code> and is called for its side effects, it should
   not return a value.
 </p>
 <pre class="language-lua"><code class="language-lua"><span class="token keyword">local</span> Behavior <span class="token operator">=</span> BehaviorBuilder<span class="token punctuation">.</span><span class="token function">Sniper</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
@@ -1234,7 +1234,7 @@ is found.
 <span class="token keyword">local</span> Behavior <span class="token operator">=</span> b<span class="token punctuation">:</span><span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 </code></pre>
 <p>
-  Both are equivalent. <code>:When()</code> is purely ergonomic — it keeps construction
+  Both are equivalent. <code>:When()</code> is purely ergonomic, it keeps construction
   as a single coherent declaration.
 </p>
 </div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Build"><code style="text-decoration:none">Build</code><a href="#Build" class="hash-link" aria-label="Direct link to Build" title="Direct link to Build">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/Vel136/Vetra/blob/master/docs/BehaviorBuilder.lua#L667"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>BehaviorBuilder<!-- -->:</code><code class="green_DgR4">Build</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Vetra/api/TypeDefinitions#VetraBehavior">VetraBehavior?</a></code><span class="inlineDescription_G7Er">-- <span>
@@ -1249,7 +1249,7 @@ is found.
   is reported at once. Returns <code>nil</code> if any validation error is found.
 </p>
 <p>
-  Does <strong>not</strong> consume the builder — call <code>:Build()</code> multiple times to
+  Does <strong>not</strong> consume the builder, call <code>:Build()</code> multiple times to
   produce independent frozen tables from the same configuration.
 </p>
 <pre class="language-lua"><code class="language-lua"><span class="token keyword">local</span> RifleBehavior  <span class="token operator">=</span> RifleBuilder<span class="token punctuation">:</span><span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
@@ -1259,7 +1259,7 @@ is found.
     &quot;functions&quot;: [
         {
             &quot;name&quot;: &quot;new&quot;,
-            &quot;desc&quot;: &quot;Creates a new builder pre-populated with all default values.\n\nEach call allocates a fresh `RaycastParams` and reads `workspace.Gravity`\nat construction time — builders never share mutable references with\neach other.&quot;,
+            &quot;desc&quot;: &quot;Creates a new builder pre-populated with all default values.\n\nEach call allocates a fresh `RaycastParams` and reads `workspace.Gravity`\nat construction time, builders never share mutable references with\neach other.&quot;,
             &quot;params&quot;: [],
             &quot;returns&quot;: [
                 {
@@ -1435,7 +1435,7 @@ is found.
         },
         {
             &quot;name&quot;: &quot;Magnus&quot;,
-            &quot;desc&quot;: &quot;Opens the Magnus configuration group.\n\nAvailable setters: `:SpinVector()`, `:Coefficient()`, `:SpinDecayRate()`.\nCall `:Done()` to return.\n\n:::caution Start small\n`MagnusCoefficient` is highly sensitive. Start at `0.00005` and increase\nincrementally — `0.0001` already produces visible drift at typical speeds.\n:::&quot;,
+            &quot;desc&quot;: &quot;Opens the Magnus configuration group.\n\nAvailable setters: `:SpinVector()`, `:Coefficient()`, `:SpinDecayRate()`.\nCall `:Done()` to return.\n\n:::caution Start small\n`MagnusCoefficient` is highly sensitive. Start at `0.00005` and increase\nincrementally, `0.0001` already produces visible drift at typical speeds.\n:::&quot;,
             &quot;params&quot;: [],
             &quot;returns&quot;: [
                 {
@@ -1547,7 +1547,7 @@ is found.
         },
         {
             &quot;name&quot;: &quot;SixDOF&quot;,
-            &quot;desc&quot;: &quot;Opens the SixDOF configuration group.\n\nAvailable setters: `:Enabled()`, `:LiftCoefficientSlope()`,\n`:PitchingMomentSlope()`, `:PitchDampingCoeff()`, `:RollDampingCoeff()`,\n`:AoADragFactor()`, `:ReferenceArea()`, `:ReferenceLength()`,\n`:AirDensity()`, `:MomentOfInertia()`, `:SpinMOI()`,\n`:MaxAngularSpeed()`, `:InitialOrientation()`, `:InitialAngularVelocity()`.\nCall `:Done()` to return.\n\nAll fields are ignored unless `:Enabled(true)` is set. When enabled,\n`BulletMass`, `ReferenceArea`, `ReferenceLength`, and `MomentOfInertia`\nare required — `:Build()` returns `nil` if any are zero.\n\n:::caution BulletMass required\nSet mass via `:Physics():BulletMass()` before enabling 6DOF.\nThe solver converts aerodynamic force vectors into accelerations using\n`a = F / m` — zero mass causes a division by zero.\n:::&quot;,
+            &quot;desc&quot;: &quot;Opens the SixDOF configuration group.\n\nAvailable setters: `:Enabled()`, `:LiftCoefficientSlope()`,\n`:PitchingMomentSlope()`, `:PitchDampingCoeff()`, `:RollDampingCoeff()`,\n`:AoADragFactor()`, `:ReferenceArea()`, `:ReferenceLength()`,\n`:AirDensity()`, `:MomentOfInertia()`, `:SpinMOI()`,\n`:MaxAngularSpeed()`, `:InitialOrientation()`, `:InitialAngularVelocity()`.\nCall `:Done()` to return.\n\nAll fields are ignored unless `:Enabled(true)` is set. When enabled,\n`BulletMass`, `ReferenceArea`, `ReferenceLength`, and `MomentOfInertia`\nare required, `:Build()` returns `nil` if any are zero.\n\n:::caution BulletMass required\nSet mass via `:Physics():BulletMass()` before enabling 6DOF.\nThe solver converts aerodynamic force vectors into accelerations using\n`a = F / m`, zero mass causes a division by zero.\n:::&quot;,
             &quot;params&quot;: [],
             &quot;returns&quot;: [
                 {
@@ -1585,7 +1585,7 @@ is found.
         },
         {
             &quot;name&quot;: &quot;Hitscan&quot;,
-            &quot;desc&quot;: &quot;Enables or disables hitscan mode for this cast.\n\nWhen `true`, the entire bullet path — pierce, bounce, and all signals —\nresolves synchronously inside [Vetra:Fire]. No per-frame physics stepping\noccurs: gravity, drag, Magnus, and all kinematic forces are skipped.\nThe bullet travels in straight lines between bounces.\n\nAll signals (`OnHit`, `OnBounce`, `OnPierce`, `OnTerminated`) fire in the\nnormal order before `Fire()` returns.\n\nDefault: `false`\n\n:::caution No physics forces\n`DragCoefficient`, `SpinVector`, `MagnusCoefficient`, gravity, and homing\ndo not apply to hitscan casts. For fast projectiles that still need physics,\nincrease speed and reduce `MaxDistance` instead.\n:::&quot;,
+            &quot;desc&quot;: &quot;Enables or disables hitscan mode for this cast.\n\nWhen `true`, the entire bullet path, pierce, bounce, and all signals —\nresolves synchronously inside [Vetra:Fire]. No per-frame physics stepping\noccurs: gravity, drag, Magnus, and all kinematic forces are skipped.\nThe bullet travels in straight lines between bounces.\n\nAll signals (`OnHit`, `OnBounce`, `OnPierce`, `OnTerminated`) fire in the\nnormal order before `Fire()` returns.\n\nDefault: `false`\n\n:::caution No physics forces\n`DragCoefficient`, `SpinVector`, `MagnusCoefficient`, gravity, and homing\ndo not apply to hitscan casts. For fast projectiles that still need physics,\nincrease speed and reduce `MaxDistance` instead.\n:::&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;value&quot;,
@@ -1623,7 +1623,7 @@ is found.
         },
         {
             &quot;name&quot;: &quot;Impose&quot;,
-            &quot;desc&quot;: &quot;Copies only the **explicitly-set** fields from `other` onto this builder.\n\n\&quot;Explicitly set\&quot; means a field whose setter was called on `other` — tracked\ninternally via dirty flags. Fields sitting at their defaults on `other` are\nnever copied, so a modifier cannot silently clobber values it never touched.\n\nReturns `self` for chaining. Does not mutate `other`.\n\n```lua\n-- Define a reusable modifier — only two fields are dirty.\nlocal APMod = BehaviorBuilder.new()\n    :Pierce()\n        :Max(5)\n        :SpeedRetention(0.95)\n    :Done()\n\n-- Apply to any base without touching MaxDistance, HighFidelity, etc.\nlocal APSniper = BehaviorBuilder.Sniper():Clone():Impose(APMod):Build()\nlocal APPistol = BehaviorBuilder.Pistol():Clone():Impose(APMod):Build()\n```\n\nModifiers stack cleanly — each `:Impose()` only writes its own dirty set:\n\n```lua\nlocal HollowMod = BehaviorBuilder.new()\n    :Tumble():OnPierce(true):DragMultiplier(5):Done()\n\nlocal APHollow = BehaviorBuilder.Sniper():Clone()\n    :Impose(APMod)\n    :Impose(HollowMod)\n    :Build()\n```\n\n:::caution Last write wins\nIf two modifiers set the same field, the second `:Impose()` wins.\nThere is no merge strategy for conflicting values — ordering is the\ncaller&#x27;s responsibility.\n:::&quot;,
+            &quot;desc&quot;: &quot;Copies only the **explicitly-set** fields from `other` onto this builder.\n\n\&quot;Explicitly set\&quot; means a field whose setter was called on `other`, tracked\ninternally via dirty flags. Fields sitting at their defaults on `other` are\nnever copied, so a modifier cannot silently clobber values it never touched.\n\nReturns `self` for chaining. Does not mutate `other`.\n\n```lua\n-- Define a reusable modifier, only two fields are dirty.\nlocal APMod = BehaviorBuilder.new()\n    :Pierce()\n        :Max(5)\n        :SpeedRetention(0.95)\n    :Done()\n\n-- Apply to any base without touching MaxDistance, HighFidelity, etc.\nlocal APSniper = BehaviorBuilder.Sniper():Clone():Impose(APMod):Build()\nlocal APPistol = BehaviorBuilder.Pistol():Clone():Impose(APMod):Build()\n```\n\nModifiers stack cleanly, each `:Impose()` only writes its own dirty set:\n\n```lua\nlocal HollowMod = BehaviorBuilder.new()\n    :Tumble():OnPierce(true):DragMultiplier(5):Done()\n\nlocal APHollow = BehaviorBuilder.Sniper():Clone()\n    :Impose(APMod)\n    :Impose(HollowMod)\n    :Build()\n```\n\n:::caution Last write wins\nIf two modifiers set the same field, the second `:Impose()` wins.\nThere is no merge strategy for conflicting values, ordering is the\ncaller&#x27;s responsibility.\n:::&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;other&quot;,
@@ -1667,7 +1667,7 @@ is found.
         },
         {
             &quot;name&quot;: &quot;Inherit&quot;,
-            &quot;desc&quot;: &quot;Creates a new `BehaviorBuilder` pre-populated from a frozen `VetraBehavior`\ntable, with every field marked dirty.\n\nThis is the inverse of `:Build()` — it lets you round-trip a frozen behavior\nback into a mutable builder so you can tweak individual fields without\nreconstructing from scratch.\n\nBecause every field is marked dirty, the resulting builder works correctly\nwith `:Impose()` and `:Merge()` — all its values are treated as intentional\nrather than defaults.\n\n```lua\n-- Received from a registry, config file, or another module\nlocal existing = BehaviorRegistry:Get(\&quot;Sniper\&quot;)\n\n-- Round-trip: unfreeze → tweak → refreeze\nlocal tweaked = BehaviorBuilder.Inherit(existing)\n    :Physics():MaxDistance(2000):Done()\n    :Build()\n```\n\nNote that `BehaviorBuilder.Inherit` is a **static constructor**, not an\ninstance method — call it on the class, not on a builder instance.&quot;,
+            &quot;desc&quot;: &quot;Creates a new `BehaviorBuilder` pre-populated from a frozen `VetraBehavior`\ntable, with every field marked dirty.\n\nThis is the inverse of `:Build()`, it lets you round-trip a frozen behavior\nback into a mutable builder so you can tweak individual fields without\nreconstructing from scratch.\n\nBecause every field is marked dirty, the resulting builder works correctly\nwith `:Impose()` and `:Merge()`, all its values are treated as intentional\nrather than defaults.\n\n```lua\n-- Received from a registry, config file, or another module\nlocal existing = BehaviorRegistry:Get(\&quot;Sniper\&quot;)\n\n-- Round-trip: unfreeze → tweak → refreeze\nlocal tweaked = BehaviorBuilder.Inherit(existing)\n    :Physics():MaxDistance(2000):Done()\n    :Build()\n```\n\nNote that `BehaviorBuilder.Inherit` is a **static constructor**, not an\ninstance method, call it on the class, not on a builder instance.&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;frozen&quot;,
@@ -1689,7 +1689,7 @@ is found.
         },
         {
             &quot;name&quot;: &quot;When&quot;,
-            &quot;desc&quot;: &quot;Conditionally applies a block of builder calls without breaking the fluent\nchain. If `condition` is falsy the builder is returned unchanged.\n\nThe callback receives `self` and is called for its side effects — it should\nnot return a value.\n\n```lua\nlocal Behavior = BehaviorBuilder.Sniper()\n    :When(isRaining,   function(b) b:Wind():Response(1.5):Done() end)\n    :When(isHeavyAmmo, function(b) b:Pierce():Max(5):Done() end)\n    :When(isDebug,     function(b) b:Debug():Visualize(true):Done() end)\n    :Build()\n```\n\nWithout `:When()`, each conditional would require breaking out of the chain:\n\n```lua\nlocal b = BehaviorBuilder.Sniper()\nif isRaining   then b:Wind():Response(1.5):Done() end\nif isHeavyAmmo then b:Pierce():Max(5):Done() end\nif isDebug     then b:Debug():Visualize(true):Done() end\nlocal Behavior = b:Build()\n```\n\nBoth are equivalent. `:When()` is purely ergonomic — it keeps construction\nas a single coherent declaration.&quot;,
+            &quot;desc&quot;: &quot;Conditionally applies a block of builder calls without breaking the fluent\nchain. If `condition` is falsy the builder is returned unchanged.\n\nThe callback receives `self` and is called for its side effects, it should\nnot return a value.\n\n```lua\nlocal Behavior = BehaviorBuilder.Sniper()\n    :When(isRaining,   function(b) b:Wind():Response(1.5):Done() end)\n    :When(isHeavyAmmo, function(b) b:Pierce():Max(5):Done() end)\n    :When(isDebug,     function(b) b:Debug():Visualize(true):Done() end)\n    :Build()\n```\n\nWithout `:When()`, each conditional would require breaking out of the chain:\n\n```lua\nlocal b = BehaviorBuilder.Sniper()\nif isRaining   then b:Wind():Response(1.5):Done() end\nif isHeavyAmmo then b:Pierce():Max(5):Done() end\nif isDebug     then b:Debug():Visualize(true):Done() end\nlocal Behavior = b:Build()\n```\n\nBoth are equivalent. `:When()` is purely ergonomic, it keeps construction\nas a single coherent declaration.&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;condition&quot;,
@@ -1716,7 +1716,7 @@ is found.
         },
         {
             &quot;name&quot;: &quot;Build&quot;,
-            &quot;desc&quot;: &quot;Validates the current configuration and returns a frozen `VetraBehavior`\ntable ready to pass to [Vetra:Fire].\n\nAll validation errors are collected and logged together so every problem\nis reported at once. Returns `nil` if any validation error is found.\n\nDoes **not** consume the builder — call `:Build()` multiple times to\nproduce independent frozen tables from the same configuration.\n\n```lua\nlocal RifleBehavior  = RifleBuilder:Build()\nlocal SniperBehavior = RifleBuilder:Physics():MaxDistance(2000):Done():Build()\n```&quot;,
+            &quot;desc&quot;: &quot;Validates the current configuration and returns a frozen `VetraBehavior`\ntable ready to pass to [Vetra:Fire].\n\nAll validation errors are collected and logged together so every problem\nis reported at once. Returns `nil` if any validation error is found.\n\nDoes **not** consume the builder, call `:Build()` multiple times to\nproduce independent frozen tables from the same configuration.\n\n```lua\nlocal RifleBehavior  = RifleBuilder:Build()\nlocal SniperBehavior = RifleBuilder:Physics():MaxDistance(2000):Done():Build()\n```&quot;,
             &quot;params&quot;: [],
             &quot;returns&quot;: [
                 {
@@ -1782,7 +1782,7 @@ is found.
     &quot;properties&quot;: [],
     &quot;types&quot;: [],
     &quot;name&quot;: &quot;BehaviorBuilder&quot;,
-    &quot;desc&quot;: &quot;Fluent typed configuration builder for [Vetra].\n\nInstead of constructing raw behavior tables by hand, chain namespace\nmethods and call `:Build()` to produce a validated, frozen `VetraBehavior`.\n\n```lua\nlocal Behavior = BehaviorBuilder.new()\n    :Physics()\n        :MaxDistance(500)\n        :MinSpeed(5)\n    :Done()\n    :Bounce()\n        :Max(3)\n        :Restitution(0.7)\n        :Filter(function(context, result, vel)\n            return result.Instance:HasTag(\&quot;Bouncy\&quot;)\n        end)\n    :Done()\n    :Drag()\n        :Coefficient(0.003)\n        :Model(Vetra.Enums.DragModel.G7)\n    :Done()\n    :Build()\n```\n\n**Namespace overview:**\n\n| Method | Configures |\n|--------|------------|\n| `:Physics()` | MaxDistance, MaxSpeed, MinSpeed, Gravity, Acceleration, RaycastParams, CastFunction, BulletMass |\n| `:Homing()` | Filter, PositionProvider, Strength, MaxDuration, AcquisitionRadius |\n| `:Pierce()` | Filter, Max, SpeedThreshold, SpeedRetention, NormalBias, PenetrationDepth, PenetrationForce, ThicknessLimit |\n| `:Bounce()` | Filter, Max, SpeedThreshold, Restitution, MaterialRestitution, NormalPerturbation, ResetPierceOnBounce |\n| `:HighFidelity()` | SegmentSize, FrameBudget, AdaptiveScale, MinSegmentSize, MaxBouncesPerFrame |\n| `:CornerTrap()` | TimeThreshold, PositionHistorySize, DisplacementThreshold, EMAAlpha, EMAThreshold, MinProgressPerBounce |\n| `:Cosmetic()` | Template, Container, Provider |\n| `:Debug()` | Visualize |\n| `:Drag()` | Coefficient, Model, SegmentInterval, CustomMachTable |\n| `:Wind()` | Response |\n| `:Magnus()` | SpinVector, Coefficient, SpinDecayRate |\n| `:GyroDrift()` | Rate, Axis |\n| `:Tumble()` | SpeedThreshold, DragMultiplier, LateralStrength, OnPierce, RecoverySpeed |\n| `:Fragmentation()` | OnPierce, Count, Deviation |\n| `:SpeedProfiles()` | Thresholds, `:Supersonic()` → profile, `:Subsonic()` → profile |\n| `:Trajectory()` | Provider |\n| `:LOD()` | Distance |\n| `:SixDOF()` | Enabled, LiftCoefficientSlope, PitchingMomentSlope, PitchDampingCoeff, RollDampingCoeff, AoADragFactor, ReferenceArea, ReferenceLength, AirDensity, MomentOfInertia, SpinMOI, MaxAngularSpeed, InitialOrientation, InitialAngularVelocity, CLAlphaMachTable, CmAlphaMachTable, CmqMachTable, ClpMachTable |\n| `:BatchTravel()` | Root-level boolean toggle — no sub-builder |\n| `:Hitscan()` | Root-level boolean toggle — no sub-builder |\n| `:Clone()` | Returns an independent copy of this builder |\n| `:Impose(other)` | Copies only the explicitly-set fields from `other` onto self |\n| `:Merge(a, b, ...)` | Clone + impose multiple modifiers, returns new builder |\n| `:When(cond, fn)` | Conditionally apply a block without breaking the chain |\n| `BehaviorBuilder.Inherit(frozen)` | Create a builder from a frozen `VetraBehavior` table |\n\n:::tip DragModel enum\nUse `Vetra.Enums.DragModel` when passing a drag model to `:Drag():Model()`.\nA wrong integer is silently incorrect; an invalid enum key is a nil-index\nwarning immediately at the call site:\n\n```lua\n:Drag():Model(Vetra.Enums.DragModel.G7):Done()\n```\n\nSee [Enums.DragModel] for the full value table and descriptions.\n:::\n\n:::tip 6DOF quick-start\nEnable full six-degrees-of-freedom aerodynamics to give bullets real\npitch, yaw, and roll dynamics driven by lift, pitching moment, damping,\nand gyroscopic precession.\n\n**Minimum required fields when `:SixDOF():Enabled(true)`:**\n\n| Field | Why required |\n|-------|-------------|\n| `BulletMass` (via `:Physics()`) | Converts aerodynamic force vectors into acceleration — F = ma |\n| `ReferenceArea` | Cross-sectional area in studs² — scales all aero forces |\n| `ReferenceLength` | Caliber/diameter in studs — scales pitching moment and damping |\n| `MomentOfInertia` | Transverse MOI — governs pitch/yaw angular response |\n\nMinimal example:\n\n```lua\nlocal Behavior = BehaviorBuilder.new()\n    :Physics()\n        :BulletMass(0.01)\n        :MinSpeed(10)\n    :Done()\n    :Drag()\n        :Coefficient(0.003)\n    :Done()\n    :SixDOF()\n        :Enabled(true)\n        :ReferenceArea(0.008)\n        :ReferenceLength(0.05)\n        :MomentOfInertia(0.001)\n        :LiftCoefficientSlope(2.0)\n        :PitchingMomentSlope(-0.5)\n        :PitchDampingCoeff(0.02)\n    :Done()\n    :Build()\n```\n\nAll other 6DOF fields default to safe values (`0` or `false`). Start\nhere and add `AoADragFactor`, `RollDampingCoeff`, and spin fields as needed.\n:::\n\n:::tip 6DOF + gyroscopic precession\nGyroscopic precession — the bullet nose tracing a slow cone around the\nvelocity vector — requires both a non-zero `SpinMOI` and a non-zero spin.\nSeed spin via `:Magnus():SpinVector()` or `:SixDOF():InitialAngularVelocity()`.\n\n```lua\n:Magnus()\n    :SpinVector(Vector3.new(0, 0, 500))   -- 500 rad/s right-hand spin\n:Done()\n:SixDOF()\n    :Enabled(true)\n    :SpinMOI(0.0003)\n    -- ... other required fields\n:Done()\n```\n\nThe solver computes precession as `ω_prec = spinAxis × aeroTorque / H`\nwhere `H = SpinMOI · spinRate`. A larger `SpinMOI` → slower precession;\na smaller one → faster cone.\n:::\n\n:::tip 6DOF — tuning guide\n**Static stability** — set `PitchingMomentSlope` negative (e.g. `-0.5`).\nThis applies a restoring torque whenever the nose deviates from velocity,\nkeeping the bullet pointing forward. More negative = stiffer.\n\n**Damping** — set `PitchDampingCoeff` (e.g. `0.02`) to kill wobble.\nWithout damping, aerodynamic torques cause permanent coning. Start at\n`0.01`–`0.05` and increase until the bullet settles within a few frames.\n\n**Lift** — `LiftCoefficientSlope` (dCL/dα) scales the Magnus-like lift\nforce proportional to AoA. Typical range `1.0`–`4.0`. Set to `0` to\ndisable lift entirely and model drag-only nose attitude.\n\n**AoA-dependent drag** — `AoADragFactor` multiplies drag by `1 + k·sin²(AoA)`.\n`3.0` triples drag when broadside. Useful for tumbling or unstable projectiles.\n\n**Roll decay** — `RollDampingCoeff` slowly kills axial spin. Without it,\na bullet with `SpinVector` set maintains its spin forever.\n\n**Reference values for a typical rifle bullet:**\n- `ReferenceArea` ≈ `0.005`–`0.02` studs²\n- `ReferenceLength` ≈ `0.03`–`0.1` studs\n- `MomentOfInertia` ≈ `0.0005`–`0.005`\n- `SpinMOI` ≈ `0.0001`–`0.001`\n- `BulletMass` ≈ `0.004`–`0.015`\n:::\n\nBuilders are **reusable** — call `:Build()` multiple times to produce\nindependent frozen tables from the same configuration.\n\n```lua\n-- Produce two independent frozen tables from the same builder\nlocal RifleBehavior  = RifleBuilder:Build()\nlocal SniperBehavior = RifleBuilder:Physics():MaxDistance(2000):Done():Build()\n```\n\n:::tip Presets\nUse [BehaviorBuilder.Sniper], [BehaviorBuilder.Grenade], or [BehaviorBuilder.Pistol]\nas a starting point, then chain additional overrides before calling `:Build()`.\n:::\n\n:::caution Build-time validation\nAll validation is deferred to `:Build()` rather than per-setter. This means\nthe builder never throws mid-chain — all errors are collected and reported\ntogether when `:Build()` is called. `:Build()` returns `nil` if any error\nis found.\n:::&quot;,
+    &quot;desc&quot;: &quot;Fluent typed configuration builder for [Vetra].\n\nInstead of constructing raw behavior tables by hand, chain namespace\nmethods and call `:Build()` to produce a validated, frozen `VetraBehavior`.\n\n```lua\nlocal Behavior = BehaviorBuilder.new()\n    :Physics()\n        :MaxDistance(500)\n        :MinSpeed(5)\n    :Done()\n    :Bounce()\n        :Max(3)\n        :Restitution(0.7)\n        :Filter(function(context, result, vel)\n            return result.Instance:HasTag(\&quot;Bouncy\&quot;)\n        end)\n    :Done()\n    :Drag()\n        :Coefficient(0.003)\n        :Model(Vetra.Enums.DragModel.G7)\n    :Done()\n    :Build()\n```\n\n**Namespace overview:**\n\n| Method | Configures |\n|--------|------------|\n| `:Physics()` | MaxDistance, MaxSpeed, MinSpeed, Gravity, Acceleration, RaycastParams, CastFunction, BulletMass |\n| `:Homing()` | Filter, PositionProvider, Strength, MaxDuration, AcquisitionRadius |\n| `:Pierce()` | Filter, Max, SpeedThreshold, SpeedRetention, NormalBias, PenetrationDepth, PenetrationForce, ThicknessLimit |\n| `:Bounce()` | Filter, Max, SpeedThreshold, Restitution, MaterialRestitution, NormalPerturbation, ResetPierceOnBounce |\n| `:HighFidelity()` | SegmentSize, FrameBudget, AdaptiveScale, MinSegmentSize, MaxBouncesPerFrame |\n| `:CornerTrap()` | TimeThreshold, PositionHistorySize, DisplacementThreshold, EMAAlpha, EMAThreshold, MinProgressPerBounce |\n| `:Cosmetic()` | Template, Container, Provider |\n| `:Debug()` | Visualize |\n| `:Drag()` | Coefficient, Model, SegmentInterval, CustomMachTable |\n| `:Wind()` | Response |\n| `:Magnus()` | SpinVector, Coefficient, SpinDecayRate |\n| `:GyroDrift()` | Rate, Axis |\n| `:Tumble()` | SpeedThreshold, DragMultiplier, LateralStrength, OnPierce, RecoverySpeed |\n| `:Fragmentation()` | OnPierce, Count, Deviation |\n| `:SpeedProfiles()` | Thresholds, `:Supersonic()` → profile, `:Subsonic()` → profile |\n| `:Trajectory()` | Provider |\n| `:LOD()` | Distance |\n| `:SixDOF()` | Enabled, LiftCoefficientSlope, PitchingMomentSlope, PitchDampingCoeff, RollDampingCoeff, AoADragFactor, ReferenceArea, ReferenceLength, AirDensity, MomentOfInertia, SpinMOI, MaxAngularSpeed, InitialOrientation, InitialAngularVelocity, CLAlphaMachTable, CmAlphaMachTable, CmqMachTable, ClpMachTable |\n| `:BatchTravel()` | Root-level boolean toggle, no sub-builder |\n| `:Hitscan()` | Root-level boolean toggle, no sub-builder |\n| `:Clone()` | Returns an independent copy of this builder |\n| `:Impose(other)` | Copies only the explicitly-set fields from `other` onto self |\n| `:Merge(a, b, ...)` | Clone + impose multiple modifiers, returns new builder |\n| `:When(cond, fn)` | Conditionally apply a block without breaking the chain |\n| `BehaviorBuilder.Inherit(frozen)` | Create a builder from a frozen `VetraBehavior` table |\n\n:::tip DragModel enum\nUse `Vetra.Enums.DragModel` when passing a drag model to `:Drag():Model()`.\nA wrong integer is silently incorrect; an invalid enum key is a nil-index\nwarning immediately at the call site:\n\n```lua\n:Drag():Model(Vetra.Enums.DragModel.G7):Done()\n```\n\nSee [Enums.DragModel] for the full value table and descriptions.\n:::\n\n:::tip 6DOF quick-start\nEnable full six-degrees-of-freedom aerodynamics to give bullets real\npitch, yaw, and roll dynamics driven by lift, pitching moment, damping,\nand gyroscopic precession.\n\n**Minimum required fields when `:SixDOF():Enabled(true)`:**\n\n| Field | Why required |\n|-------|-------------|\n| `BulletMass` (via `:Physics()`) | Converts aerodynamic force vectors into acceleration, F = ma |\n| `ReferenceArea` | Cross-sectional area in studs², scales all aero forces |\n| `ReferenceLength` | Caliber/diameter in studs, scales pitching moment and damping |\n| `MomentOfInertia` | Transverse MOI, governs pitch/yaw angular response |\n\nMinimal example:\n\n```lua\nlocal Behavior = BehaviorBuilder.new()\n    :Physics()\n        :BulletMass(0.01)\n        :MinSpeed(10)\n    :Done()\n    :Drag()\n        :Coefficient(0.003)\n    :Done()\n    :SixDOF()\n        :Enabled(true)\n        :ReferenceArea(0.008)\n        :ReferenceLength(0.05)\n        :MomentOfInertia(0.001)\n        :LiftCoefficientSlope(2.0)\n        :PitchingMomentSlope(-0.5)\n        :PitchDampingCoeff(0.02)\n    :Done()\n    :Build()\n```\n\nAll other 6DOF fields default to safe values (`0` or `false`). Start\nhere and add `AoADragFactor`, `RollDampingCoeff`, and spin fields as needed.\n:::\n\n:::tip 6DOF + gyroscopic precession\nGyroscopic precession, the bullet nose tracing a slow cone around the\nvelocity vector, requires both a non-zero `SpinMOI` and a non-zero spin.\nSeed spin via `:Magnus():SpinVector()` or `:SixDOF():InitialAngularVelocity()`.\n\n```lua\n:Magnus()\n    :SpinVector(Vector3.new(0, 0, 500))   -- 500 rad/s right-hand spin\n:Done()\n:SixDOF()\n    :Enabled(true)\n    :SpinMOI(0.0003)\n    -- ... other required fields\n:Done()\n```\n\nThe solver computes precession as `ω_prec = spinAxis × aeroTorque / H`\nwhere `H = SpinMOI · spinRate`. A larger `SpinMOI` → slower precession;\na smaller one → faster cone.\n:::\n\n:::tip 6DOF, tuning guide\n**Static stability**, set `PitchingMomentSlope` negative (e.g. `-0.5`).\nThis applies a restoring torque whenever the nose deviates from velocity,\nkeeping the bullet pointing forward. More negative = stiffer.\n\n**Damping**, set `PitchDampingCoeff` (e.g. `0.02`) to kill wobble.\nWithout damping, aerodynamic torques cause permanent coning. Start at\n`0.01`–`0.05` and increase until the bullet settles within a few frames.\n\n**Lift**, `LiftCoefficientSlope` (dCL/dα) scales the Magnus-like lift\nforce proportional to AoA. Typical range `1.0`–`4.0`. Set to `0` to\ndisable lift entirely and model drag-only nose attitude.\n\n**AoA-dependent drag**, `AoADragFactor` multiplies drag by `1 + k·sin²(AoA)`.\n`3.0` triples drag when broadside. Useful for tumbling or unstable projectiles.\n\n**Roll decay**, `RollDampingCoeff` slowly kills axial spin. Without it,\na bullet with `SpinVector` set maintains its spin forever.\n\n**Reference values for a typical rifle bullet:**\n- `ReferenceArea` ≈ `0.005`–`0.02` studs²\n- `ReferenceLength` ≈ `0.03`–`0.1` studs\n- `MomentOfInertia` ≈ `0.0005`–`0.005`\n- `SpinMOI` ≈ `0.0001`–`0.001`\n- `BulletMass` ≈ `0.004`–`0.015`\n:::\n\nBuilders are **reusable**, call `:Build()` multiple times to produce\nindependent frozen tables from the same configuration.\n\n```lua\n-- Produce two independent frozen tables from the same builder\nlocal RifleBehavior  = RifleBuilder:Build()\nlocal SniperBehavior = RifleBuilder:Physics():MaxDistance(2000):Done():Build()\n```\n\n:::tip Presets\nUse [BehaviorBuilder.Sniper], [BehaviorBuilder.Grenade], or [BehaviorBuilder.Pistol]\nas a starting point, then chain additional overrides before calling `:Build()`.\n:::\n\n:::caution Build-time validation\nAll validation is deferred to `:Build()` rather than per-setter. This means\nthe builder never throws mid-chain, all errors are collected and reported\ntogether when `:Build()` is called. `:Build()` returns `nil` if any error\nis found.\n:::&quot;,
     &quot;source&quot;: {
         &quot;line&quot;: 181,
         &quot;path&quot;: &quot;docs/BehaviorBuilder.lua&quot;
