@@ -1,10 +1,10 @@
---[=[
+﻿--[=[
 	@class VetraNet
 
 	Full-stack network middleware for Vetra. Handles fire-request
 	serialization, server-side authority (rate limiting, origin validation,
 	behavior verification), authoritative bullet replication, and client-side
-	cosmetic management — all over a **single `RemoteEvent`**.
+	cosmetic management, all over a **single `RemoteEvent`**.
 
 	VetraNet is accessed via `Vetra.VetraNet`. It is environment-aware:
 	calling it on the server returns a handle with authority signals;
@@ -44,7 +44,7 @@
 
 	:::danger Registration order
 	Both server and client **must** register behaviors in the same order with
-	the same names. Fire payloads carry only a 2-byte u16 hash — if the hash
+	the same names. Fire payloads carry only a 2-byte u16 hash, if the hash
 	tables diverge, every fire request will be rejected as `RejectedUnknownBehavior`.
 	Enforce this by requiring the same shared registration module on both sides.
 	:::
@@ -97,7 +97,7 @@
 	| `CorrectionRate` | `number` | `8` | Lerp speed for drift correction (studs per second). |
 	| `LatencyBuffer` | `number` | `0` | Extra seconds to delay local cosmetic spawn. `0` = use measured RTT. |
 	| `ReplicateState` | `boolean` | `true` | Broadcast bullet state every Heartbeat to all clients. |
-	| `Mode` | `NetworkMode` | `"ClientAuthoritative"` | Authority mode — controls which side may call `:Fire()`. See [Enums.NetworkMode]. |
+	| `Mode` | `NetworkMode` | `"ClientAuthoritative"` | Authority mode, controls which side may call `:Fire()`. See [Enums.NetworkMode]. |
 
 	## NetworkMode
 
@@ -119,7 +119,7 @@
 	**`ServerAuthority`**
 
 	Only server code may initiate bullets by calling `Net:Fire()`. Any fire
-	request that arrives from a client is silently dropped — clients cannot
+	request that arrives from a client is silently dropped, clients cannot
 	spawn network bullets at all. Use this for NPC projectiles, environmental
 	hazards, or any weapon whose origin should be entirely server-controlled.
 
@@ -244,7 +244,7 @@ function VetraNet.new(
 -- ─── Server Methods ──────────────────────────────────────────────────────────
 
 --[=[
-	*(Server only — `ServerAuthority` and `SharedAuthority` modes)*
+	*(Server only, `ServerAuthority` and `SharedAuthority` modes)*
 
 	Fires a server-owned bullet and replicates it to all clients.
 	Bypasses all validation (rate limit, origin tolerance, behavior hash checks)
@@ -255,7 +255,7 @@ function VetraNet.new(
 
 	The caller creates a `BulletContext` with the desired fire parameters.
 	`UserData` and `RaycastParams` set on the context are forwarded to the
-	solver automatically — no separate call needed.
+	solver automatically, no separate call needed.
 
 	```lua
 	local Net = Vetra.VetraNet.new(ServerSolver, SharedRegistry, {
@@ -323,7 +323,7 @@ function VetraNet:Fire(Context: any, BehaviorName: string) end
 
 	Pass `nil` to clear the filter and revert to all-player broadcast (default).
 
-	The shooter's own fire echo is **never filtered** — the shooter always
+	The shooter's own fire echo is **never filtered**, the shooter always
 	receives confirmation of their own cast regardless of the predicate.
 
 	```lua
@@ -332,7 +332,7 @@ function VetraNet:Fire(Context: any, BehaviorName: string) end
 	    return player.Team == Teams.Blue
 	end)
 
-	-- Clear the filter — back to full broadcast
+	-- Clear the filter, back to full broadcast
 	Net:SetPlayerFilter(nil)
 	```
 
@@ -350,7 +350,7 @@ function VetraNet:SetPlayerFilter(Fn: ((player: Player) -> boolean)?) end
 
 	:::caution
 	Call this only when shutting down the game or a specific weapon system
-	entirely. Do not call on every player disconnect — VetraNet is designed
+	entirely. Do not call on every player disconnect, VetraNet is designed
 	to live for the duration of the server/client lifetime.
 	:::
 ]=]

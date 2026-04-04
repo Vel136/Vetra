@@ -1,4 +1,4 @@
---[=[
+﻿--[=[
 	@class BulletContext
 
 	The public-facing object that weapon code interacts with for every
@@ -83,8 +83,8 @@ local BulletContext = {}
 	for this bullet if the Behavior does not have its own `RaycastParams` set.
 
 	Priority order in [Vetra:Fire]:
-	1. `BulletContext.RaycastParams` — this field (highest priority).
-	2. `Behavior.RaycastParams` — if the user called `:RaycastParams()` on the BehaviorBuilder.
+	1. `BulletContext.RaycastParams`, this field (highest priority).
+	2. `Behavior.RaycastParams`, if the user called `:RaycastParams()` on the BehaviorBuilder.
 	3. Default empty `RaycastParams.new()`.
 
 	Useful when you share a single Behavior across many bullet types but need
@@ -124,7 +124,7 @@ local BulletContext = {}
 	@within BulletContext
 	@readonly
 
-	True accumulated path distance in studs — the sum of every frame
+	True accumulated path distance in studs, the sum of every frame
 	displacement since firing. This diverges from straight-line
 	`(Position - Origin).Magnitude` for bullets that bounce or follow
 	homing curves. See also [BulletContext:GetDistanceTraveled].
@@ -175,7 +175,7 @@ local BulletContext = {}
 	Creates a new BulletContext.
 
 	`Origin`, `Direction`, and `Speed` are required. `SolverData` is reserved
-	for internal solver use — do not supply it from weapon code.
+	for internal solver use, do not supply it from weapon code.
 
 	@param config BulletContextConfig
 	@return BulletContext
@@ -194,7 +194,7 @@ function BulletContext:IsAlive(): boolean end
 --[=[
 	Returns how many seconds this bullet has been simulated.
 
-	Tracks `SimulationTime` accumulated by the solver — not real-world clock
+	Tracks `SimulationTime` accumulated by the solver, not real-world clock
 	time. Does not advance while the cast is paused.
 
 	@return number -- Simulated age in seconds.

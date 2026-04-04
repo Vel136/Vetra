@@ -1,4 +1,4 @@
--- ─── PhysicsBuilder ──────────────────────────────────────────────────────────
+﻿-- ─── PhysicsBuilder ──────────────────────────────────────────────────────────
 
 --[=[
 	@class PhysicsBuilder
@@ -49,7 +49,7 @@ function PhysicsBuilder:MinSpeed(value: number): PhysicsBuilder end
 function PhysicsBuilder:Gravity(value: Vector3): PhysicsBuilder end
 
 --[=[
-	Extra constant acceleration layered on top of gravity — e.g. rocket thrust.
+	Extra constant acceleration layered on top of gravity, e.g. rocket thrust.
 
 	Default: `Vector3.zero`
 
@@ -61,10 +61,10 @@ function PhysicsBuilder:Acceleration(value: Vector3): PhysicsBuilder end
 --[=[
 	`RaycastParams` used for all raycasts during this cast's lifetime.
 
-	**Priority order** — [Vetra:Fire] resolves params using:
-	1. `BulletContext.RaycastParams` — per-bullet filter (highest priority).
-	2. `Behavior.RaycastParams` — this setter, if called.
-	3. Empty `RaycastParams.new()` — catch-all fallback.
+	**Priority order**, [Vetra:Fire] resolves params using:
+	1. `BulletContext.RaycastParams`, per-bullet filter (highest priority).
+	2. `Behavior.RaycastParams`, this setter, if called.
+	3. Empty `RaycastParams.new()`, catch-all fallback.
 
 	:::warning Overridden by BulletContext
 	If the `BulletContext` passed to [Vetra:Fire] has its own `RaycastParams`
@@ -72,7 +72,7 @@ function PhysicsBuilder:Acceleration(value: Vector3): PhysicsBuilder end
 	behavior-wide default when no per-bullet filter is provided.
 	:::
 
-	Default: `nil` (not set — defers to BulletContext or the fallback)
+	Default: `nil` (not set, defers to BulletContext or the fallback)
 
 	@param value RaycastParams
 	@return PhysicsBuilder
@@ -86,7 +86,7 @@ function PhysicsBuilder:RaycastParams(value: RaycastParams): PhysicsBuilder end
 	Signature: `(origin: Vector3, direction: Vector3, params: RaycastParams) -> RaycastResult?`
 
 	:::caution Serial solver only
-	Silently ignored by `Vetra.newParallel()` — functions cannot cross Actor
+	Silently ignored by `Vetra.newParallel()`, functions cannot cross Actor
 	boundaries via message serialization.
 	:::
 
@@ -456,13 +456,13 @@ function HighFidelityBuilder:Done(): BehaviorBuilder end
 	Call `:Done()` to return to the root [BehaviorBuilder].
 
 	Corner-trap detection terminates bullets stuck bouncing infinitely between
-	opposing surfaces. Four independent passes run on every bounce — any single
+	opposing surfaces. Four independent passes run on every bounce, any single
 	pass firing is sufficient to declare a trap:
 
-	- **Pass 1 — Temporal:** Two bounces within `CornerTimeThreshold` seconds.
-	- **Pass 2 — Velocity EMA:** Velocity direction EMA falls below `CornerEMAThreshold`.
-	- **Pass 3 — Spatial:** Successive bounce contact points within `CornerDisplacementThreshold` studs.
-	- **Pass 4 — Minimum progress:** Bullet fails to advance `CornerMinProgressPerBounce` studs from its first bounce contact.
+	- **Pass 1, Temporal:** Two bounces within `CornerTimeThreshold` seconds.
+	- **Pass 2, Velocity EMA:** Velocity direction EMA falls below `CornerEMAThreshold`.
+	- **Pass 3, Spatial:** Successive bounce contact points within `CornerDisplacementThreshold` studs.
+	- **Pass 4, Minimum progress:** Bullet fails to advance `CornerMinProgressPerBounce` studs from its first bounce contact.
 ]=]
 local CornerTrapBuilder = {}
 
@@ -591,7 +591,7 @@ function CosmeticBuilder:Provider(callback: (any) -> Instance?): CosmeticBuilder
 	when the cast terminates.
 
 	When `true` (default), the solver calls `:Destroy()` on the cosmetic object
-	at termination. Set to `false` to take ownership of cleanup — useful when
+	at termination. Set to `false` to take ownership of cleanup, useful when
 	you want to play a death animation or pool the object yourself.
 
 	Default: `true`
@@ -964,7 +964,7 @@ function SpeedProfilesBuilder:Done(): BehaviorBuilder end
 	Opened via [SpeedProfilesBuilder:Supersonic] or [SpeedProfilesBuilder:Subsonic].
 	Call `:Done()` to commit the profile and return to [SpeedProfilesBuilder].
 
-	All fields are optional — omitted fields continue using the base behavior values.
+	All fields are optional, omitted fields continue using the base behavior values.
 ]=]
 local SpeedProfileBuilder = {}
 
@@ -1024,7 +1024,7 @@ function SpeedProfileBuilder:Done(): SpeedProfilesBuilder end
 
 	:::caution BulletMass required
 	When 6DOF is enabled, `BulletMass` must be set via `:Physics():BulletMass()`.
-	`:Build()` returns `nil` if it is zero or unset — mass is required to convert
+	`:Build()` returns `nil` if it is zero or unset, mass is required to convert
 	aerodynamic force vectors into accelerations.
 	:::
 ]=]
@@ -1042,7 +1042,7 @@ local SixDOFBuilder = {}
 function SixDOFBuilder:Enabled(value: boolean): SixDOFBuilder end
 
 --[=[
-	dCL/dα — lift coefficient slope. Scales aerodynamic lift with angle of attack.
+	dCL/dα, lift coefficient slope. Scales aerodynamic lift with angle of attack.
 	Typical range: `1.0`–`4.0`. `0` disables lift.
 
 	Default: `0`
@@ -1053,7 +1053,7 @@ function SixDOFBuilder:Enabled(value: boolean): SixDOFBuilder end
 function SixDOFBuilder:LiftCoefficientSlope(value: number): SixDOFBuilder end
 
 --[=[
-	dCm/dα — pitching moment slope. Negative values produce a statically stable
+	dCm/dα, pitching moment slope. Negative values produce a statically stable
 	restoring torque (the bullet noses back toward velocity). Zero = neutrally stable.
 	Typical range: `-1.0` to `-0.1`.
 
@@ -1065,7 +1065,7 @@ function SixDOFBuilder:LiftCoefficientSlope(value: number): SixDOFBuilder end
 function SixDOFBuilder:PitchingMomentSlope(value: number): SixDOFBuilder end
 
 --[=[
-	Cmq — pitch/yaw damping coefficient. Damps wobble and coning motion.
+	Cmq, pitch/yaw damping coefficient. Damps wobble and coning motion.
 	Typical range: `0.005`–`0.05`. `0` = no damping.
 
 	Default: `0`
@@ -1076,7 +1076,7 @@ function SixDOFBuilder:PitchingMomentSlope(value: number): SixDOFBuilder end
 function SixDOFBuilder:PitchDampingCoeff(value: number): SixDOFBuilder end
 
 --[=[
-	Clp — roll damping coefficient. Controls how quickly axial spin decays.
+	Clp, roll damping coefficient. Controls how quickly axial spin decays.
 	Typical range: `0.001`–`0.02`. `0` = no spin decay.
 
 	Default: `0`

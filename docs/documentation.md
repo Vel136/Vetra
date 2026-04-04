@@ -1,4 +1,4 @@
----
+﻿---
 sidebar_position: 2
 sidebar_label: "Documentation"
 ---
@@ -7,12 +7,12 @@ sidebar_label: "Documentation"
 
 # Every Shot Lands Where Physics Says It Should
 
-Vetra is a projectile simulation module for Roblox. It uses exact kinematic trajectories — no
-per-frame drift, no frame-rate dependency, no client/server divergence — and builds a full physics
+Vetra is a projectile simulation module for Roblox. It uses exact kinematic trajectories, no
+per-frame drift, no frame-rate dependency, no client/server divergence, and builds a full physics
 and networking stack on top of that foundation: pierce, bounce, hitscan, homing, drag (linear, quadratic,
 G-series empirical models), Magnus effect, Coriolis deflection, gyroscopic drift, 6DOF aerodynamics,
 tumble, fragmentation, high-fidelity sub-segment raycasting, LOD, parallel physics via Roblox
-Actors, and VetraNet — a full authoritative network layer.
+Actors, and VetraNet, a full authoritative network layer.
 
 ---
 
@@ -126,11 +126,11 @@ end)
 ## Your Raycast. Your Rules.
 
 By default Vetra uses `workspace:Raycast` for every intersection test. `CastFunction` replaces that
-with any function that matches the same signature — `workspace:Spherecast`, `workspace:Blockcast`,
+with any function that matches the same signature, `workspace:Spherecast`, `workspace:Blockcast`,
 or a completely custom wrapper:
 
 ```lua
--- Spherecast — treats the bullet as a sphere with a radius
+-- Spherecast, treats the bullet as a sphere with a radius
 Solver:Fire(context, {
     MaxDistance  = 500,
     CastFunction = function(origin, direction, params)
@@ -138,7 +138,7 @@ Solver:Fire(context, {
     end,
 })
 
--- Blockcast — useful for shotgun pellets or wide projectiles
+-- Blockcast, useful for shotgun pellets or wide projectiles
 Solver:Fire(context, {
     CastFunction = function(origin, direction, params)
         local size = Vector3.new(0.2, 0.2, direction.Magnitude)
@@ -147,7 +147,7 @@ Solver:Fire(context, {
     end,
 })
 
--- Custom wrapper — ignore water terrain, apply a tag filter
+-- Custom wrapper, ignore water terrain, apply a tag filter
 Solver:Fire(context, {
     CastFunction = function(origin, direction, params)
         local result = workspace:Raycast(origin, direction, params)
@@ -159,12 +159,12 @@ Solver:Fire(context, {
 })
 ```
 
-`direction` is the raw displacement vector for that frame — not a unit vector. Its magnitude is the
+`direction` is the raw displacement vector for that frame, not a unit vector. Its magnitude is the
 cast distance. Do not normalise it before passing to the underlying cast call or you will cast the
 wrong distance.
 
 :::caution Serial solver only
-`CastFunction` is **ignored** by `Vetra.newParallel()` — functions cannot cross Actor boundaries.
+`CastFunction` is **ignored** by `Vetra.newParallel()`, functions cannot cross Actor boundaries.
 Use `Vetra.new()` if you need a custom cast function.
 :::
 
@@ -188,11 +188,11 @@ Solver:Fire(context, Behavior)
 Parallel overhead breaks even around 50–100 active bullets. Below that threshold `Vetra.new()` is
 typically faster. Above ~200 bullets with physics features enabled, the parallel version scales
 significantly better. If Actor construction fails internally, `newParallel` automatically falls back
-to a serial solver and logs an error — your call site receives a working solver either way.
+to a serial solver and logs an error, your call site receives a working solver either way.
 :::
 
 :::caution
-`CastFunction` overrides in `VetraBehavior` are **ignored** by the parallel solver — functions
+`CastFunction` overrides in `VetraBehavior` are **ignored** by the parallel solver, functions
 cannot cross Actor boundaries. Use `Vetra.new()` if you need a custom cast function.
 :::
 
@@ -234,8 +234,8 @@ Solver:Fire(context, {
 | Model | Description |
 |-------|-------------|
 | `"Linear"` | Deceleration ∝ speed |
-| `"Quadratic"` | Deceleration ∝ speed² — default, most accurate subsonic |
-| `"Exponential"` | Deceleration ∝ eˢᵖᵉᵉᵈ — exotic high-drag shapes |
+| `"Quadratic"` | Deceleration ∝ speed², default, most accurate subsonic |
+| `"Exponential"` | Deceleration ∝ eˢᵖᵉᵉᵈ, exotic high-drag shapes |
 | `"G1"` | Flat-base spitzer; general purpose standard |
 | `"G5"` | Boat-tail spitzer; mid-range rifles |
 | `"G6"` | Semi-spitzer flat-base; shotgun slugs |
@@ -289,7 +289,7 @@ Solver:Fire(context, {
 
 :::caution
 `MagnusCoefficient` is highly sensitive. Start at `0.00005`–`0.0001` and increase
-incrementally — at high speeds even `0.001` produces dramatic deviation.
+incrementally, at high speeds even `0.001` produces dramatic deviation.
 :::
 
 ---
@@ -357,7 +357,7 @@ end)
 ## It Will Find Them
 
 Steer the bullet toward a dynamic target position each frame. The steering fields are set directly on
-the behavior table — they are not available through the `BehaviorBuilder` `:Homing()` sub-builder
+the behavior table, they are not available through the `BehaviorBuilder` `:Homing()` sub-builder
 (which only exposes the `CanHomeFunction` gate filter):
 
 ```lua
@@ -401,7 +401,7 @@ Solver:Fire(context, {
 
 ## Zero Physics. Instant Resolution.
 
-Hitscan resolves the entire bullet path — pierce, bounce, all signals — synchronously inside `Fire()`.
+Hitscan resolves the entire bullet path, pierce, bounce, all signals, synchronously inside `Fire()`.
 No per-frame physics stepping, no gravity, no drag, no Magnus: the bullet travels in straight lines
 between bounces and terminates before `Fire()` returns.
 
@@ -420,11 +420,11 @@ Solver:Fire(context, Behavior)
 -- By the time Fire() returns, OnHit has already fired.
 ```
 
-Pierce and bounce still apply — the full hit chain runs, just synchronously. All signals (`OnHit`,
+Pierce and bounce still apply, the full hit chain runs, just synchronously. All signals (`OnHit`,
 `OnBounce`, `OnPierce`, `OnTerminated`) fire in the normal order before `Fire()` returns.
 
 :::caution No physics forces
-`DragCoefficient`, `SpinVector`, `MagnusCoefficient`, gravity, homing — none of these apply to
+`DragCoefficient`, `SpinVector`, `MagnusCoefficient`, gravity, homing, none of these apply to
 hitscan casts. If you need a fast projectile with physics, increase speed and reduce `MaxDistance`
 instead of enabling hitscan.
 :::
@@ -446,13 +446,13 @@ Solver:Fire(context, { WindResponse = 0.0 }) -- ignores wind entirely
 ## Even the Earth Gets a Vote
 
 Coriolis is a **solver-level environment setting**, not a per-bullet behavior field. Call
-`SetCoriolisConfig` once per map/zone — all bullets fired through that solver are affected equally:
+`SetCoriolisConfig` once per map/zone, all bullets fired through that solver are affected equally:
 
 ```lua
--- Arctic map — strong northern deflection
+-- Arctic map, strong northern deflection
 Solver:SetCoriolisConfig(75, 1200)
 
--- Equatorial map — horizontal east/west drift only
+-- Equatorial map, horizontal east/west drift only
 Solver:SetCoriolisConfig(0, 800)
 
 -- Disable entirely (default)
@@ -461,7 +461,7 @@ Solver:SetCoriolisConfig(45, 0)
 
 | Scale | Effect |
 |-------|--------|
-| `0` | Disabled — zero overhead (default) |
+| `0` | Disabled, zero overhead (default) |
 | `500` | Subtle; detectable only at long range |
 | `1000` | Clearly perceptible at ~300 studs |
 | `3000` | Strong, map-defining mechanic |
@@ -510,7 +510,7 @@ end)
 ```
 
 `MutateData` is only active during the synchronous handler. Calling it after the handler returns
-logs a warning and has no effect — do not yield inside hook signal handlers.
+logs a warning and has no effect, do not yield inside hook signal handlers.
 
 ---
 
@@ -532,7 +532,7 @@ end)
 ## The Network Layer You Didn't Have to Write
 
 VetraNet is Vetra's built-in network middleware. It handles fire-request serialization, server-side
-authority, and client-side cosmetic replication — all over a single `RemoteEvent`.
+authority, and client-side cosmetic replication, all over a single `RemoteEvent`.
 
 **Shared setup (ModuleScript required by both sides):**
 ```lua
@@ -586,4 +586,4 @@ local Behavior = Vetra.BehaviorBuilder.new()
 ```
 
 Draws cast segments, hit normals, bounce vectors, and corner-trap markers in-world. Zero runtime
-cost when disabled — no draw calls or raycasts are added.
+cost when disabled, no draw calls or raycasts are added.

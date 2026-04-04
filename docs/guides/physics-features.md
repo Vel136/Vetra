@@ -1,25 +1,25 @@
----
+﻿---
 sidebar_position: 2
 ---
 
 # Making Bullets Feel Real
 
-There's a version of a shooter that technically works — bullets fire, hit things, deal damage — but doesn't *feel* right. Something about the projectiles is weightless. They travel in a laser-straight line, ignore wind, never tumble, and arrive at 300 studs exactly as crisply as they left the barrel.
+There's a version of a shooter that technically works, bullets fire, hit things, deal damage, but doesn't *feel* right. Something about the projectiles is weightless. They travel in a laser-straight line, ignore wind, never tumble, and arrive at 300 studs exactly as crisply as they left the barrel.
 
 It functions. It doesn't feel like a gun.
 
-The gap between "technically works" and "feels real" is physics. Not complicated physics — a few forces applied incrementally that change how the bullet travels through the air. This page explains each one: what it is, why it matters, and when you'd actually use it.
+The gap between "technically works" and "feels real" is physics. Not complicated physics, a few forces applied incrementally that change how the bullet travels through the air. This page explains each one: what it is, why it matters, and when you'd actually use it.
 
 ---
 
 ## Gravity and Bullet Drop
 
-This one you probably already have. A bullet fired horizontally doesn't stay horizontal — it falls. The further the target, the lower you need to aim.
+This one you probably already have. A bullet fired horizontally doesn't stay horizontal, it falls. The further the target, the lower you need to aim.
 
 Vetra applies gravity through the acceleration term in its kinematic formula. The default is `workspace.Gravity` pointing downward, read at the time the behavior is built:
 
 ```lua
--- Default — uses workspace.Gravity automatically
+-- Default, uses workspace.Gravity automatically
 local Behavior = Vetra.BehaviorBuilder.new()
     :Physics()
         :MaxDistance(800)
@@ -31,7 +31,7 @@ If you're building a zero-gravity map, a space level, or an underwater area with
 
 ```lua
 :Physics()
-    :Gravity(Vector3.new(0, -5, 0))  -- 5 studs/s² downward — floaty, underwater feel
+    :Gravity(Vector3.new(0, -5, 0))  -- 5 studs/s² downward, floaty, underwater feel
 :Done()
 ```
 
@@ -39,7 +39,7 @@ Bullet drop is the baseline. Everything else layered on top makes it feel *speci
 
 ---
 
-## Drag — Why Bullets Slow Down
+## Drag, Why Bullets Slow Down
 
 In a vacuum, a bullet would travel the same speed across any distance. In air, it doesn't.
 
@@ -67,11 +67,11 @@ local Behavior = BehaviorBuilder.new()
     :Build()
 ```
 
-**Choosing a drag model.** The `:Model()` setter controls which drag curve is used. Always pass a value from `BehaviorBuilder.DragModel` rather than a raw string — typos on raw strings pass the type checker silently and only fail at `:Build()`.
+**Choosing a drag model.** The `:Model()` setter controls which drag curve is used. Always pass a value from `BehaviorBuilder.DragModel` rather than a raw string, typos on raw strings pass the type checker silently and only fail at `:Build()`.
 
-For most rifles and modern guns, `BehaviorBuilder.DragModel.G7` is the right choice. It models a long boat-tail projectile — the standard reference for contemporary small-arms ballistics. For shotgun slugs or blunt projectiles, `G6` applies more drag. For pistols and hollow points, `G8`. For muskets and round shot, `GL` (the "lead ball" model) gives the heavy, arcing feel of pre-rifled weapons.
+For most rifles and modern guns, `BehaviorBuilder.DragModel.G7` is the right choice. It models a long boat-tail projectile, the standard reference for contemporary small-arms ballistics. For shotgun slugs or blunt projectiles, `G6` applies more drag. For pistols and hollow points, `G8`. For muskets and round shot, `GL` (the "lead ball" model) gives the heavy, arcing feel of pre-rifled weapons.
 
-`Quadratic` is the default and is physically accurate for most situations where historical accuracy isn't required — drag proportional to speed squared. For pure gameplay tuning, it's often all you need.
+`Quadratic` is the default and is physically accurate for most situations where historical accuracy isn't required, drag proportional to speed squared. For pure gameplay tuning, it's often all you need.
 
 ---
 
@@ -79,7 +79,7 @@ For most rifles and modern guns, `BehaviorBuilder.DragModel.G7` is the right cho
 
 Real bullets behave differently depending on whether they're moving faster or slower than the speed of sound.
 
-A supersonic bullet is creating a shockwave in front of it. The drag profile is different. The acoustic signature is the iconic crack followed by the thump of the shot — the crack arriving first because it travelled with the bullet, the thump arriving later from the muzzle. Ballistically, the transition from supersonic to subsonic is a zone of instability where the bullet can yaw, deflect, and lose accuracy.
+A supersonic bullet is creating a shockwave in front of it. The drag profile is different. The acoustic signature is the iconic crack followed by the thump of the shot, the crack arriving first because it travelled with the bullet, the thump arriving later from the muzzle. Ballistically, the transition from supersonic to subsonic is a zone of instability where the bullet can yaw, deflect, and lose accuracy.
 
 Vetra tracks whether a bullet is supersonic (above 343 studs/s) and lets you configure different physics for each regime:
 
@@ -111,11 +111,11 @@ For most games this level of detail is optional. But if you're building a milsim
 
 ---
 
-## Magnus Effect — The Curveball
+## Magnus Effect, The Curveball
 
 A spinning bullet moving through air doesn't travel straight. It curves.
 
-The force is perpendicular to both the spin axis and the velocity — the Magnus effect. It's why a baseball pitcher can throw a curveball. It's why real-world rifles exhibit spin drift — bullets fired from right-hand twist barrels drift slightly right over long distances. It's why a well-hit topspin tennis ball dips faster than you'd expect.
+The force is perpendicular to both the spin axis and the velocity, the Magnus effect. It's why a baseball pitcher can throw a curveball. It's why real-world rifles exhibit spin drift, bullets fired from right-hand twist barrels drift slightly right over long distances. It's why a well-hit topspin tennis ball dips faster than you'd expect.
 
 In a game, this is useful in a few ways. You can build trick-shot mechanics. You can make specific weapons have a characteristic drift that skilled players need to account for. You can create a gun that literally curves its shots around cover.
 
@@ -130,7 +130,7 @@ local Behavior = BehaviorBuilder.new()
 ```
 
 :::caution Start small
-`MagnusCoefficient` is extremely sensitive. The force is `Cm × (SpinVector × Velocity)` — at 600 studs/s with a spin rate of 300, even `0.0001` produces visible drift. Start at `0.00005` and work up incrementally. Going straight to `0.001` will produce dramatic swerving that looks more like a homing missile than a bullet.
+`MagnusCoefficient` is extremely sensitive. The force is `Cm × (SpinVector × Velocity)`, at 600 studs/s with a spin rate of 300, even `0.0001` produces visible drift. Start at `0.00005` and work up incrementally. Going straight to `0.001` will produce dramatic swerving that looks more like a homing missile than a bullet.
 :::
 
 ---
@@ -139,7 +139,7 @@ local Behavior = BehaviorBuilder.new()
 
 Magnus drift is the *lateral* curl caused by spin. Gyroscopic drift is the *directional yaw* caused by the same spin interacting with the bullet's own precession around its velocity axis.
 
-The practical difference: Magnus curves the path cleanly. Gyroscopic drift adds a slow, continuous lateral wander — subtle at short range, accumulating into noticeable deviation at long range.
+The practical difference: Magnus curves the path cleanly. Gyroscopic drift adds a slow, continuous lateral wander, subtle at short range, accumulating into noticeable deviation at long range.
 
 Real bullets from right-hand rifling drift slightly right and slightly up at long range. This is the combination of gyroscopic precession and Magnus effect. For a milsim game this is a compelling detail. For most games it's noise.
 
@@ -147,20 +147,20 @@ Real bullets from right-hand rifling drift slightly right and slightly up at lon
 local Behavior = BehaviorBuilder.new()
     :GyroDrift()
         :Rate(0.4)    -- lateral acceleration in studs/s²
-        -- :Axis() not set — defaults to world UP (right-hand rifling)
+        -- :Axis() not set, defaults to world UP (right-hand rifling)
     :Done()
     :Build()
 ```
 
-Use this sparingly. It's most effective as a barely-perceptible force that snipers notice at extreme range — not as something that requires overcorrection on every shot.
+Use this sparingly. It's most effective as a barely-perceptible force that snipers notice at extreme range, not as something that requires overcorrection on every shot.
 
 ---
 
-## Tumble — When Bullets Stop Flying
+## Tumble, When Bullets Stop Flying
 
 A stable bullet is an aerodynamic bullet. The pointy end leads, the drag is low, the flight is predictable.
 
-A tumbling bullet is a bullet that has lost that stability. It's yawing, pitching — presenting its side to the airflow instead of its nose. Drag spikes. Accuracy collapses. The path becomes chaotic.
+A tumbling bullet is a bullet that has lost that stability. It's yawing, pitching, presenting its side to the airflow instead of its nose. Drag spikes. Accuracy collapses. The path becomes chaotic.
 
 This can happen when a bullet slows down below the speed that its rotational stabilisation can maintain. It can happen when a bullet passes through a soft target and exits destabilised. Either way, a tumbling bullet behaves completely differently from a stable one.
 
@@ -172,10 +172,10 @@ local Behavior = BehaviorBuilder.new()
     :Done()
     :Tumble()
         :OnPierce(true)          -- begin tumbling immediately after first pierce
-        :DragMultiplier(4.0)     -- drag multiplied by 4 — slows down fast
+        :DragMultiplier(4.0)     -- drag multiplied by 4, slows down fast
         :LateralStrength(8)      -- chaotic lateral acceleration in studs/s²
-        -- :SpeedThreshold() not set — pierce-based onset only
-        -- :RecoverySpeed() not set — once tumbling, permanent
+        -- :SpeedThreshold() not set, pierce-based onset only
+        -- :RecoverySpeed() not set, once tumbling, permanent
     :Done()
     :Build()
 
@@ -184,7 +184,7 @@ Signals.OnTumbleBegin:Connect(function(context, velocity)
 end)
 ```
 
-The result: bullets that exit a target are fast and predictable. Bullets that exit are slower, erratic, and do less damage at range — which is physically accurate. It turns pierce from "bullet ignores one wall" into "bullet changes character after passing through something."
+The result: bullets that exit a target are fast and predictable. Bullets that exit are slower, erratic, and do less damage at range, which is physically accurate. It turns pierce from "bullet ignores one wall" into "bullet changes character after passing through something."
 
 ---
 
@@ -212,7 +212,7 @@ Signals.OnBranchSpawned:Connect(function(parentContext, childContext)
 end)
 ```
 
-Each fragment is a fully live cast. It can bounce, it can hit things, it fires `OnHit` independently. If you want fragments that have their own drag and tumble, that's available too — either set it on the shared behavior the fragments inherit, or intercept `OnBranchSpawned` and fire new casts with custom behavior immediately.
+Each fragment is a fully live cast. It can bounce, it can hit things, it fires `OnHit` independently. If you want fragments that have their own drag and tumble, that's available too, either set it on the shared behavior the fragments inherit, or intercept `OnBranchSpawned` and fire new casts with custom behavior immediately.
 
 ---
 
@@ -220,15 +220,15 @@ Each fragment is a fully live cast. It can bounce, it can hit things, it fires `
 
 The Coriolis effect is the deflection caused by Earth's rotation. A bullet fired north in the northern hemisphere drifts slightly east. Fired south, it drifts west. At the equator the drift is purely horizontal. At the poles, it rotates the bullet's ground track.
 
-In a real weapon at real-world distances and velocities, the Coriolis effect is real but tiny — irrelevant at combat ranges, detectable at extreme long range by specialist snipers. In a game, it can be exaggerated into a visible, tactile mechanic.
+In a real weapon at real-world distances and velocities, the Coriolis effect is real but tiny, irrelevant at combat ranges, detectable at extreme long range by specialist snipers. In a game, it can be exaggerated into a visible, tactile mechanic.
 
-This is a **map-level setting**, not a bullet-level one. Every bullet fired through the same solver is affected equally — it's a property of the simulated environment, not the weapon.
+This is a **map-level setting**, not a bullet-level one. Every bullet fired through the same solver is affected equally, it's a property of the simulated environment, not the weapon.
 
 ```lua
--- Arctic map — latitude 75°, 1200× exaggeration
+-- Arctic map, latitude 75°, 1200× exaggeration
 Solver:SetCoriolisConfig(75, 1200)
 
--- Equatorial map — latitude 0°, east/west drift only
+-- Equatorial map, latitude 0°, east/west drift only
 Solver:SetCoriolisConfig(0, 800)
 
 -- Turn it off for standard maps (default)
@@ -241,8 +241,8 @@ At scale `1000`, Coriolis is clearly perceptible at ~300 studs. At `3000` it's a
 
 ## Putting It Together
 
-None of these features are mandatory. A simple bounce-and-pierce setup without drag will work perfectly well for most shooters. The physics features exist for when you want the weapon to feel like *that specific weapon* — not just a projectile with hitboxes.
+None of these features are mandatory. A simple bounce-and-pierce setup without drag will work perfectly well for most shooters. The physics features exist for when you want the weapon to feel like *that specific weapon*, not just a projectile with hitboxes.
 
-A sniper rifle that starts supersonic, transitions to subsonic at range, drifts slightly right from spin drift, and requires leading against moving targets at long range — that's a *character*. Players learn its specific feel. Mastering it becomes part of the skill expression.
+A sniper rifle that starts supersonic, transitions to subsonic at range, drifts slightly right from spin drift, and requires leading against moving targets at long range, that's a *character*. Players learn its specific feel. Mastering it becomes part of the skill expression.
 
 The right level of simulation for your game is a creative decision, not a technical one. Start with the minimum that makes the weapon feel right. Add physics one feature at a time until it feels like what you were imagining.

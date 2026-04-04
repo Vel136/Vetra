@@ -1,4 +1,4 @@
----
+﻿---
 sidebar_position: 1
 ---
 
@@ -17,7 +17,7 @@ intro page covers all of them in order and gets you to a working gun in under 20
 
 ## "My bullets are tunnelling through walls."
 
-That's not a bug in your code — it's a mathematical property of how most projectile systems work.
+That's not a bug in your code, it's a mathematical property of how most projectile systems work.
 [Why Your Bullets Miss](./guides/why-bullets-miss) explains exactly what's happening and how Vetra's
 analytic trajectory and high-fidelity sub-segment raycasting solve it.
 
@@ -25,8 +25,8 @@ analytic trajectory and high-fidelity sub-segment raycasting solve it.
 
 ## "I want drag, spin drift, or realistic ballistics."
 
-[Making Bullets Feel Real](./guides/physics-features) goes through every physics feature — drag
-models, Magnus effect, gyroscopic drift, tumble, fragmentation, Coriolis — with practical guidance
+[Making Bullets Feel Real](./guides/physics-features) goes through every physics feature, drag
+models, Magnus effect, gyroscopic drift, tumble, fragmentation, Coriolis, with practical guidance
 on when each one is worth using and what values to start with.
 
 The quick reference for every field lives in [TypeDefinitions](../api/TypeDefinitions) under
@@ -34,7 +34,7 @@ The quick reference for every field lives in [TypeDefinitions](../api/TypeDefini
 
 ---
 
-## "I want full 6DOF aerodynamics — lift, pitching moment, gyroscopic precession."
+## "I want full 6DOF aerodynamics, lift, pitching moment, gyroscopic precession."
 
 Enable [SixDOFBuilder](../api/SixDOFBuilder) via `:SixDOF():Enabled(true)`. At minimum you need
 `BulletMass`, `ReferenceArea`, `ReferenceLength`, and `MomentOfInertia` set. Everything else
@@ -45,7 +45,7 @@ tuning guidance. The field reference is in [SixDOFBuilder](../api/SixDOFBuilder)
 
 ---
 
-## "I need multiplayer — server authority, cosmetics, hit validation."
+## "I need multiplayer, server authority, cosmetics, hit validation."
 
 [Networking and Trust](./guides/networking) explains the architecture: why trusting the client is
 dangerous, how VetraNet's trajectory reconstruction works, and what each rejection reason means.
@@ -60,15 +60,15 @@ The API reference for setup and signals is [VetraNet](../api/VetraNet) and
 [Performance](./guides/performance) covers LOD, spatial partitioning, `OnTravelBatch` vs
 `OnTravel`, and when the parallel solver is actually worth using.
 
-The [Benchmarks](./guides/benchmarks) page has the raw numbers — serial vs parallel across four
-profiles and 13 bullet counts — and instructions for running the benchmarker against your own
+The [Benchmarks](./guides/benchmarks) page has the raw numbers, serial vs parallel across four
+profiles and 13 bullet counts, and instructions for running the benchmarker against your own
 weapon behaviors.
 
 ---
 
 ## "I need to customise physics mid-flight."
 
-[VetraCast](../api/VetraCast) — the object returned by `Solver:Fire()` — exposes `SetVelocity`,
+[VetraCast](../api/VetraCast), the object returned by `Solver:Fire()`, exposes `SetVelocity`,
 `SetAcceleration`, `SetPosition`, `Pause`, `Resume`, and state reset methods. Use these from signal
 handlers to override physics on a live bullet.
 
@@ -80,7 +80,7 @@ For mutating a bounce or pierce *as it resolves* (before the math finalises), se
 
 ## "I want to build behaviors with typed setters and validation."
 
-[BehaviorBuilder](../api/BehaviorBuilder) is the fluent builder — chain `:Physics()`, `:Bounce()`,
+[BehaviorBuilder](../api/BehaviorBuilder) is the fluent builder, chain `:Physics()`, `:Bounce()`,
 `:Pierce()`, `:Drag()`, `:Magnus()`, `:Homing()`, and so on, then call `:Build()` to get a
 validated frozen table. Every `VetraBehavior` field is covered by a typed setter.
 
@@ -107,14 +107,14 @@ The individual sub-builders are documented in [SubBuilders](../api/PhysicsBuilde
 :::tip DragModel enum
 Use `BehaviorBuilder.DragModel.G7` instead of the raw string `"G7"`. Typos on raw
 strings pass the type checker silently and only fail at `:Build()`. `BehaviorBuilder.DragModel`
-is a direct re-export of `Vetra.Enums.DragModel` — they are the same table.
+is a direct re-export of `Vetra.Enums.DragModel`, they are the same table.
 :::
 
 ## "I need to compare against a termination reason or drag model."
 
 [Enums](../api/Enums) documents every named constant table exposed on `Vetra.Enums`.
 Use `Vetra.Enums.TerminateReason.Hit` instead of the raw string `"hit"` in
-`OnPreTermination` handlers — if a value is ever renamed, every reference site
+`OnPreTermination` handlers, if a value is ever renamed, every reference site
 produces a nil rather than silently passing the wrong value.
 
 ```lua

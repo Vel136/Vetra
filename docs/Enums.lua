@@ -1,4 +1,4 @@
---[=[
+﻿--[=[
 	@class Enums
 
 	Named constant tables for every value that appears in Vetra's public API.
@@ -52,30 +52,30 @@ local Enums = {}
 	    :Build()
 	```
 
-	**Analytic models** — mathematically defined drag curves:
+	**Analytic models**, mathematically defined drag curves:
 
 	| Key | Value | Description |
 	|-----|-------|-------------|
-	| `Quadratic` | `1` | Deceleration ∝ speed² — default; most accurate for subsonic bullets |
+	| `Quadratic` | `1` | Deceleration ∝ speed², default; most accurate for subsonic bullets |
 	| `Linear` | `2` | Deceleration ∝ speed |
-	| `Exponential` | `3` | Deceleration ∝ eˢᵖᵉᵉᵈ — exotic high-drag shapes |
+	| `Exponential` | `3` | Deceleration ∝ eˢᵖᵉᵉᵈ, exotic high-drag shapes |
 
-	**G-series empirical models** — Mach-indexed Cd lookup tables derived from
+	**G-series empirical models**, Mach-indexed Cd lookup tables derived from
 	ballistic reference projectiles. The `DragCoefficient` field acts as a scalar
-	multiplier on top of the table value — `1.0` is physically accurate, lower
+	multiplier on top of the table value, `1.0` is physically accurate, lower
 	values give a more arcade feel:
 
 	| Key | Value | Description |
 	|-----|-------|-------------|
-	| `G1` | `4` | Flat-base spitzer — general-purpose standard |
-	| `G2` | `5` | Aberdeen J projectile — large-calibre / atypical shapes |
-	| `G3` | `6` | Finnish reference projectile — rarely used in practice |
-	| `G4` | `7` | Seldom-used reference — included for completeness |
-	| `G5` | `8` | Boat-tail spitzer — mid-range rifles |
-	| `G6` | `9` | Semi-spitzer flat-base — shotgun slugs / blunt rounds |
-	| `G7` | `10` | Long boat-tail — modern long-range / sniper standard |
-	| `G8` | `11` | Flat-base semi-spitzer — hollow points / pistols |
-	| `GL` | `12` | Lead round ball — cannons / muskets / buckshot |
+	| `G1` | `4` | Flat-base spitzer, general-purpose standard |
+	| `G2` | `5` | Aberdeen J projectile, large-calibre / atypical shapes |
+	| `G3` | `6` | Finnish reference projectile, rarely used in practice |
+	| `G4` | `7` | Seldom-used reference, included for completeness |
+	| `G5` | `8` | Boat-tail spitzer, mid-range rifles |
+	| `G6` | `9` | Semi-spitzer flat-base, shotgun slugs / blunt rounds |
+	| `G7` | `10` | Long boat-tail, modern long-range / sniper standard |
+	| `G8` | `11` | Flat-base semi-spitzer, hollow points / pistols |
+	| `GL` | `12` | Lead round ball, cannons / muskets / buckshot |
 
 	**User-supplied:**
 
@@ -100,7 +100,7 @@ Enums.DragModel = {}
 	@tag enum
 
 	Reason strings passed to `OnPreTermination` signal handlers. Compare
-	against these rather than hardcoding raw strings — if a value is ever
+	against these rather than hardcoding raw strings, if a value is ever
 	renamed, every reference site produces a detectable nil rather than silently
 	passing the wrong string.
 
@@ -109,12 +109,12 @@ Enums.DragModel = {}
 
 	Signals.OnPreTermination:Connect(function(context, reason, mutate)
 	    if reason == Vetra.Enums.TerminateReason.Hit then
-	        -- bullet struck a surface — optionally cancel termination
+	        -- bullet struck a surface, optionally cancel termination
 	        if context.UserData.HasShield then
 	            mutate(true, nil)  -- cancelled
 	        end
 	    elseif reason == Vetra.Enums.TerminateReason.CornerTrap then
-	        -- corner-trap detection triggered — termination cannot be cancelled
+	        -- corner-trap detection triggered, termination cannot be cancelled
 	    end
 	end)
 	```
@@ -162,12 +162,12 @@ Enums.TerminateReason = {}
 
 	**Choosing a mode**
 
-	- `ClientAuthoritative` — standard player-fired weapons. The client fires,
+	- `ClientAuthoritative`, standard player-fired weapons. The client fires,
 	  the server validates origin, rate, and behavior, then replicates to all.
-	- `ServerAuthority` — server-controlled projectiles such as NPC attacks,
+	- `ServerAuthority`, server-controlled projectiles such as NPC attacks,
 	  environmental hazards, or scripted events. No client request is ever
 	  accepted. Call `Net:Fire()` from server code only.
-	- `SharedAuthority` — mixed scenarios where both player weapons and
+	- `SharedAuthority`, mixed scenarios where both player weapons and
 	  server-spawned projectiles share the same VetraNet handle and behavior
 	  registry. Player requests go through the full validation pipeline;
 	  server calls bypass it.

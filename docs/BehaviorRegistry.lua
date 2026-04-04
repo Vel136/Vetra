@@ -1,4 +1,4 @@
---[=[
+﻿--[=[
 	@class BehaviorRegistry
 
 	Pre-registered behavior hash table shared between server and client.
@@ -7,7 +7,7 @@
 	network**. Instead, both server and client register the same behaviors at
 	startup with identical names and registration order. Fire payloads carry
 	only a 2-byte u16 hash. The server resolves the full behavior by hash
-	lookup — zero serialization cost, zero deserialization cost, and zero
+	lookup, zero serialization cost, zero deserialization cost, and zero
 	ability for the client to inject or modify a behavior by crafting a
 	custom table.
 
@@ -24,14 +24,14 @@
 	Both server and client **must** register behaviors in the **same order**
 	with the **same names**. If they diverge, hashes will not match and every
 	fire request will be rejected as `RejectedUnknownBehavior`. Enforce this
-	by requiring the same shared ModuleScript on both sides — never register
+	by requiring the same shared ModuleScript on both sides, never register
 	behaviors conditionally or in a different order per environment.
 	:::
 
 	:::tip Set MaxSpeed on every behavior
 	Always set `MaxSpeed` on every registered behavior via
 	`BehaviorBuilder:Physics():MaxSpeed(n):Done()`. The registry logs a warning
-	if `MaxSpeed` is missing — without it, `FireValidator` falls back to a
+	if `MaxSpeed` is missing, without it, `FireValidator` falls back to a
 	global default cap rather than your per-weapon limit, which weakens
 	server-side speed validation.
 	:::
@@ -48,9 +48,9 @@ function BehaviorRegistry.new(): BehaviorRegistry end
 --[=[
 	Registers a named behavior and returns its assigned u16 hash.
 
-	Registering the same name twice is **idempotent** — the existing hash is
+	Registering the same name twice is **idempotent**, the existing hash is
 	returned without creating a duplicate entry. Registering the same behavior
-	table under a different name produces a separate hash (intentional — weapon
+	table under a different name produces a separate hash (intentional, weapon
 	variants may share physics but carry different cosmetic behaviors).
 
 	```lua
@@ -91,7 +91,7 @@ function BehaviorRegistry:GetHash(Name: string): number end
 --[=[
 	Destroys this registry, clearing all name and hash mappings.
 
-	Idempotent — safe to call more than once.
+	Idempotent, safe to call more than once.
 ]=]
 function BehaviorRegistry:Destroy() end
 

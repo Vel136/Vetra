@@ -1,9 +1,9 @@
---[=[
+﻿--[=[
 	@class TypeDefinitions
 
 	Shared Luau type definitions used across Vetra and VetraNet.
 
-	These are imported for type annotations only — there is no runtime cost.
+	These are imported for type annotations only, there is no runtime cost.
 	You generally do not need to require this module directly.
 ]=]
 
@@ -59,7 +59,7 @@
 	.Direction Vector3 -- Required. Unit direction vector.
 	.Speed number -- Required. Initial speed in studs/second.
 	.RaycastParams RaycastParams? -- Optional per-bullet raycast filter. Takes priority over `Behavior.RaycastParams` when set. Default: `nil`
-	.SolverData any? -- Internal — used by the solver to attach lifecycle hooks. Do not set from weapon code.
+	.SolverData any? -- Internal, used by the solver to attach lifecycle hooks. Do not set from weapon code.
 ]=]
 
 -- ─── SpeedProfile ────────────────────────────────────────────────────────────
@@ -250,21 +250,21 @@
 	Drag model used to compute aerodynamic deceleration each `DragSegmentInterval`.
 
 	**Analytic models:**
-	- `"Linear"` — deceleration ∝ speed.
-	- `"Quadratic"` — deceleration ∝ speed² (default). Most physically accurate for subsonic bullets.
-	- `"Exponential"` — deceleration ∝ eˢᵖᵉᵉᵈ. Models exotic high-drag shapes.
+	- `"Linear"`, deceleration ∝ speed.
+	- `"Quadratic"`, deceleration ∝ speed² (default). Most physically accurate for subsonic bullets.
+	- `"Exponential"`, deceleration ∝ eˢᵖᵉᵉᵈ. Models exotic high-drag shapes.
 
 	**G-series empirical models (Mach-indexed Cd lookup tables):**
-	- `"G1"` — flat-base spitzer; general-purpose standard.
-	- `"G2"` — Aberdeen J projectile; large-caliber / atypical shapes.
-	- `"G5"` — boat-tail spitzer; mid-range rifles.
-	- `"G6"` — semi-spitzer flat-base; shotgun slugs.
-	- `"G7"` — long boat-tail; modern long-range / sniper standard.
-	- `"G8"` — flat-base semi-spitzer; hollow points / pistols.
-	- `"GL"` — lead round ball; cannons / muskets / buckshot.
+	- `"G1"`, flat-base spitzer; general-purpose standard.
+	- `"G2"`, Aberdeen J projectile; large-caliber / atypical shapes.
+	- `"G5"`, boat-tail spitzer; mid-range rifles.
+	- `"G6"`, semi-spitzer flat-base; shotgun slugs.
+	- `"G7"`, long boat-tail; modern long-range / sniper standard.
+	- `"G8"`, flat-base semi-spitzer; hollow points / pistols.
+	- `"GL"`, lead round ball; cannons / muskets / buckshot.
 
 	**User-supplied:**
-	- `"Custom"` — requires `CustomMachTable = { {mach, cd}, ... }` in the behavior.
+	- `"Custom"`, requires `CustomMachTable = { {mach, cd}, ... }` in the behavior.
 ]=]
 
 -- ─── NetworkMode ─────────────────────────────────────────────────────────────
@@ -275,9 +275,9 @@
 
 	Authority mode that controls which side may call `:Fire()` on a VetraNet handle.
 
-	- `"ClientAuthoritative"` — clients send fire requests; server validates. **(Default)**
-	- `"ServerAuthority"` — only server code may initiate bullets; client fire requests are silently dropped.
-	- `"SharedAuthority"` — both client and server may fire; client requests go through validation, server calls bypass it.
+	- `"ClientAuthoritative"`, clients send fire requests; server validates. **(Default)**
+	- `"ServerAuthority"`, only server code may initiate bullets; client fire requests are silently dropped.
+	- `"SharedAuthority"`, both client and server may fire; client requests go through validation, server calls bypass it.
 
 	Pass via `NetworkConfig.Mode`. Prefer `Vetra.Enums.NetworkMode` over raw strings.
 ]=]
@@ -291,11 +291,11 @@
 	The reason a cast was terminated. Passed as the second argument to
 	`OnPreTermination` signal handlers.
 
-	- `"hit"` — bullet struck a surface and was not pierced or bounced.
-	- `"distance"` — `MaxDistance` was reached.
-	- `"speed"` — speed dropped below `MinSpeed` or exceeded `MaxSpeed`.
-	- `"corner_trap"` — corner-trap detection terminated the cast.
-	- `"manual"` — `Terminate()` was called explicitly, or the solver was destroyed.
+	- `"hit"`, bullet struck a surface and was not pierced or bounced.
+	- `"distance"`, `MaxDistance` was reached.
+	- `"speed"`, speed dropped below `MinSpeed` or exceeded `MaxSpeed`.
+	- `"corner_trap"`, corner-trap detection terminated the cast.
+	- `"manual"`, `Terminate()` was called explicitly, or the solver was destroyed.
 ]=]
 
 -- ─── NetworkConfig ───────────────────────────────────────────────────────────
@@ -305,7 +305,7 @@
 	@within TypeDefinitions
 
 	Optional configuration table passed to `VetraNet.new()` as the third argument.
-	All fields are optional — unset fields fall back to built-in defaults.
+	All fields are optional, unset fields fall back to built-in defaults.
 
 	.MaxOriginTolerance number? -- Max studs between client-reported and server-reconstructed fire origin. Default: `15`
 	.MaxConcurrentPerPlayer number? -- Maximum in-flight bullets per player at any time. Default: `20`

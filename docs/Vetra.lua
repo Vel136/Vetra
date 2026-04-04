@@ -1,4 +1,4 @@
---[=[
+﻿--[=[
 	@class Vetra
 
 	Analytic-trajectory projectile simulation engine for Roblox.
@@ -8,7 +8,7 @@
 	raycasts between the previous and current position, and resolves hits as
 	pierce, bounce, or terminal impact.
 
-	Signals are instance-level — connect once at initialisation and receive
+	Signals are instance-level, connect once at initialisation and receive
 	events from every cast fired through that solver. The [BulletContext]
 	argument on every signal lets you identify which bullet fired the event
 	and dispatch accordingly.
@@ -85,8 +85,8 @@ local Vetra = {}
 function Vetra.new(FactoryConfig: { SpatialPartition: any? }?): Vetra end
 
 --[=[
-	Creates a new **parallel** Vetra solver. Physics computation — raycasts,
-	drag, Magnus, homing, bounce math, corner-trap detection — runs across `N`
+	Creates a new **parallel** Vetra solver. Physics computation, raycasts,
+	drag, Magnus, homing, bounce math, corner-trap detection, runs across `N`
 	Roblox Actors on multiple cores via Parallel Luau.
 
 	Signal firing, user callbacks (`CanPierce` / `CanBounce` / `HomingPositionProvider`),
@@ -111,14 +111,14 @@ function Vetra.new(FactoryConfig: { SpatialPartition: any? }?): Vetra end
 
 	:::caution CastFunction not supported
 	`CastFunction` overrides in `VetraBehavior` are **silently ignored** by the
-	parallel solver — functions cannot cross Actor boundaries via message
+	parallel solver, functions cannot cross Actor boundaries via message
 	serialization. Use `Vetra.new()` if you need a custom cast function.
 	:::
 
 	:::caution Fallback on failure
 	If the internal Actor coordinator fails to construct, `newParallel` falls
 	back to a serial solver automatically and logs an error. The returned solver
-	is still fully functional — you cannot distinguish the fallback from a
+	is still fully functional, you cannot distinguish the fallback from a
 	normal serial solver at the call site. Check output logs if parallel
 	performance is expected but not observed.
 	:::
@@ -145,7 +145,7 @@ function Vetra.newParallel(FactoryConfig: any?): Vetra end
 
 --[=[
 	Attaches a server-side [HitValidator] to an existing solver instance.
-	Must be called on the **server only** — returns `Solver` unchanged on the
+	Must be called on the **server only**, returns `Solver` unchanged on the
 	client so the same setup code can run on both sides safely.
 
 	Once attached, the solver records every `Fire()` trajectory and validates
@@ -237,14 +237,14 @@ function Vetra:Fire(context: BulletContext, behavior: VetraBehavior?): VetraCast
 
 	**Hook signals (`OnPreBounce`, `OnMidBounce`, `OnPrePenetration`, `OnMidPenetration`, `OnPreTermination`):**
 	The `mutate` callback is only active during the **synchronous** signal handler. Do not yield in
-	these handlers — calling `mutate` after the handler returns logs a warning and has no effect.
+	these handlers, calling `mutate` after the handler returns logs a warning and has no effect.
 
 	**`OnPreTermination` 3-strike rule:**
 	Cancellation is tracked per `reason` string. After 3 consecutive cancels for the same reason the
 	bullet is force-terminated regardless. The counter resets to zero on any non-cancelled termination.
 
 	**`OnTravel` vs `OnTravelBatch`:**
-	`OnTravel` fires using the fast `Fire` path (not `FireSafe`) — handlers **must not throw or
+	`OnTravel` fires using the fast `Fire` path (not `FireSafe`), handlers **must not throw or
 	yield**. Use `OnTravelBatch` for batch processing when you need error isolation or want to process
 	all travelling bullets in one call.
 
@@ -313,7 +313,7 @@ function Vetra:SetWind(WindVector: Vector3) end
 	end)
 	```
 
-	Pass `nil` to disable LOD — all casts are stepped at full frequency.
+	Pass `nil` to disable LOD, all casts are stepped at full frequency.
 
 	@param LODOrigin Vector3?
 ]=]
@@ -348,7 +348,7 @@ function Vetra:SetInterestPoints(Points: { Vector3 }) end
 
 --[=[
 	Configures the Coriolis deflection effect for this solver. This is a
-	**solver-level environment property** — it is not configurable per-bullet
+	**solver-level environment property**, it is not configurable per-bullet
 	via the behavior table. All bullets fired through this solver are affected
 	equally.
 
@@ -356,10 +356,10 @@ function Vetra:SetInterestPoints(Points: { Vector3 }) end
 	trigonometry runs in the per-frame step loop.
 
 	```lua
-	-- Arctic map — strong northern deflection
+	-- Arctic map, strong northern deflection
 	Solver:SetCoriolisConfig(75, 1200)
 
-	-- Equatorial map — purely horizontal east/west drift
+	-- Equatorial map, purely horizontal east/west drift
 	Solver:SetCoriolisConfig(0, 800)
 
 	-- Disable entirely (default)
@@ -370,7 +370,7 @@ function Vetra:SetInterestPoints(Points: { Vector3 }) end
 
 	| Scale | Effect |
 	|-------|--------|
-	| `0` | Disabled — zero overhead (default) |
+	| `0` | Disabled, zero overhead (default) |
 	| `500` | Subtle; detectable only at long range |
 	| `1000` | Clearly perceptible at ~300 studs |
 	| `3000` | Strong, map-defining mechanic |
@@ -382,7 +382,7 @@ function Vetra:SetCoriolisConfig(latitude: number, scale: number) end
 
 --[=[
 	Tears down this solver instance completely. After this call the instance
-	is inert — its frame loop is disconnected, all live casts are terminated,
+	is inert, its frame loop is disconnected, all live casts are terminated,
 	all signals are destroyed, and all internal state is cleared.
 
 	`OnTerminated` fires for every live cast during shutdown, giving consumers
@@ -390,7 +390,7 @@ function Vetra:SetCoriolisConfig(latitude: number, scale: number) end
 
 	:::danger
 	Calling any method on the instance after `Destroy()` returns is undefined
-	behaviour. The metatable is stripped and the table is frozen — all reads
+	behaviour. The metatable is stripped and the table is frozen, all reads
 	and writes will error immediately at the call site.
 	:::
 

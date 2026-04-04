@@ -1,4 +1,4 @@
----
+﻿---
 sidebar_position: 3
 ---
 
@@ -6,7 +6,7 @@ sidebar_position: 3
 
 Multiplayer shooters have a problem that single-player games don't: the client lies.
 
-Not always on purpose. Sometimes the client is a bad actor deliberately reporting false hits. Sometimes it's a legitimate player on a 200ms connection whose bullet's position doesn't quite line up with where the server thinks it should be. Either way, the server needs a way to decide what to believe — and that decision has consequences in both directions.
+Not always on purpose. Sometimes the client is a bad actor deliberately reporting false hits. Sometimes it's a legitimate player on a 200ms connection whose bullet's position doesn't quite line up with where the server thinks it should be. Either way, the server needs a way to decide what to believe, and that decision has consequences in both directions.
 
 Believe too little and legitimate hits get rejected. Players feel the game is broken, report rubber bullets and missed shots. Believe too much and exploiters can fire from anywhere, claim hits at any range, damage without risk.
 
@@ -16,13 +16,13 @@ Most games pick a point on that spectrum and live with the tradeoffs. VetraNet i
 
 ## The Classic Approaches and Why They Fall Short
 
-**Trust the client entirely.** The client says it hit, so it hit. Damage is applied immediately, no server check. This is fast, it feels responsive, and it works great until someone sends a remote event claiming they hit every player in the game simultaneously. It's not a strategy — it's an absence of strategy.
+**Trust the client entirely.** The client says it hit, so it hit. Damage is applied immediately, no server check. This is fast, it feels responsive, and it works great until someone sends a remote event claiming they hit every player in the game simultaneously. It's not a strategy, it's an absence of strategy.
 
-**Raycast on the server only.** The client sends "I fired here in this direction." The server re-runs the full hit detection itself. Nothing the client can claim matters — the server is authoritative on all hits.
+**Raycast on the server only.** The client sends "I fired here in this direction." The server re-runs the full hit detection itself. Nothing the client can claim matters, the server is authoritative on all hits.
 
-This sounds perfect until you think about lag. A player on 100ms ping fires at someone. That fire event arrives on the server 100ms later. The server raycasts at the target's position as it currently is — not where it was when the player pulled the trigger. If the target moved in those 100ms, the server misses. The player sees a hit, the server says miss. Every shot on a moving target becomes a gamble.
+This sounds perfect until you think about lag. A player on 100ms ping fires at someone. That fire event arrives on the server 100ms later. The server raycasts at the target's position as it currently is, not where it was when the player pulled the trigger. If the target moved in those 100ms, the server misses. The player sees a hit, the server says miss. Every shot on a moving target becomes a gamble.
 
-You can add lag compensation — store a history of character positions and rewind the server state to the client's timestamp before raycasting. Now you're correct for positions but the implementation complexity is significant, and the rewind window itself introduces its own exploits.
+You can add lag compensation, store a history of character positions and rewind the server state to the client's timestamp before raycasting. Now you're correct for positions but the implementation complexity is significant, and the rewind window itself introduces its own exploits.
 
 **Reconstruct the trajectory, compare the claim.** The server and client both run the same physics. The server records the bullet's trajectory as it fires it. When the client reports a hit, the server reconstructs where that bullet *should have been* at the reported timestamp and checks whether the client's claimed position is within tolerance.
 
@@ -34,17 +34,17 @@ This is what VetraNet does. The client can't fabricate a hit from a position the
 
 Here's a subtle exploit that most systems miss: if the client sends the full behavior configuration with every fire request, they can send a modified behavior. Dramatically increased speed, no `MaxPierceCount`, a custom `CanPierceFunction` that always returns true. The server trusts the behavior because it came with the fire request.
 
-VetraNet avoids this entirely. Behavior tables are **never sent over the network**. Instead, both server and client register the same behaviors at startup — same names, same order — and fire requests carry only a 2-byte hash that identifies which pre-registered behavior was used.
+VetraNet avoids this entirely. Behavior tables are **never sent over the network**. Instead, both server and client register the same behaviors at startup, same names, same order, and fire requests carry only a 2-byte hash that identifies which pre-registered behavior was used.
 
 ```lua
--- SharedBehaviors.lua — required by both server and client
+-- SharedBehaviors.lua, required by both server and client
 local Registry = Vetra.VetraNet.BehaviorRegistry.new()
 Registry:Register("Rifle",   RifleBehavior)
 Registry:Register("Shotgun", ShotgunBehavior)
 return Registry
 ```
 
-The client fires a `"Rifle"` and sends hash `1`. The server looks up hash `1` in its own registry — the same `RifleBehavior` it registered at startup. There's nothing for the client to forge. If they send an unregistered hash, the request is rejected with `RejectedUnknownBehavior` before a bullet ever spawns.
+The client fires a `"Rifle"` and sends hash `1`. The server looks up hash `1` in its own registry, the same `RifleBehavior` it registered at startup. There's nothing for the client to forge. If they send an unregistered hash, the request is rejected with `RejectedUnknownBehavior` before a bullet ever spawns.
 
 This also means fire payloads are tiny. A hash fits in 2 bytes. Position and direction together are 24 bytes. The entire fire request is small enough that you could realistically fire at high rates without worrying about bandwidth from the request itself.
 
@@ -82,7 +82,7 @@ Net:Fire(pos, dir, speed, "Rifle")
 → send over RemoteEvent
                                          ← receive fire packet
                                          ← validate: rate, concurrent, hash, origin, speed
-                                         ← Solver:Fire() — bullet lives on server
+                                         ← Solver:Fire(), bullet lives on server
                                          ← record trajectory for validation
                                          ← echo fire to all clients
 
@@ -173,7 +173,7 @@ VetraNet supports three authority modes, configured via `NetworkConfig.Mode`. Al
 
 ### ClientAuthoritative *(default)*
 
-Clients send fire requests. The server validates each one — rate limit, origin tolerance, behavior hash — and replicates approved bullets to all clients. This is the standard model for player weapons.
+Clients send fire requests. The server validates each one, rate limit, origin tolerance, behavior hash, and replicates approved bullets to all clients. This is the standard model for player weapons.
 
 ```lua
 local Net = Vetra.VetraNet.new(ServerSolver, SharedRegistry, {
@@ -183,7 +183,7 @@ local Net = Vetra.VetraNet.new(ServerSolver, SharedRegistry, {
 
 ### ServerAuthority
 
-Only server code may initiate bullets. Any fire request that arrives from a client is silently dropped. Use this for NPC projectiles, environmental hazards, or any weapon that should be entirely server-controlled — clients literally cannot spawn a network bullet in this mode, no matter what events they fire.
+Only server code may initiate bullets. Any fire request that arrives from a client is silently dropped. Use this for NPC projectiles, environmental hazards, or any weapon that should be entirely server-controlled, clients literally cannot spawn a network bullet in this mode, no matter what events they fire.
 
 ```lua
 local Net = Vetra.VetraNet.new(ServerSolver, SharedRegistry, {
@@ -194,7 +194,7 @@ local Net = Vetra.VetraNet.new(ServerSolver, SharedRegistry, {
 Net:Fire(origin, direction, speed, SharedRegistry:HashOf("SniperRifle"))
 ```
 
-Server-fired bullets replicate to all clients automatically. The `OnValidatedHit` signal still fires on hit — the `owner` parameter will be `nil` (no player owns the bullet), so make sure your damage handler accounts for that.
+Server-fired bullets replicate to all clients automatically. The `OnValidatedHit` signal still fires on hit, the `owner` parameter will be `nil` (no player owns the bullet), so make sure your damage handler accounts for that.
 
 ```lua
 Net.OnValidatedHit:Connect(function(owner, context, result, velocity, impactForce)
@@ -224,8 +224,8 @@ Net:Fire(origin, direction, speed, SharedRegistry:HashOf("Mortar"))
 
 ## What VetraNet Can't Do
 
-VetraNet validates that bullets followed physics it could have produced. It doesn't validate that the player *should* have been able to fire — that the tool was equipped, that the player was alive, that the cooldown had elapsed. Those are your responsibility to check before or after calling `Net:Fire`.
+VetraNet validates that bullets followed physics it could have produced. It doesn't validate that the player *should* have been able to fire, that the tool was equipped, that the player was alive, that the cooldown had elapsed. Those are your responsibility to check before or after calling `Net:Fire`.
 
-It also doesn't prevent cosmetic exploits. A client could display their own bullets travelling wherever they want locally — VetraNet only controls what the server acknowledges as a real hit. Visual cheating that doesn't produce server-authoritative damage is a separate problem outside the scope of ballistics.
+It also doesn't prevent cosmetic exploits. A client could display their own bullets travelling wherever they want locally, VetraNet only controls what the server acknowledges as a real hit. Visual cheating that doesn't produce server-authoritative damage is a separate problem outside the scope of ballistics.
 
-The goal is a reasonable, practical level of protection that makes projectile exploiting hard without making the game unfair for legitimate players with normal network conditions. That's an engineering goal, not a security guarantee — but for most games, it's more than enough.
+The goal is a reasonable, practical level of protection that makes projectile exploiting hard without making the game unfair for legitimate players with normal network conditions. That's an engineering goal, not a security guarantee, but for most games, it's more than enough.

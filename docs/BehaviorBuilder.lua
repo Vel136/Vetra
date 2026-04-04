@@ -1,4 +1,4 @@
---[=[
+﻿--[=[
 	@class BehaviorBuilder
 
 	Fluent typed configuration builder for [Vetra].
@@ -48,8 +48,8 @@
 	| `:Trajectory()` | Provider |
 	| `:LOD()` | Distance |
 	| `:SixDOF()` | Enabled, LiftCoefficientSlope, PitchingMomentSlope, PitchDampingCoeff, RollDampingCoeff, AoADragFactor, ReferenceArea, ReferenceLength, AirDensity, MomentOfInertia, SpinMOI, MaxAngularSpeed, InitialOrientation, InitialAngularVelocity, CLAlphaMachTable, CmAlphaMachTable, CmqMachTable, ClpMachTable |
-	| `:BatchTravel()` | Root-level boolean toggle — no sub-builder |
-	| `:Hitscan()` | Root-level boolean toggle — no sub-builder |
+	| `:BatchTravel()` | Root-level boolean toggle, no sub-builder |
+	| `:Hitscan()` | Root-level boolean toggle, no sub-builder |
 	| `:Clone()` | Returns an independent copy of this builder |
 	| `:Impose(other)` | Copies only the explicitly-set fields from `other` onto self |
 	| `:Merge(a, b, ...)` | Clone + impose multiple modifiers, returns new builder |
@@ -77,10 +77,10 @@
 
 	| Field | Why required |
 	|-------|-------------|
-	| `BulletMass` (via `:Physics()`) | Converts aerodynamic force vectors into acceleration — F = ma |
-	| `ReferenceArea` | Cross-sectional area in studs² — scales all aero forces |
-	| `ReferenceLength` | Caliber/diameter in studs — scales pitching moment and damping |
-	| `MomentOfInertia` | Transverse MOI — governs pitch/yaw angular response |
+	| `BulletMass` (via `:Physics()`) | Converts aerodynamic force vectors into acceleration, F = ma |
+	| `ReferenceArea` | Cross-sectional area in studs², scales all aero forces |
+	| `ReferenceLength` | Caliber/diameter in studs, scales pitching moment and damping |
+	| `MomentOfInertia` | Transverse MOI, governs pitch/yaw angular response |
 
 	Minimal example:
 
@@ -110,8 +110,8 @@
 	:::
 
 	:::tip 6DOF + gyroscopic precession
-	Gyroscopic precession — the bullet nose tracing a slow cone around the
-	velocity vector — requires both a non-zero `SpinMOI` and a non-zero spin.
+	Gyroscopic precession, the bullet nose tracing a slow cone around the
+	velocity vector, requires both a non-zero `SpinMOI` and a non-zero spin.
 	Seed spin via `:Magnus():SpinVector()` or `:SixDOF():InitialAngularVelocity()`.
 
 	```lua
@@ -130,23 +130,23 @@
 	a smaller one → faster cone.
 	:::
 
-	:::tip 6DOF — tuning guide
-	**Static stability** — set `PitchingMomentSlope` negative (e.g. `-0.5`).
+	:::tip 6DOF, tuning guide
+	**Static stability**, set `PitchingMomentSlope` negative (e.g. `-0.5`).
 	This applies a restoring torque whenever the nose deviates from velocity,
 	keeping the bullet pointing forward. More negative = stiffer.
 
-	**Damping** — set `PitchDampingCoeff` (e.g. `0.02`) to kill wobble.
+	**Damping**, set `PitchDampingCoeff` (e.g. `0.02`) to kill wobble.
 	Without damping, aerodynamic torques cause permanent coning. Start at
 	`0.01`–`0.05` and increase until the bullet settles within a few frames.
 
-	**Lift** — `LiftCoefficientSlope` (dCL/dα) scales the Magnus-like lift
+	**Lift**, `LiftCoefficientSlope` (dCL/dα) scales the Magnus-like lift
 	force proportional to AoA. Typical range `1.0`–`4.0`. Set to `0` to
 	disable lift entirely and model drag-only nose attitude.
 
-	**AoA-dependent drag** — `AoADragFactor` multiplies drag by `1 + k·sin²(AoA)`.
+	**AoA-dependent drag**, `AoADragFactor` multiplies drag by `1 + k·sin²(AoA)`.
 	`3.0` triples drag when broadside. Useful for tumbling or unstable projectiles.
 
-	**Roll decay** — `RollDampingCoeff` slowly kills axial spin. Without it,
+	**Roll decay**, `RollDampingCoeff` slowly kills axial spin. Without it,
 	a bullet with `SpinVector` set maintains its spin forever.
 
 	**Reference values for a typical rifle bullet:**
@@ -157,7 +157,7 @@
 	- `BulletMass` ≈ `0.004`–`0.015`
 	:::
 
-	Builders are **reusable** — call `:Build()` multiple times to produce
+	Builders are **reusable**, call `:Build()` multiple times to produce
 	independent frozen tables from the same configuration.
 
 	```lua
@@ -173,7 +173,7 @@
 
 	:::caution Build-time validation
 	All validation is deferred to `:Build()` rather than per-setter. This means
-	the builder never throws mid-chain — all errors are collected and reported
+	the builder never throws mid-chain, all errors are collected and reported
 	together when `:Build()` is called. `:Build()` returns `nil` if any error
 	is found.
 	:::
@@ -186,7 +186,7 @@ local BehaviorBuilder = {}
 	Creates a new builder pre-populated with all default values.
 
 	Each call allocates a fresh `RaycastParams` and reads `workspace.Gravity`
-	at construction time — builders never share mutable references with
+	at construction time, builders never share mutable references with
 	each other.
 
 	@return BehaviorBuilder
@@ -327,7 +327,7 @@ function BehaviorBuilder:Wind(): WindBuilder end
 
 	:::caution Start small
 	`MagnusCoefficient` is highly sensitive. Start at `0.00005` and increase
-	incrementally — `0.0001` already produces visible drift at typical speeds.
+	incrementally, `0.0001` already produces visible drift at typical speeds.
 	:::
 
 	@return MagnusBuilder
@@ -437,12 +437,12 @@ function BehaviorBuilder:LOD(): LODBuilder end
 
 	All fields are ignored unless `:Enabled(true)` is set. When enabled,
 	`BulletMass`, `ReferenceArea`, `ReferenceLength`, and `MomentOfInertia`
-	are required — `:Build()` returns `nil` if any are zero.
+	are required, `:Build()` returns `nil` if any are zero.
 
 	:::caution BulletMass required
 	Set mass via `:Physics():BulletMass()` before enabling 6DOF.
 	The solver converts aerodynamic force vectors into accelerations using
-	`a = F / m` — zero mass causes a division by zero.
+	`a = F / m`, zero mass causes a division by zero.
 	:::
 
 	@return SixDOFBuilder
@@ -463,7 +463,7 @@ function BehaviorBuilder:BatchTravel(value: boolean): BehaviorBuilder end
 --[=[
 	Enables or disables hitscan mode for this cast.
 
-	When `true`, the entire bullet path — pierce, bounce, and all signals —
+	When `true`, the entire bullet path, pierce, bounce, and all signals —
 	resolves synchronously inside [Vetra:Fire]. No per-frame physics stepping
 	occurs: gravity, drag, Magnus, and all kinematic forces are skipped.
 	The bullet travels in straight lines between bounces.
@@ -510,14 +510,14 @@ function BehaviorBuilder:Clone(): BehaviorBuilder end
 --[=[
 	Copies only the **explicitly-set** fields from `other` onto this builder.
 
-	"Explicitly set" means a field whose setter was called on `other` — tracked
+	"Explicitly set" means a field whose setter was called on `other`, tracked
 	internally via dirty flags. Fields sitting at their defaults on `other` are
 	never copied, so a modifier cannot silently clobber values it never touched.
 
 	Returns `self` for chaining. Does not mutate `other`.
 
 	```lua
-	-- Define a reusable modifier — only two fields are dirty.
+	-- Define a reusable modifier, only two fields are dirty.
 	local APMod = BehaviorBuilder.new()
 	    :Pierce()
 	        :Max(5)
@@ -529,7 +529,7 @@ function BehaviorBuilder:Clone(): BehaviorBuilder end
 	local APPistol = BehaviorBuilder.Pistol():Clone():Impose(APMod):Build()
 	```
 
-	Modifiers stack cleanly — each `:Impose()` only writes its own dirty set:
+	Modifiers stack cleanly, each `:Impose()` only writes its own dirty set:
 
 	```lua
 	local HollowMod = BehaviorBuilder.new()
@@ -543,7 +543,7 @@ function BehaviorBuilder:Clone(): BehaviorBuilder end
 
 	:::caution Last write wins
 	If two modifiers set the same field, the second `:Impose()` wins.
-	There is no merge strategy for conflicting values — ordering is the
+	There is no merge strategy for conflicting values, ordering is the
 	caller's responsibility.
 	:::
 
@@ -585,12 +585,12 @@ function BehaviorBuilder:Merge(...: BehaviorBuilder): BehaviorBuilder end
 	Creates a new `BehaviorBuilder` pre-populated from a frozen `VetraBehavior`
 	table, with every field marked dirty.
 
-	This is the inverse of `:Build()` — it lets you round-trip a frozen behavior
+	This is the inverse of `:Build()`, it lets you round-trip a frozen behavior
 	back into a mutable builder so you can tweak individual fields without
 	reconstructing from scratch.
 
 	Because every field is marked dirty, the resulting builder works correctly
-	with `:Impose()` and `:Merge()` — all its values are treated as intentional
+	with `:Impose()` and `:Merge()`, all its values are treated as intentional
 	rather than defaults.
 
 	```lua
@@ -604,7 +604,7 @@ function BehaviorBuilder:Merge(...: BehaviorBuilder): BehaviorBuilder end
 	```
 
 	Note that `BehaviorBuilder.Inherit` is a **static constructor**, not an
-	instance method — call it on the class, not on a builder instance.
+	instance method, call it on the class, not on a builder instance.
 
 	@param frozen VetraBehavior -- A frozen behavior table produced by `:Build()`.
 	@return BehaviorBuilder -- Mutable builder pre-populated from the frozen table.
@@ -615,7 +615,7 @@ function BehaviorBuilder.Inherit(frozen: VetraBehavior): BehaviorBuilder end
 	Conditionally applies a block of builder calls without breaking the fluent
 	chain. If `condition` is falsy the builder is returned unchanged.
 
-	The callback receives `self` and is called for its side effects — it should
+	The callback receives `self` and is called for its side effects, it should
 	not return a value.
 
 	```lua
@@ -636,7 +636,7 @@ function BehaviorBuilder.Inherit(frozen: VetraBehavior): BehaviorBuilder end
 	local Behavior = b:Build()
 	```
 
-	Both are equivalent. `:When()` is purely ergonomic — it keeps construction
+	Both are equivalent. `:When()` is purely ergonomic, it keeps construction
 	as a single coherent declaration.
 
 	@param condition any -- Truthy value to gate the block. Falsy = skip.
@@ -654,7 +654,7 @@ function BehaviorBuilder:When(condition: any, fn: (BehaviorBuilder) -> ()): Beha
 	All validation errors are collected and logged together so every problem
 	is reported at once. Returns `nil` if any validation error is found.
 
-	Does **not** consume the builder — call `:Build()` multiple times to
+	Does **not** consume the builder, call `:Build()` multiple times to
 	produce independent frozen tables from the same configuration.
 
 	```lua

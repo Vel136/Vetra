@@ -1,4 +1,4 @@
----
+﻿---
 sidebar_position: 5
 ---
 
@@ -12,7 +12,7 @@ Vetra is built and maintained by **VeDevelopment**.
 
 Vetra was designed, written, and is actively maintained by the VeDevelopment team. Every line —
 the analytic kinematics engine, the parallel Actor architecture, the VetraNet middleware, the
-corner-trap detector, the G-series drag tables, the benchmarker — is original work.
+corner-trap detector, the G-series drag tables, the benchmarker, is original work.
 
 **Find us:**
 
@@ -28,7 +28,7 @@ corner-trap detector, the G-series drag tables, the benchmarker — is original 
 
 Vetra ships with one internal dependency:
 
-**VeSignal** — a high-performance, type-safe signal implementation for Roblox Luau, written by
+**VeSignal**, a high-performance, type-safe signal implementation for Roblox Luau, written by
 VeDevelopment. It uses connection pooling, scratch arrays, and thread recycling to minimise GC
 pressure. Its `FireSafe` path is used throughout the solver for user-facing signal emissions where
 error isolation matters.

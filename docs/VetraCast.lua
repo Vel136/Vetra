@@ -1,4 +1,4 @@
---[=[
+﻿--[=[
 	@class VetraCast
 
 	The internal representation of one in-flight projectile. Returned by
@@ -7,7 +7,7 @@
 
 	:::warning Prefer BulletContext
 	Weapon scripts should interact with [BulletContext] rather than `VetraCast`
-	directly. `VetraCast` exposes internal solver state — mutating it outside
+	directly. `VetraCast` exposes internal solver state, mutating it outside
 	of the documented methods can produce physics errors that are difficult
 	to debug.
 
@@ -71,7 +71,7 @@ function VetraCast:GetVelocity(): Vector3 end
 --[=[
 	Returns the constant acceleration vector for the active trajectory segment.
 	This is the pre-computed sum of gravity, extra acceleration, wind, and
-	any initial drag deceleration for this segment — not `workspace.Gravity` alone.
+	any initial drag deceleration for this segment, not `workspace.Gravity` alone.
 
 	@return Vector3
 ]=]
@@ -179,7 +179,7 @@ function VetraCast:ResetBounceState() end
 	original `FilterDescendantsInstances` on the cast's `RaycastParams`.
 
 	Typically called from an `OnBounce` handler when `ResetPierceOnBounce`
-	is not sufficient — for example, if you only want to reset pierce state
+	is not sufficient, for example, if you only want to reset pierce state
 	after specific bounces rather than all of them.
 ]=]
 function VetraCast:ResetPierceState() end
