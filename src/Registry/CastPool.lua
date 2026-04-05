@@ -110,7 +110,7 @@ local function NewRuntime(): any
 		SpatialDeltaAccumulator  = 0,
 		CosmeticBulletObject     = nil,
 		ParentCastId             = nil,
-		PenetrationForceRemaining= nil,
+		PierceForceRemaining= nil,
 		IsTumbling               = false,
 		TumbleRandom             = nil,
 		Orientation              = CFrame.identity,
@@ -157,11 +157,11 @@ local function NewBehavior(): any
 		CanPierceFunction          = nil,
 		MaxPierceCount             = 0,
 		PierceSpeedThreshold       = 0,
-		PenetrationSpeedRetention  = 0,
+		PierceSpeedRetention  = 0,
 		PierceNormalBias           = 0,
-		PenetrationDepth           = 0,
-		PenetrationForce           = 0,
-		PenetrationThicknessLimit  = 500,
+		PierceDepth           = 0,
+		PierceForce           = 0,
+		PierceThicknessLimit  = 500,
 		FragmentOnPierce           = false,
 		FragmentCount              = 0,
 		FragmentDeviation          = 0,
@@ -264,7 +264,7 @@ local function ResetRuntime(Runtime: any, Behavior: any, InitialTrajectory: any,
 	Runtime.SpatialDeltaAccumulator     = 0
 	Runtime.CosmeticBulletObject        = nil
 	Runtime.ParentCastId                = nil
-	Runtime.PenetrationForceRemaining   = nil
+	Runtime.PierceForceRemaining   = nil
 	Runtime.IsTumbling                  = false
 	Runtime.TumbleRandom                = nil
 	Runtime.Orientation                 = CFrame.identity

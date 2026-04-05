@@ -32,7 +32,7 @@
 	|--------|------------|
 	| `:Physics()` | MaxDistance, MaxSpeed, MinSpeed, Gravity, Acceleration, RaycastParams, CastFunction, BulletMass |
 	| `:Homing()` | Filter, PositionProvider, Strength, MaxDuration, AcquisitionRadius |
-	| `:Pierce()` | Filter, Max, SpeedThreshold, SpeedRetention, NormalBias, PenetrationDepth, PenetrationForce, ThicknessLimit |
+	| `:Pierce()` | Filter, Max, SpeedThreshold, SpeedRetention, NormalBias, PierceDepth, PierceForce, ThicknessLimit |
 	| `:Bounce()` | Filter, Max, SpeedThreshold, Restitution, MaterialRestitution, NormalPerturbation, ResetPierceOnBounce |
 	| `:HighFidelity()` | SegmentSize, FrameBudget, AdaptiveScale, MinSegmentSize, MaxBouncesPerFrame |
 	| `:CornerTrap()` | TimeThreshold, PositionHistorySize, DisplacementThreshold, EMAAlpha, EMAThreshold, MinProgressPerBounce |
@@ -220,8 +220,8 @@ function BehaviorBuilder:Homing(): HomingBuilder end
 	Opens the Pierce configuration group.
 
 	Available setters: `:Filter()`, `:Max()`, `:SpeedThreshold()`,
-	`:SpeedRetention()`, `:NormalBias()`, `:PenetrationDepth()`,
-	`:PenetrationForce()`, `:ThicknessLimit()`. Call `:Done()` to return.
+	`:SpeedRetention()`, `:NormalBias()`, `:PierceDepth()`,
+	`:PierceForce()`, `:ThicknessLimit()`. Call `:Done()` to return.
 
 	:::caution
 	Pierce and bounce are mutually exclusive per hit. Pierce is evaluated first.
@@ -673,7 +673,7 @@ function BehaviorBuilder:Build(): VetraBehavior? end
 	pierce-capable, high-fidelity projectile. No bouncing.
 
 	**Preset values:** MaxDistance 1500, MinSpeed 50, MaxPierceCount 3,
-	PierceSpeedThreshold 200, PenetrationSpeedRetention 0.9, PierceNormalBias 0.8,
+	PierceSpeedThreshold 200, PierceSpeedRetention 0.9, PierceNormalBias 0.8,
 	HighFidelitySegmentSize 0.2, HighFidelityFrameBudget 2.
 
 	Suitable for rifles and anti-materiel weapons.
@@ -702,7 +702,7 @@ function BehaviorBuilder.Grenade(): BehaviorBuilder end
 	projectile with single pierce and no bounce.
 
 	**Preset values:** MaxDistance 300, MinSpeed 5, MaxPierceCount 1,
-	PierceSpeedThreshold 80, PenetrationSpeedRetention 0.75.
+	PierceSpeedThreshold 80, PierceSpeedRetention 0.75.
 
 	Suitable for handguns and SMGs.
 

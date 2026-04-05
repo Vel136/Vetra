@@ -229,7 +229,7 @@ function Coordinator.new(Solver: any, Config: any?)
 
 			-- Behavior: pierce
 			PierceSpeedThreshold      = 0,
-			PenetrationSpeedRetention = 0,
+			PierceSpeedRetention = 0,
 			PierceNormalBias          = 0,
 
 			-- Behavior: magnus
@@ -380,7 +380,7 @@ function Coordinator:AddCast(Cast: VetraCast)
 
 	-- Behavior: pierce
 	Message.PierceSpeedThreshold      = Behavior.PierceSpeedThreshold
-	Message.PenetrationSpeedRetention = Behavior.PenetrationSpeedRetention
+	Message.PierceSpeedRetention = Behavior.PierceSpeedRetention
 	Message.PierceNormalBias          = Behavior.PierceNormalBias
 
 	-- Behavior: magnus

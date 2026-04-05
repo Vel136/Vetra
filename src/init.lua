@@ -141,11 +141,11 @@ local DEFAULT_BEHAVIOR = {
 	CanPierceFunction            = nil,
 	MaxPierceCount               = 3,
 	PierceSpeedThreshold         = 50,
-	PenetrationSpeedRetention    = 0.8,
+	PierceSpeedRetention    = 0.8,
 	PierceNormalBias             = 1.0,
-	PenetrationDepth             = 0,
-	PenetrationForce             = 0,
-	PenetrationThicknessLimit    = 500,
+	PierceDepth             = 0,
+	PierceForce             = 0,
+	PierceThicknessLimit    = 500,
 
 	FragmentOnPierce             = false,
 	FragmentCount                = 3,
@@ -661,12 +661,12 @@ function Vetra.Fire(self: any, FireBulletContext: any, FireBehavior: any): any
 		FireBulletContext.CosmeticBulletObject        = CosmeticBulletClone
 	end
 
-	-- ── PenetrationForce initialisation ──────────────────────────────────────
+	-- ── PierceForce initialisation ──────────────────────────────────────
 	-- Seed the remaining-force budget on Runtime so Pierce.ResolveChain can
-	-- decrement it without needing to read Behavior.PenetrationForce each time.
+	-- decrement it without needing to read Behavior.PierceForce each time.
 	-- nil means "disabled" — Pierce checks for nil before decrementing.
-	local PenetrationForceValue = Behavior.PenetrationForce
-	Cast.Runtime.PenetrationForceRemaining = (PenetrationForceValue and PenetrationForceValue > 0) and PenetrationForceValue or nil
+	local PierceForceValue = Behavior.PierceForce
+	Cast.Runtime.PierceForceRemaining = (PierceForceValue and PierceForceValue > 0) and PierceForceValue or nil
 
 	-- ── 6DOF angular state initialisation ────────────────────────────────────
 	-- When SixDOFEnabled is true, seed the cast's orientation and angular
@@ -820,8 +820,8 @@ function Factory.new(FactoryConfig: any?): any
 			OnTerminated             = VeSignal.new(),
 			OnPreBounce              = VeSignal.new(),
 			OnMidBounce              = VeSignal.new(),
-			OnPrePenetration         = VeSignal.new(),
-			OnMidPenetration         = VeSignal.new(),
+			OnPrePierce         = VeSignal.new(),
+			OnMidPierce         = VeSignal.new(),
 			OnSpeedThresholdCrossed  = VeSignal.new(),
 			OnPreTermination         = VeSignal.new(),
 			OnSegmentOpen            = VeSignal.new(),
@@ -940,8 +940,8 @@ function Factory.newParallel(FactoryConfig: any?): any
 			OnTerminated             = VeSignal.new(),
 			OnPreBounce              = VeSignal.new(),
 			OnMidBounce              = VeSignal.new(),
-			OnPrePenetration         = VeSignal.new(),
-			OnMidPenetration         = VeSignal.new(),
+			OnPrePierce         = VeSignal.new(),
+			OnMidPierce         = VeSignal.new(),
 			OnSpeedThresholdCrossed  = VeSignal.new(),
 			OnPreTermination         = VeSignal.new(),
 			OnSegmentOpen            = VeSignal.new(),

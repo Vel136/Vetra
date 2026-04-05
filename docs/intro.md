@@ -73,7 +73,7 @@ weapon behaviors.
 handlers to override physics on a live bullet.
 
 For mutating a bounce or pierce *as it resolves* (before the math finalises), see the hook signals
-`OnPreBounce`, `OnMidBounce`, `OnPrePenetration`, and `OnMidPenetration` in the
+`OnPreBounce`, `OnMidBounce`, `OnPrePierce`, and `OnMidPierce` in the
 [Vetra signals table](../api/Vetra#GetSignals).
 
 ---

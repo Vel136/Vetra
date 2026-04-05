@@ -85,8 +85,8 @@ local function ValidateBuilt(Config: BuiltBehavior): { string }
     -- Pierce
     Expect(Config.MaxPierceCount            >= 0, "MaxPierceCount must be >= 0")
     Expect(Config.PierceSpeedThreshold      >= 0, "PierceSpeedThreshold must be >= 0")
-    Expect(Config.PenetrationSpeedRetention >= 0 and Config.PenetrationSpeedRetention <= 1,
-        "PenetrationSpeedRetention must be in [0, 1]")
+    Expect(Config.PierceSpeedRetention >= 0 and Config.PierceSpeedRetention <= 1,
+        "PierceSpeedRetention must be in [0, 1]")
     Expect(Config.PierceNormalBias >= 0 and Config.PierceNormalBias <= 1,
         "PierceNormalBias must be in [0, 1]")
 

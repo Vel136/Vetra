@@ -116,7 +116,7 @@ Actor:BindToMessage("AddCast", function(InitData: CastSnapshot)
 
 		-- Behavior: pierce
 		PierceSpeedThreshold      = InitData.PierceSpeedThreshold,
-		PenetrationSpeedRetention = InitData.PenetrationSpeedRetention,
+		PierceSpeedRetention = InitData.PierceSpeedRetention,
 		PierceNormalBias          = InitData.PierceNormalBias,
 
 		-- Behavior: magnus

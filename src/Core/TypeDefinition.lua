@@ -141,13 +141,13 @@ export type CastRuntime = {
 	-- based on measured wall-clock cost vs. the HighFidelityFrameBudget target.
 	CurrentSegmentSize     : number,
 
-	-- ─── Penetration ─────────────────────────────────────────────────────────
+	-- ─── Pierce ───────────────────────────────────────────────────────────────
 
 	-- Remaining kinetic energy budget for penetration (in studs).
-	-- Initialised to Behavior.PenetrationForce at Fire() time and decremented
+	-- Initialised to Behavior.PierceForce at Fire() time and decremented
 	-- by each pierce's measured material thickness. When it reaches 0 the
-	-- bullet stops inside the material. nil when PenetrationForce is disabled.
-	PenetrationForceRemaining : number?,
+	-- bullet stops inside the material. nil when PierceForce is disabled.
+	PierceForceRemaining : number?,
 
 	-- ─── Cosmetic ────────────────────────────────────────────────────────────
 
@@ -256,7 +256,7 @@ export type CastBehavior = {
 
 	-- Fraction of speed retained after each pierce (e.g. 0.8 = 20% energy lost
 	-- per pierce). Applied multiplicatively — deeper chains lose progressively more.
-	PenetrationSpeedRetention  : number,
+	PierceSpeedRetention  : number,
 
 	-- Controls minimum approach angle for pierce eligibility.
 	-- ImpactDot = |RayDir.Unit · SurfaceNormal|. Pierce requires ImpactDot >= (1 - PierceNormalBias).
@@ -265,15 +265,15 @@ export type CastBehavior = {
 
 	-- Maximum material thickness (in studs) the bullet can penetrate.
 	-- A secondary raycast is fired from inside the object outward to measure
-	-- actual thickness. If thickness > PenetrationDepth, the bullet stops inside.
+	-- actual thickness. If thickness > PierceDepth, the bullet stops inside.
 	-- 0 = disabled (no thickness check).
-	PenetrationDepth           : number,
+	PierceDepth           : number,
 
 	-- Kinetic energy budget (in studs) available for penetration.
 	-- Each stud of material thickness consumes this budget. If exhausted before
 	-- the exit point, the bullet stops inside the material.
 	-- 0 = disabled (no energy budget check).
-	PenetrationForce           : number,
+	PierceForce           : number,
 
 	-- ─── Homing ──────────────────────────────────────────────────────────────
 
@@ -510,7 +510,7 @@ export type CastSnapshot = {
 
 	-- Behavior: pierce
 	PierceSpeedThreshold        : number,
-	PenetrationSpeedRetention   : number,
+	PierceSpeedRetention   : number,
 	PierceNormalBias            : number,
 
 	-- Behavior: magnus

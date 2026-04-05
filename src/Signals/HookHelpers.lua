@@ -118,7 +118,7 @@ function HookHelpers.FireOnMidBounce(
 	return PostBounceVelocity, Restitution, NormalPerturbation
 end
 
-function HookHelpers.FireOnPrePenetration(
+function HookHelpers.FireOnPrePierce(
 	Solver    : any,
 	Cast      : any,
 	HitResult : RaycastResult,
@@ -137,33 +137,33 @@ function HookHelpers.FireOnPrePenetration(
 			if t.Vector3(NewEntryVelocity) then
 				EntryVelocity = NewEntryVelocity
 			else
-				Logger:Warn("FireOnPrePenetration MutateData: EntryVelocity must be Vector3")
+				Logger:Warn("FireOnPrePierce MutateData: EntryVelocity must be Vector3")
 			end
 		end
 		if NewMaxPierceOverride ~= nil then
 			if t.number(NewMaxPierceOverride) and NewMaxPierceOverride >= 1 and NewMaxPierceOverride <= Cast.Behavior.MaxPierceCount then
 				MaxPierceOverride = math.floor(NewMaxPierceOverride)
 			else
-				Logger:Warn("FireOnPrePenetration MutateData: MaxPierceOverride must be number in [1, MaxPierceCount]")
+				Logger:Warn("FireOnPrePierce MutateData: MaxPierceOverride must be number in [1, MaxPierceCount]")
 			end
 		end
 	end
 
-	Solver.Signals.OnPrePenetration:FireSafe(Context, HitResult, Velocity, MutateData)
+	Solver.Signals.OnPrePierce:FireSafe(Context, HitResult, Velocity, MutateData)
 	live = false
 	return EntryVelocity, MaxPierceOverride
 end
 
-function HookHelpers.FireOnMidPenetration(
+function HookHelpers.FireOnMidPierce(
 	Solver    : any,
 	Cast      : any,
 	HitResult : RaycastResult,
 	Velocity  : Vector3
 ): (number, Vector3?)
 	local Context = Solver._CastToBulletContext[Cast]
-	if not Context then return Cast.Behavior.PenetrationSpeedRetention, nil end
+	if not Context then return Cast.Behavior.PierceSpeedRetention, nil end
 
-	local SpeedRetention = Cast.Behavior.PenetrationSpeedRetention
+	local SpeedRetention = Cast.Behavior.PierceSpeedRetention
 	local ExitVelocity   = nil :: Vector3?
 
 	local live = true
@@ -173,19 +173,19 @@ function HookHelpers.FireOnMidPenetration(
 			if t.number(NewSpeedRetention) and NewSpeedRetention >= 0 and NewSpeedRetention <= 1 then
 				SpeedRetention = NewSpeedRetention
 			else
-				Logger:Warn("FireOnMidPenetration MutateData: SpeedRetention must be number in [0, 1]")
+				Logger:Warn("FireOnMidPierce MutateData: SpeedRetention must be number in [0, 1]")
 			end
 		end
 		if NewExitVelocity ~= nil then
 			if t.Vector3(NewExitVelocity) then
 				ExitVelocity = NewExitVelocity
 			else
-				Logger:Warn("FireOnMidPenetration MutateData: ExitVelocity must be Vector3")
+				Logger:Warn("FireOnMidPierce MutateData: ExitVelocity must be Vector3")
 			end
 		end
 	end
 
-	Solver.Signals.OnMidPenetration:FireSafe(Context, HitResult, Velocity, MutateData)
+	Solver.Signals.OnMidPierce:FireSafe(Context, HitResult, Velocity, MutateData)
 	live = false
 	return SpeedRetention, ExitVelocity
 end

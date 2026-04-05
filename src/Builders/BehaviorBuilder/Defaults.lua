@@ -73,11 +73,11 @@ local DEFAULTS: BuiltBehavior = {
     CanPierceFunction            = nil,
     MaxPierceCount               = 3,
     PierceSpeedThreshold         = 50,
-    PenetrationSpeedRetention    = 0.8,
+    PierceSpeedRetention    = 0.8,
     PierceNormalBias             = 1.0,
-    PenetrationDepth             = 0,
-    PenetrationForce             = 0,
-    PenetrationThicknessLimit    = 500,
+    PierceDepth             = 0,
+    PierceForce             = 0,
+    PierceThicknessLimit    = 500,
 
     -- Fragmentation
     FragmentOnPierce             = false,

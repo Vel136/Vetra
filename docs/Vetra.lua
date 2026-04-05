@@ -224,8 +224,8 @@ function Vetra:Fire(context: BulletContext, behavior: VetraBehavior?): VetraCast
 	| `OnBounce` | `context`, `result: RaycastResult`, `velocity: Vector3`, `bounceCount: number` | Fired after a confirmed bounce. |
 	| `OnPreBounce` | `context`, `result: RaycastResult`, `velocity: Vector3`, `mutate: MutateFn` | Before reflection math. Call `mutate(newNormal, newInVelocity)` to override. |
 	| `OnMidBounce` | `context`, `result: RaycastResult`, `outVelocity: Vector3`, `mutate: MutateFn` | After reflection, before corner-trap check. Call `mutate(newOutVelocity, newRestitution, newNormalPerturbation)` to override. |
-	| `OnPrePenetration` | `context`, `result: RaycastResult`, `velocity: Vector3`, `mutate: MutateFn` | Before pierce resolution. Call `mutate(newEntryVelocity, maxPierceOverride)` to override. |
-	| `OnMidPenetration` | `context`, `result: RaycastResult`, `entryVelocity: Vector3`, `mutate: MutateFn` | After exit-point raycast. Call `mutate(newSpeedRetention, newExitVelocity)` to override. |
+	| `OnPrePierce` | `context`, `result: RaycastResult`, `velocity: Vector3`, `mutate: MutateFn` | Before pierce resolution. Call `mutate(newEntryVelocity, maxPierceOverride)` to override. |
+	| `OnMidPierce` | `context`, `result: RaycastResult`, `entryVelocity: Vector3`, `mutate: MutateFn` | After exit-point raycast. Call `mutate(newSpeedRetention, newExitVelocity)` to override. |
 	| `OnTerminated` | `context` | Fires on any termination cause. |
 	| `OnPreTermination` | `context`, `reason: TerminationReason`, `mutate: MutateFn` | Before cleanup. Call `mutate(cancelled: boolean, newReason?)` to cancel. Per-reason 3-strike limit applies. |
 	| `OnSegmentOpen` | `context`, `trajectory: CastTrajectory` | Fires when a new parabolic arc begins (fire, bounce, velocity change). |
@@ -235,7 +235,7 @@ function Vetra:Fire(context: BulletContext, behavior: VetraBehavior?): VetraCast
 	| `OnTumbleBegin` | `context`, `velocity: Vector3` | Fires when the bullet enters tumble mode. |
 	| `OnTumbleEnd` | `context`, `velocity: Vector3` | Fires when the bullet recovers from tumble. |
 
-	**Hook signals (`OnPreBounce`, `OnMidBounce`, `OnPrePenetration`, `OnMidPenetration`, `OnPreTermination`):**
+	**Hook signals (`OnPreBounce`, `OnMidBounce`, `OnPrePierce`, `OnMidPierce`, `OnPreTermination`):**
 	The `mutate` callback is only active during the **synchronous** signal handler. Do not yield in
 	these handlers, calling `mutate` after the handler returns logs a warning and has no effect.
 
@@ -275,7 +275,7 @@ function Vetra:Fire(context: BulletContext, behavior: VetraBehavior?): VetraCast
 	end)
 	```
 
-	@return { OnHit: Signal, OnTravel: Signal, OnTravelBatch: Signal, OnPierce: Signal, OnBounce: Signal, OnPreBounce: Signal, OnMidBounce: Signal, OnPrePenetration: Signal, OnMidPenetration: Signal, OnTerminated: Signal, OnPreTermination: Signal, OnSegmentOpen: Signal, OnBranchSpawned: Signal, OnSpeedThresholdCrossed: Signal, OnHomingDisengaged: Signal, OnTumbleBegin: Signal, OnTumbleEnd: Signal }
+	@return { OnHit: Signal, OnTravel: Signal, OnTravelBatch: Signal, OnPierce: Signal, OnBounce: Signal, OnPreBounce: Signal, OnMidBounce: Signal, OnPrePierce: Signal, OnMidPierce: Signal, OnTerminated: Signal, OnPreTermination: Signal, OnSegmentOpen: Signal, OnBranchSpawned: Signal, OnSpeedThresholdCrossed: Signal, OnHomingDisengaged: Signal, OnTumbleBegin: Signal, OnTumbleEnd: Signal }
 ]=]
 function Vetra:GetSignals() end
 

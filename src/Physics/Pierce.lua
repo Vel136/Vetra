@@ -47,7 +47,7 @@ local NUDGE                 = Constants.NUDGE
 local VISUALIZER_HIT_TYPE   = Constants.VISUALIZER_HIT_TYPE
 
 
--- ─── Penetration Thickness Measurement ───────────────────────────────────────
+-- ─── Pierce Thickness Measurement ────────────────────────────────────────────
 
 local function MeasureThickness(EntryPosition: Vector3, RayDirection: Vector3, HitInstance: Instance, ThicknessLimit: number): number
 	if RayDirection:Dot(RayDirection) < MIN_MAGNITUDE_SQ then return 0 end
@@ -118,7 +118,7 @@ function Pierce.ResolveChain(
 	local RayParams         = Behavior.RaycastParams
 	local CanPierceCallback = Behavior.CanPierceFunction
 
-	local EntryVelocity, MaxPierceOverride = HookHelpers.FireOnPrePenetration(Solver, Cast, InitialResult, CurrentVelocity)
+	local EntryVelocity, MaxPierceOverride = HookHelpers.FireOnPrePierce(Solver, Cast, InitialResult, CurrentVelocity)
 
 	if EntryVelocity then CurrentVelocity = EntryVelocity end
 
@@ -137,36 +137,36 @@ function Pierce.ResolveChain(
 
 		Pierce.MutateFilter(RayParams, PiercedInstance)
 
-		-- ── PenetrationDepth / PenetrationForce checks ───────────────────────
+		-- ── PierceDepth / PierceForce checks ───────────────────────
 		-- Both checks require the material thickness, so we measure it once and
 		-- share the result between both guards to avoid a redundant raycast.
-		local PenetrationDepth = Behavior.PenetrationDepth
-		local PenetrationForce = Behavior.PenetrationForce
-		local NeedThickness    = (PenetrationDepth and PenetrationDepth > 0) or (PenetrationForce and PenetrationForce > 0)
+		local PierceDepth = Behavior.PierceDepth
+		local PierceForce = Behavior.PierceForce
+		local NeedThickness    = (PierceDepth and PierceDepth > 0) or (PierceForce and PierceForce > 0)
 
 
 		if NeedThickness then
-			local Thickness = MeasureThickness(CurrentResult.Position, RayDirection, PiercedInstance, Behavior.PenetrationThicknessLimit)
-			-- PenetrationDepth: if material is thicker than the limit, stop inside.
-			if PenetrationDepth and PenetrationDepth > 0 and Thickness > PenetrationDepth then
+			local Thickness = MeasureThickness(CurrentResult.Position, RayDirection, PiercedInstance, Behavior.PierceThicknessLimit)
+			-- PierceDepth: if material is thicker than the limit, stop inside.
+			if PierceDepth and PierceDepth > 0 and Thickness > PierceDepth then
 				FoundSolid = true
 				break
 			end
 
-			-- PenetrationForce: deduct thickness from the remaining energy budget.
+			-- PierceForce: deduct thickness from the remaining energy budget.
 			-- If the budget is exhausted, stop inside the material.
-			if PenetrationForce and PenetrationForce > 0 then
-				Runtime.PenetrationForceRemaining = (Runtime.PenetrationForceRemaining or PenetrationForce) - Thickness
-				if Runtime.PenetrationForceRemaining <= 0 then
+			if PierceForce and PierceForce > 0 then
+				Runtime.PierceForceRemaining = (Runtime.PierceForceRemaining or PierceForce) - Thickness
+				if Runtime.PierceForceRemaining <= 0 then
 					FoundSolid = true
 					break
 				end
 			end
 		end
 
-		local SpeedRetention, ExitVelocity = HookHelpers.FireOnMidPenetration(Solver, Cast, CurrentResult, CurrentVelocity)
+		local SpeedRetention, ExitVelocity = HookHelpers.FireOnMidPierce(Solver, Cast, CurrentResult, CurrentVelocity)
 
-		-- An OnMidPenetration handler may call BulletContext:Terminate(), which
+		-- An OnMidPierce handler may call BulletContext:Terminate(), which
 		-- unlinks the context. Without this guard the loop would continue firing
 		-- sub-raycasts and calling user callbacks (with a nil context) for up to
 		-- 100 iterations on a cast that is already dead.

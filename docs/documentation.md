@@ -216,8 +216,7 @@ local Solver = Vetra.WithValidator(Vetra.new(), {
 
 ## Bullets Don't Travel in a Vacuum
 
-Set `DragCoefficient > 0` to enable drag. Fields not exposed by `BehaviorBuilder` setters are passed
-directly on the behavior table:
+Set `DragCoefficient > 0` to enable drag. All fields are available via `BehaviorBuilder:Drag()` or passed directly on the behavior table:
 
 ```lua
 Solver:Fire(context, {
@@ -356,9 +355,7 @@ end)
 
 ## It Will Find Them
 
-Steer the bullet toward a dynamic target position each frame. The steering fields are set directly on
-the behavior table, they are not available through the `BehaviorBuilder` `:Homing()` sub-builder
-(which only exposes the `CanHomeFunction` gate filter):
+Steer the bullet toward a dynamic target position each frame. All fields are available via `BehaviorBuilder:Homing()` or passed directly on the behavior table:
 
 ```lua
 local target = workspace.TargetPart
@@ -484,7 +481,7 @@ Solver:SetInterestPoints({ player1.Character.HumanoidRootPart.Position, ... })
 
 ## Intercept. Override. Continue.
 
-`OnPreBounce`, `OnMidBounce`, `OnPrePenetration`, and `OnMidPenetration` receive a `MutateData`
+`OnPreBounce`, `OnMidBounce`, `OnPrePierce`, and `OnMidPierce` receive a `MutateData`
 callback as their last argument, allowing synchronous override of physics values mid-calculation:
 
 ```lua
@@ -499,12 +496,12 @@ Signals.OnMidBounce:Connect(function(context, result, inVel, mutate)
 end)
 
 -- Cap pierce count for this bullet on the fly
-Signals.OnPrePenetration:Connect(function(context, result, velocity, mutate)
+Signals.OnPrePierce:Connect(function(context, result, velocity, mutate)
     mutate(nil, 1)  -- (newEntryVelocity, maxPierceOverride)
 end)
 
 -- Remove speed loss on exit
-Signals.OnMidPenetration:Connect(function(context, result, velocity, mutate)
+Signals.OnMidPierce:Connect(function(context, result, velocity, mutate)
     mutate(1.0, nil)  -- (newSpeedRetention, newExitVelocity)
 end)
 ```

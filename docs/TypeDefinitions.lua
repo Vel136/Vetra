@@ -169,11 +169,11 @@
 	.CanPierceFunction CanPierceCallback? -- Pierce gate; return `true` to pierce. Default: `nil`
 	.MaxPierceCount number? -- Lifetime pierce limit. Default: `3`
 	.PierceSpeedThreshold number? -- Min speed to attempt pierce (studs/s). Default: `50`
-	.PenetrationSpeedRetention number? -- Speed fraction kept per pierce `[0,1]`. Default: `0.8`
+	.PierceSpeedRetention number? -- Speed fraction kept per pierce `[0,1]`. Default: `0.8`
 	.PierceNormalBias number? -- Min approach angle for pierce `[0,1]`. `1.0` = all angles, `0.0` = perpendicular only. Default: `1.0`
-	.PenetrationDepth number? -- Max wall thickness per pierce in studs. `0` = no per-pierce depth limit. Default: `0`
-	.PenetrationForce number? -- Total momentum force budget for penetration. `0` = disabled. Default: `0`
-	.PenetrationThicknessLimit number? -- Hard cap on wall thickness for the exit-point raycast in studs. Default: `500`
+	.PierceDepth number? -- Max wall thickness per pierce in studs. `0` = no per-pierce depth limit. Default: `0`
+	.PierceForce number? -- Total momentum force budget for penetration. `0` = disabled. Default: `0`
+	.PierceThicknessLimit number? -- Hard cap on wall thickness for the exit-point raycast in studs. Default: `500`
 
 	---
 

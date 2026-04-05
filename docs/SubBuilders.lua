@@ -260,7 +260,7 @@ function PierceBuilder:NormalBias(value: number): PierceBuilder end
 	@param value number
 	@return PierceBuilder
 ]=]
-function PierceBuilder:PenetrationDepth(value: number): PierceBuilder end
+function PierceBuilder:PierceDepth(value: number): PierceBuilder end
 
 --[=[
 	Total momentum force budget for penetration. `0` = disabled.
@@ -270,7 +270,7 @@ function PierceBuilder:PenetrationDepth(value: number): PierceBuilder end
 	@param value number
 	@return PierceBuilder
 ]=]
-function PierceBuilder:PenetrationForce(value: number): PierceBuilder end
+function PierceBuilder:PierceForce(value: number): PierceBuilder end
 
 --[=[
 	Hard cap on wall thickness for the exit-point raycast in studs.

@@ -82,7 +82,7 @@ function FireHelpers.FlushTravelBatch(Solver: any)
 end
 
 function FireHelpers.FireOnPierce(Solver: any, Cast: any, Result: RaycastResult, Velocity: Vector3)
-	-- Increment PierceCount before the context nil-guard. If an OnMidPenetration
+	-- Increment PierceCount before the context nil-guard. If an OnMidPierce
 	-- handler calls BulletContext:Terminate() the context is unlinked, but the
 	-- pierce still happened — the count must advance so ResolveChain's
 	-- PierceCount >= EffectiveMaxPierce break condition can eventually fire.

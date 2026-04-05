@@ -38,7 +38,7 @@
                            RaycastParams, CastFunction, BulletMass
         :Homing()        → Filter, PositionProvider, Strength, MaxDuration, AcquisitionRadius
         :Pierce()        → Filter, Max, SpeedThreshold, SpeedRetention, NormalBias,
-                           PenetrationDepth, PenetrationForce, ThicknessLimit
+                           PierceDepth, PierceForce, ThicknessLimit
         :Bounce()        → Filter, Max, SpeedThreshold, Restitution, MaterialRestitution,
                            NormalPerturbation, ResetPierceOnBounce
         :HighFidelity()  → SegmentSize, FrameBudget, AdaptiveScale,
@@ -217,11 +217,11 @@ function BehaviorBuilder.new(): BehaviorBuilder
         CanPierceFunction            = DEFAULTS.CanPierceFunction,
         MaxPierceCount               = DEFAULTS.MaxPierceCount,
         PierceSpeedThreshold         = DEFAULTS.PierceSpeedThreshold,
-        PenetrationSpeedRetention    = DEFAULTS.PenetrationSpeedRetention,
+        PierceSpeedRetention    = DEFAULTS.PierceSpeedRetention,
         PierceNormalBias             = DEFAULTS.PierceNormalBias,
-        PenetrationDepth             = DEFAULTS.PenetrationDepth,
-        PenetrationForce             = DEFAULTS.PenetrationForce,
-        PenetrationThicknessLimit    = DEFAULTS.PenetrationThicknessLimit,
+        PierceDepth             = DEFAULTS.PierceDepth,
+        PierceForce             = DEFAULTS.PierceForce,
+        PierceThicknessLimit    = DEFAULTS.PierceThicknessLimit,
 
         FragmentOnPierce             = DEFAULTS.FragmentOnPierce,
         FragmentCount                = DEFAULTS.FragmentCount,
@@ -354,11 +354,11 @@ end
         local APMod = BehaviorBuilder.new()
             :Pierce():Max(5):SpeedRetention(0.95):Done()
 
-        -- APMod._Dirty = { MaxPierceCount=true, PenetrationSpeedRetention=true }
+        -- APMod._Dirty = { MaxPierceCount=true, PierceSpeedRetention=true }
         -- All other fields on APMod are defaults and will NOT be copied.
 
         local APSniper = BehaviorBuilder.Sniper():Clone():Impose(APMod):Build()
-        -- Only MaxPierceCount and PenetrationSpeedRetention were written.
+        -- Only MaxPierceCount and PierceSpeedRetention were written.
         -- MaxDistance(1500), HighFidelitySegmentSize(0.2), etc. are untouched.
 
     Stacking modifiers works naturally — each Impose only writes its own dirty set:
