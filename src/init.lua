@@ -6,7 +6,7 @@
     MIT License
     Copyright (c) 2026 VeDevelopment
 
-    Version: 6.3.1
+    Version: 6.4.1
 ]]
 
 -- ─── Vetra ───────────────────────────────────────────────────────────────────
