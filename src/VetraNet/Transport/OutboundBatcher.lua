@@ -11,7 +11,7 @@
     Per-player outbound cursor accumulator.
 
     V0.1.2: replaces per-event RemoteEvent sends with a single buffer-per-player that is flushed
-    once per Heartbeat. Every message written to the batcher gets a 1-byte
+    once per PreSimulation. Every message written to the batcher gets a 1-byte
     channel prefix (CHANNEL_FIRE, CHANNEL_HIT, CHANNEL_STATE). The client
     reads the prefix and dispatches to the correct decoder in a tight loop
     until the buffer is exhausted — matching Packet's "while not Ended()" model.
@@ -21,7 +21,7 @@
         Batcher:WriteHitForAll(AllPlayers, EncodedHitBuf)
         Batcher:WriteStateForAll(AllPlayers, EncodedStateBuf)   -- once/frame
 
-    Flush pattern (server, once per Heartbeat):
+    Flush pattern (server, once per PreSimulation):
         Batcher:Flush(Remote)   → fires one FireClient per player with their
                                    accumulated buffer, then clears all cursors.
 

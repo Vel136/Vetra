@@ -64,7 +64,7 @@ end
 -- ─── Lifetime Management ─────────────────────────────────────────────────────
 
 local function ScheduleDestroy(instance: Instance, lifetime: number?)
-	--Debris:AddItem(instance, lifetime or Constants.VISUALIZER_LIFETIME)
+	Debris:AddItem(instance, lifetime or Constants.VISUALIZER_LIFETIME)
 end
 
 -- ─── Public API ──────────────────────────────────────────────────────────────

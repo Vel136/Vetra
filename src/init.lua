@@ -6,7 +6,7 @@
     MIT License
     Copyright (c) 2026 VeDevelopment
 
-    Version: 6.3
+    Version: 6.3.1
 ]]
 
 -- ─── Vetra ───────────────────────────────────────────────────────────────────
@@ -836,7 +836,7 @@ function Factory.new(FactoryConfig: any?): any
 
 	SolverInstance._Terminate = Terminate
 
-	local FrameEvent = IS_SERVER and RunService.Heartbeat or RunService.RenderStepped
+	local FrameEvent = IS_SERVER and RunService.PreSimulation or RunService.PreSimulation
 	local Connection = FrameEvent:Connect(function(FrameDelta: number)
 		StepProjectile.StepProjectile(SolverInstance, FrameDelta)
 	end)
@@ -985,8 +985,8 @@ function Factory.newParallel(FactoryConfig: any?): any
 		end
 	end
 
-	-- Connect Heartbeat to Coordinator.Step instead of StepProjectile.
-	local FrameEvent = IS_SERVER and RunService.Heartbeat or RunService.RenderStepped
+	-- Connect PreSimulation to Coordinator.Step instead of StepProjectile.
+	local FrameEvent = IS_SERVER and RunService.PreSimulation or RunService.PreSimulation
 	local Connection = FrameEvent:Connect(function(FrameDelta: number)
 		CoordInstance:Step(FrameDelta)
 	end)

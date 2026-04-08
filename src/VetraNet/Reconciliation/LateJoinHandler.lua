@@ -78,7 +78,7 @@ local string_format  = string.format
 -- OutboundBatcher.WriteStateForAll writes to every player in the list.
 -- We pass a single-element table { Player } so only the joiner is targeted.
 -- The batcher is flushed immediately after writing rather than waiting for
--- the next Heartbeat — late-join sync must be instantaneous.
+-- the next PreSimulation — late-join sync must be instantaneous.
 --
 -- CurrentFrameId is StateBatcher's current _FrameId so the joining client
 -- receives a FrameId coherent with the ongoing batch stream. Using 0 would
@@ -137,7 +137,7 @@ function LateJoinHandler.SyncPlayer(
 	-- We do NOT write through OutboundBatcher:WriteStateForAll + Flush here
 	-- because Flush iterates ALL player cursors — it would prematurely send
 	-- every other player's mid-frame accumulated fire/hit data before the
-	-- Heartbeat loop is done writing to them, causing duplicate delivery.
+	-- PreSimulation loop is done writing to them, causing duplicate delivery.
 	--
 	-- Instead we manually construct the channel-prefixed message and send it
 	-- directly via FireClient. This is the ONE permitted exception to the
@@ -146,9 +146,9 @@ function LateJoinHandler.SyncPlayer(
 	-- Wire format matches OutboundBatcher.AppendMessage:
 	--   channel(u8=1) | msgLen(u16=2) | encodedStateBatch(N bytes)
 	--
-	-- FrameDelta: there is no Heartbeat DeltaTime available at PlayerAdded time,
+	-- FrameDelta: there is no PreSimulation DeltaTime available at PlayerAdded time,
 	-- so we pass 0. The client clamps FrameDelta to [1/120, 1/10], so 0 becomes
-	-- 1/120 — a small but valid correction alpha. Normal Heartbeat batches follow
+	-- 1/120 — a small but valid correction alpha. Normal PreSimulation batches follow
 	-- immediately and restore accurate delta timing.
 	local Encoded    = BlinkSchema.EncodeStateBatch(CurrentFrameId, States, #States, 0)
 	local MessageLen = buffer_len(Encoded)

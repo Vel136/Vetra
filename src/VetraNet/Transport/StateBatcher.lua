@@ -155,7 +155,7 @@ end
 -- Encode the collected states into a StateBatch buffer and reset the
 -- collection for the next frame. Returns the encoded buffer.
 -- Called once per frame AFTER Collect().
--- FrameDelta is the Heartbeat DeltaTime for this frame in seconds. It is
+-- FrameDelta is the PreSimulation DeltaTime for this frame in seconds. It is
 -- embedded in the batch header so the client can use it directly as the
 -- correction alpha base, avoiding the os.clock() burst-collapse bug.
 function StateBatcher.Flush(self: any, FrameDelta: number): buffer
@@ -192,7 +192,7 @@ end
 -- Returns the FrameId that the next Flush() call will assign.
 -- Used by LateJoinHandler to stamp its one-shot state batch with a coherent
 -- FrameId. The joining client uses this ID to initialise its LastFrameId, so
--- the immediately-following regular Heartbeat batch (which will carry this same
+-- the immediately-following regular PreSimulation batch (which will carry this same
 -- ID after Flush increments _FrameId) is not discarded as stale.
 --
 -- Exposing this via a method rather than letting callers read _FrameId directly

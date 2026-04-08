@@ -410,7 +410,7 @@ function Server.new(Solver: any, BehaviorRegistry_: any, NetworkConfig_: any?): 
 			--   2. All-others broadcast — LocalCastId = 0. Other clients have no local
 			--      cosmetic to migrate; they spawn a fresh cosmetic on receipt.
 			--
-			-- Both are queued via OutboundBatcher and flushed at the next Heartbeat.
+			-- Both are queued via OutboundBatcher and flushed at the next PreSimulation.
 			local AllPlayers  = GetFiltered()
 			local LocalCastId = Payload.CastId  -- client's local cosmetic ID
 
@@ -475,7 +475,7 @@ function Server.new(Solver: any, BehaviorRegistry_: any, NetworkConfig_: any?): 
 		CleanupCast(CastId)
 	end)
 
-	local FrameConnection = RunService.Heartbeat:Connect(function(DeltaTime: number)
+	local FrameConnection = RunService.PreSimulation:Connect(function(DeltaTime: number)
 		RateLimiterInstance:Refill(DeltaTime)
 		StateBatcherInstance:Collect(Solver)
 

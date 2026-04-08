@@ -284,6 +284,70 @@ There's no parallel-specific penalty beyond the extra math per step.
 
 ## Performance
 
+**My bullets look like they're moving in slow motion when many are active.**
+
+High-fidelity mode is likely the cause. The `HighFidelityFrameBudget` is shared across every active
+cast in the solver. When there are many bullets in flight simultaneously, the budget exhausts
+partway through the cast list — bullets that don't get their full sub-segment loop completed only
+advance `TotalRuntime` by a fraction of the frame delta. Their simulated position lags behind,
+and over several frames they visually crawl.
+
+The fix depends on what you actually need:
+
+- **You need thin-wall detection, not sub-segment precision.** Disable HF entirely
+  (`HighFidelitySegmentSize = 0` or omit the field) and fix your `CastFunction` instead. A
+  Blockcast or Spherecast with the shape's back face flush with `origin` catches thin walls
+  reliably without any sub-segmentation cost. See the note on Blockcast blind zones below.
+- **You need HF for a subset of bullets.** Don't fire all bullets with the same behavior. Reserve
+  HF for bullets where sub-segment precision genuinely matters (sniper rounds, slow projectiles
+  near thin geometry) and use standard casting for the rest.
+- **You need HF for many bullets.** Raise `HighFidelityFrameBudget` and increase
+  `HighFidelitySegmentSize` so fewer sub-segments are needed per bullet per frame. The adaptive
+  system will self-tune from there.
+
+As a rough guide: at 60fps, `N` bullets each needing `S` sub-segments consume approximately
+`N × S × C` ms per frame, where `C` is the cost of a single cast in your scene. If that product
+exceeds your budget, bullets will slow down.
+
+---
+
+**My Blockcast tunnels through thin walls but Raycast doesn't.**
+
+This is a `CastFunction` geometry issue. A common pattern passes `direction.Magnitude` as the
+box's Z size:
+
+```lua
+local size = Vector3.new(0.2, 0.2, direction.Magnitude)
+local cframe = CFrame.lookAt(origin, origin + direction)
+workspace:Blockcast(cframe, size, direction, params)
+```
+
+With the box centered at `origin`, the front face starts at
+`origin + direction.Magnitude/2 * forward` — half a sub-segment ahead of the bullet. Any wall
+closer than that to `origin` in the forward direction is already inside the starting shape.
+Roblox's shapecasts don't detect geometry the starting shape overlaps, so the wall is silently
+skipped. A raycast from the same `origin` is a point with no forward extension, so it hits
+correctly.
+
+Fix: offset the box center backward so the front face is flush with `origin`:
+
+```lua
+CastFunction = function(origin, direction, params)
+    local BoxZ    = 0.01
+    local dirUnit = direction.Unit
+    local center  = origin - dirUnit * (BoxZ / 2)
+    local size    = Vector3.new(0.2, 0.2, BoxZ)
+    local cframe  = CFrame.lookAt(center, center + direction)
+    return workspace:Blockcast(cframe, size, direction, params)
+end
+```
+
+The front face now starts exactly at `origin`. No part of the box precedes the bullet's position
+before the sweep begins, so a wall at any distance ahead will be detected. `BoxZ` just needs to be
+nonzero for Roblox to accept the call — keep it small (≤ the thinnest wall you expect to hit).
+
+---
+
 **When should I use `Vetra.newParallel()` instead of `Vetra.new()`?**
 
 Once you have roughly 50+ bullets in flight simultaneously. Below that, the Actor messaging

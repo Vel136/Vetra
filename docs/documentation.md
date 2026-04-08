@@ -139,13 +139,29 @@ Solver:Fire(context, {
 })
 
 -- Blockcast, useful for shotgun pellets or wide projectiles
+-- Box center is offset back so the front face is flush with origin.
+-- If the center were at origin, the front face would start direction.Magnitude/2
+-- ahead of the bullet — any wall closer than that would be inside the starting
+-- shape and silently skipped by Roblox's overlap rule.
 Solver:Fire(context, {
     CastFunction = function(origin, direction, params)
-        local size = Vector3.new(0.2, 0.2, direction.Magnitude)
-        local cframe = CFrame.lookAt(origin, origin + direction)
+        local BoxZ    = 0.01
+        local dirUnit = direction.Unit
+        local center  = origin - dirUnit * (BoxZ / 2)
+        local size    = Vector3.new(0.2, 0.2, BoxZ)
+        local cframe  = CFrame.lookAt(center, center + direction)
         return workspace:Blockcast(cframe, size, direction, params)
     end,
 })
+
+:::caution Roblox does not sweep geometry the starting shape already overlaps
+This applies to `Blockcast`, `Spherecast`, and `Raycast` alike. If the shape or ray origin starts
+inside or touching a surface, that surface is invisible to the cast. For Blockcast this is easy to
+trigger accidentally: centering the box at `origin` with a non-zero Z size means the front face
+starts `Z/2` ahead of the bullet. Any wall within that gap is already overlapping the starting box
+and will be silently skipped. The example above avoids this by offsetting the center backward so
+the front face is flush with `origin`.
+:::
 
 -- Custom wrapper, ignore water terrain, apply a tag filter
 Solver:Fire(context, {

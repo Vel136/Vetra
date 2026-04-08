@@ -21,7 +21,7 @@ return table.freeze({
 	-- V0.1.2: three remotes collapsed into one. All outbound server messages
 	-- (fire replication, hit confirmation, state batch) are written into a
 	-- per-player OutboundBatcher cursor and flushed as a single FireClient
-	-- call per Heartbeat. The client reads a 1-byte channel prefix to
+	-- call per PreSimulation. The client reads a 1-byte channel prefix to
 	-- dispatch to the correct decoder. One remote, one send per player/frame.
 	REMOTE_NET = "VetraNet_Net",
 
@@ -100,7 +100,7 @@ return table.freeze({
 	STATE_ENTRY_BYTES = 28,
 
 	-- StateBatch header size. Layout: frameId(u32=4) + count(u32=4) + frameDelta(f32=4) = 12 bytes.
-	-- frameDelta is the server Heartbeat DeltaTime for this frame in seconds.
+	-- frameDelta is the server PreSimulation DeltaTime for this frame in seconds.
 	-- The client uses it as the correction alpha denominator instead of os.clock()
 	-- wall-time difference, which is wrong under burst packet delivery (two batches
 	-- arriving the same frame collapse DeltaTime to near-zero, making alpha ~0).

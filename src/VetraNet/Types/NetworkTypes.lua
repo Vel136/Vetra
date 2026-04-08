@@ -46,7 +46,7 @@ export type StateEntry = {
 -- Container for all StateEntries collected in one frame.
 -- FrameId is a monotonically increasing counter used by the client to discard
 -- out-of-order batches from reordered UDP packets.
--- FrameDelta is the server Heartbeat DeltaTime for this frame, embedded in the
+-- FrameDelta is the server PreSimulation DeltaTime for this frame, embedded in the
 -- batch header so the client can use it directly as the correction alpha base.
 export type StateBatch = {
 	FrameId    : number,

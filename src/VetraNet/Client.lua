@@ -201,7 +201,7 @@ function Client.new(
 		if Batch.FrameId <= LastFrameId then return end
 		LastFrameId = Batch.FrameId
 
-		-- Use the server's actual Heartbeat DeltaTime embedded in the batch header.
+		-- Use the server's actual PreSimulation DeltaTime embedded in the batch header.
 		-- Using os.clock() wall-time diff here is wrong: if two batches arrive in
 		-- the same client frame (network burst or late delivery), DeltaTime collapses
 		-- to near-zero and is clamped to 1/120, making correction alpha ~0 and

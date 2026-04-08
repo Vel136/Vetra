@@ -17,7 +17,7 @@
 	  4. Require it, create a Benchmark instance, and call :Run()
 
 	WHAT IS MEASURED:
-	  • Frame time  (ms) — average Heartbeat wall-clock duration while N bullets are live
+	  • Frame time  (ms) — average PreSimulation wall-clock duration while N bullets are live
 	  • Throughput       — total cast-steps processed per second
 	  • Overhead ratio   — parallel / serial frame time  (< 1 = parallel wins)
 
@@ -59,7 +59,7 @@ export type BenchmarkConfig = {
 	BulletCounts              : { number }?,
 	--- At this count and above, the serial solver is skipped.
 	ParallelOnlyThreshold     : number?,
-	--- Heartbeat frames to sample per (solver x count x profile) cell.
+	--- PreSimulation frames to sample per (solver x count x profile) cell.
 	SampleFrames              : number?,
 	--- Frames to wait after seeding bullets before sampling begins.
 	WarmupFrames              : number?,
@@ -244,7 +244,7 @@ local function CollectSamples(
 	FireBullets(self, solver, targetCount, behavior)
 
 	for _ = 1, WarmupFrames do
-		RunService.Heartbeat:Wait()
+		RunService.PreSimulation:Wait()
 	end
 
 	-- Top up any bullets lost during warmup.
@@ -259,7 +259,7 @@ local function CollectSamples(
 
 	for i = 1, SampleFrames do
 		local T0 = os.clock()
-		RunService.Heartbeat:Wait()
+		RunService.PreSimulation:Wait()
 		Samples[i]  = (os.clock() - T0) * 1000   -- convert to ms
 		ActiveSum  += #solver._ActiveCasts
 	end
@@ -350,7 +350,7 @@ local function PrintHeader(Config: BenchmarkConfig)
 	print(string.format("  Shard count      : %d", ShardCount))
 	print(string.format("  Serial skipped   : %d+ bullets (parallel only)", ParallelOnlyThreshold))
 	print(SEPARATOR_HEAVY)
-	print("  NOTE: frame time = wall-clock Heartbeat duration (solver step + scheduler overhead).")
+	print("  NOTE: frame time = wall-clock PreSimulation duration (solver step + scheduler overhead).")
 	print("        Treat values as relative, not absolute.")
 	print("")
 end

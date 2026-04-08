@@ -3,7 +3,7 @@
 -- ─── RaycastParamsPooler ──────────────────────────────────────────────────────
 --[[
     Adaptive, demand-smoothed object pool for RaycastParams.
-    Thin wrapper around Fluix — delegates all EMA, heartbeat, and sizing logic
+    Thin wrapper around Fluix — delegates all EMA, PreSimulation, and sizing logic
     to the generic pooler. Only the RaycastParams-specific Factory, Reset, and
     template-copy (Acquire) live here.
 
@@ -24,7 +24,7 @@
         Alpha                number   EMA smoothing coefficient (0–1).              Default: 0.3
         Headroom             number   Pool target multiplier over smoothed demand.  Default: 2.0
         SampleWindow         number   Demand measurement interval in seconds.       Default: 0.5
-        PrewarmBatchSize     number   Max allocations per Heartbeat tick.           Default: 16
+        PrewarmBatchSize     number   Max allocations per PreSimulation tick.           Default: 16
         ShrinkGraceSeconds   number   Surplus duration before eviction begins.      Default: 3.0
         IdleDisconnectWindows number  Consecutive idle windows before dormancy.     Default: 6
 ]]

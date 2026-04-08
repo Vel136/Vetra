@@ -91,8 +91,8 @@ function RateLimiter.Acquire(self: any, Player: Player): boolean
 end
 
 -- Regenerate tokens for all tracked players proportionally to elapsed time.
--- Called once per Heartbeat frame from the server frame loop.
--- DeltaTime is the Heartbeat delta in seconds.
+-- Called once per PreSimulation frame from the server frame loop.
+-- DeltaTime is the PreSimulation delta in seconds.
 --
 -- Tokens regenerate at TokensPerSecond per second and cap at BurstLimit.
 -- Players who have not fired yet are not tracked — they get seeded lazily

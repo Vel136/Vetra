@@ -160,7 +160,7 @@ end
 --
 -- The buffer is always STATE_BATCH_MAX_BYTES large regardless of N.
 -- The count field tells the decoder how many valid entries to read.
--- frameDelta is the server Heartbeat DeltaTime (seconds, f32). The client uses
+-- frameDelta is the server PreSimulation DeltaTime (seconds, f32). The client uses
 -- it directly as the correction alpha base instead of os.clock() wall-time
 -- diff, which collapses to near-zero when two batches arrive in the same frame.
 -- Unused trailing bytes are zero (Roblox buffer.create initialises to zero).

@@ -95,7 +95,7 @@ export type PoolerSignals<T> = {
     Private fields use the underscore convention; Luau does not enforce access
     modifiers, so the distinction is purely by naming discipline.
 
-    Internal methods (_BorrowObject, _PushToPool, _HeartbeatTick,
+    Internal methods (_BorrowObject, _PushToPool, _PreSimulationTick,
     _EnsureConnected) are included here so that every method body receives a
     fully typed self without any unsafe casts inside the implementation.
 ]]
@@ -129,7 +129,7 @@ export type Pooler<T> = {
 	_TargetSize              : number,
 	_LastDemandSatisfiedTime : number,
 	_IdleWindowCount         : number,
-	_HeartbeatConnection     : RBXScriptConnection?,
+	_PreSimulationConnection     : RBXScriptConnection?,
 	_Destroyed               : boolean,
 	_Paused                  : boolean,
 	_MissCount               : number,
@@ -143,7 +143,7 @@ export type Pooler<T> = {
 	-- ── Internal Methods ──────────────────────────────────────────────────────
 	_BorrowObject   : (self: Pooler<T>) -> T?,
 	_PushToPool     : (self: Pooler<T>, obj: T) -> (),
-	_HeartbeatTick  : (self: Pooler<T>) -> (),
+	_PreSimulationTick  : (self: Pooler<T>) -> (),
 	_EnsureConnected: (self: Pooler<T>) -> (),
 	-- ── Public Methods ────────────────────────────────────────────────────────
 	Seed             : (self: Pooler<T>, ExpectedDemand: number) -> (),
@@ -243,8 +243,8 @@ function FluixClass.new<T>(config: PoolerConfig<T>): Pooler<T>
 	self._LastDemandSatisfiedTime = os.clock()
 	self._IdleWindowCount         = 0
 
-	-- ── Heartbeat Lifecycle ───────────────────────────────────────────────────
-	self._HeartbeatConnection = nil :: RBXScriptConnection?
+	-- ── PreSimulation Lifecycle ───────────────────────────────────────────────────
+	self._PreSimulationConnection = nil :: RBXScriptConnection?
 	self._Destroyed           = false
 	self._Paused              = false
 
@@ -309,9 +309,9 @@ function FluixClass._PushToPool(self, obj)
 	end
 end
 
--- ─── Heartbeat Tick ──────────────────────────────────────────────────────────
+-- ─── PreSimulation Tick ──────────────────────────────────────────────────────────
 
-function FluixClass._HeartbeatTick<T>(self: Pooler<T>)
+function FluixClass._PreSimulationTick<T>(self: Pooler<T>)
 	local Now = os.clock()
 
 	-- ── Window Boundary ───────────────────────────────────────────────────────
@@ -325,9 +325,9 @@ function FluixClass._HeartbeatTick<T>(self: Pooler<T>)
 		if self._WindowAcquisitions == 0 then
 			self._IdleWindowCount += 1
 			if self._IdleWindowCount >= self._IDLE_DISCONNECT_WINDOWS then
-				if self._HeartbeatConnection then
-					self._HeartbeatConnection:Disconnect()
-					self._HeartbeatConnection = nil
+				if self._PreSimulationConnection then
+					self._PreSimulationConnection:Disconnect()
+					self._PreSimulationConnection = nil
 				end
 				self._WindowStart     = os.clock()
 				self._IdleWindowCount = 0
@@ -437,11 +437,11 @@ end
 function FluixClass._EnsureConnected<T>(self: Pooler<T>)
 	-- Respect an explicit Pause() — do not reconnect while paused.
 	if self._Paused then return end
-	if self._HeartbeatConnection then return end
+	if self._PreSimulationConnection then return end
 	self._IdleWindowCount = 0
 	self._WindowStart     = os.clock()
-	self._HeartbeatConnection = RunService.Heartbeat:Connect(function()
-		self:_HeartbeatTick()
+	self._PreSimulationConnection = RunService.PreSimulation:Connect(function()
+		self:_PreSimulationTick()
 	end)
 end
 
@@ -604,7 +604,7 @@ end
 --[=[
     Destroy
 
-    Tears down the pool: disconnects Heartbeat, destroys all signals, clears
+    Tears down the pool: disconnects PreSimulation, destroys all signals, clears
     both pools and the live set, and marks the instance as destroyed. Any
     subsequent public API call will error.
 
@@ -616,9 +616,9 @@ function FluixClass.Destroy<T>(self: Pooler<T>)
 	if self._Destroyed then return end
 	self._Destroyed = true
 
-	if self._HeartbeatConnection then
-		self._HeartbeatConnection:Disconnect()
-		self._HeartbeatConnection = nil
+	if self._PreSimulationConnection then
+		self._PreSimulationConnection:Disconnect()
+		self._PreSimulationConnection = nil
 	end
 
 	-- Remove this pool from any peers' borrow lists to prevent dangling refs.
@@ -668,7 +668,7 @@ end
         MissCount         — lifetime total pool misses
         MissesThisWindow  — misses since last window reset
         LiveCount         — objects currently out in the wild
-        IsActive          — true if Heartbeat connection is live
+        IsActive          — true if PreSimulation connection is live
 ]=]
 function FluixClass.GetStats<T>(self: Pooler<T>): PoolerStats
 	return {
@@ -679,7 +679,7 @@ function FluixClass.GetStats<T>(self: Pooler<T>): PoolerStats
 		MissCount        = self._MissCount,
 		MissesThisWindow = self._MissesThisWindow,
 		LiveCount        = self._LiveCount,
-		IsActive         = self._HeartbeatConnection ~= nil,
+		IsActive         = self._PreSimulationConnection ~= nil,
 	}
 end
 
@@ -742,7 +742,7 @@ end
 --[=[
     Pause
 
-    Immediately disconnects the Heartbeat connection without destroying any pool
+    Immediately disconnects the PreSimulation connection without destroying any pool
     state. Pre-warmed objects remain in both tiers; the EMA and live ownership
     table are untouched. Subsequent Acquire calls will still work — Pause only
     suppresses background pre-warming, shrinking, and TTL scans.
@@ -755,16 +755,16 @@ end
 function FluixClass.Pause<T>(self: Pooler<T>)
 	assert(not self._Destroyed, Identity .. ": cannot Pause a destroyed pool")
 	self._Paused = true
-	if self._HeartbeatConnection then
-		self._HeartbeatConnection:Disconnect()
-		self._HeartbeatConnection = nil
+	if self._PreSimulationConnection then
+		self._PreSimulationConnection:Disconnect()
+		self._PreSimulationConnection = nil
 	end
 end
 
 --[=[
     Resume
 
-    Reconnects the Heartbeat after a Pause(). Safe to call if the pool is
+    Reconnects the PreSimulation after a Pause(). Safe to call if the pool is
     already active — it is a no-op in that case.
 ]=]
 function FluixClass.Resume<T>(self: Pooler<T>)
@@ -840,7 +840,7 @@ end
     Resize
 
     Updates the MinSize and MaxSize bounds live, then immediately clamps
-    TargetSize into the new range. The Heartbeat tick will handle the actual
+    TargetSize into the new range. The PreSimulation tick will handle the actual
     fill or gradual eviction on subsequent frames — no synchronous allocation
     or eviction happens here.
 
@@ -857,7 +857,7 @@ function FluixClass.Resize<T>(self: Pooler<T>, newMin: number, newMax: number)
 	self._MAX_POOL_SIZE = math.floor(newMax)
 
 	-- Clamp the current target into the new bounds immediately so the
-	-- Heartbeat tick begins converging toward the correct size next frame.
+	-- PreSimulation tick begins converging toward the correct size next frame.
 	self._TargetSize = math.clamp(self._TargetSize, self._MIN_POOL_SIZE, self._MAX_POOL_SIZE)
 
 	self:_EnsureConnected()
@@ -939,11 +939,11 @@ function FluixClass.GetMissCount<T>(self: Pooler<T>): number
 end
 
 --[=[
-    IsActive — true if the Heartbeat connection is currently live. False if the
+    IsActive — true if the PreSimulation connection is currently live. False if the
     pool is idle-dormant or has been explicitly Paused().
 ]=]
 function FluixClass.IsActive<T>(self: Pooler<T>): boolean
-	return self._HeartbeatConnection ~= nil
+	return self._PreSimulationConnection ~= nil
 end
 
 --[=[
