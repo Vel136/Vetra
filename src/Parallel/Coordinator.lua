@@ -299,13 +299,8 @@ function Coordinator.new(Solver: any, Config: any?)
 			TumbleOnPierce         = false,
 			TumbleRecoverySpeed    = nil,
 
-			FilterType        = nil,
-			FilterList        = nil,
-			CollisionGroup    = "",
-			RespectCanCollide = false,
-			IgnoreWater       = false,
-			BruteForceAllSlow = false,
-			VisualizeCasts    = false,
+			RaycastParams  = nil,
+			VisualizeCasts = false,
 
 			CoriolisOmega = Vector3.zero,
 
@@ -450,13 +445,8 @@ function Coordinator:AddCast(Cast: VetraCast)
 	Message.TumbleOnPierce        = Behavior.TumbleOnPierce
 	Message.TumbleRecoverySpeed   = Behavior.TumbleRecoverySpeed
 
-	Message.FilterType        = RaycastParams.FilterType
-	Message.FilterList        = table.clone(RaycastParams.FilterDescendantsInstances or {})
-	Message.CollisionGroup    = RaycastParams.CollisionGroup
-	Message.RespectCanCollide = RaycastParams.RespectCanCollide
-	Message.IgnoreWater       = RaycastParams.IgnoreWater
-	Message.BruteForceAllSlow = RaycastParams.BruteForceAllSlow
-	Message.VisualizeCasts    = Behavior.VisualizeCasts
+	Message.RaycastParams  = RaycastParams
+	Message.VisualizeCasts = Behavior.VisualizeCasts
 
 	Message.CoriolisOmega = Solver._CoriolisOmega or Vector3.zero
 	Message.NeedsSync     = NeedsSync

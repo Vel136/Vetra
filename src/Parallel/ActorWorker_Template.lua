@@ -59,13 +59,6 @@ end)
 -- ─── AddCast ─────────────────────────────────────────────────────────────────
 
 Actor:BindToMessage("AddCast", function(InitData: CastSnapshot)
-	local RayParams = RaycastParams.new()
-	RayParams.FilterType                 = InitData.FilterType
-	RayParams.FilterDescendantsInstances = InitData.FilterList
-	RayParams.CollisionGroup             = InitData.CollisionGroup    or ""
-	RayParams.RespectCanCollide          = InitData.RespectCanCollide or false
-	RayParams.IgnoreWater                = InitData.IgnoreWater       or false
-	RayParams.BruteForceAllSlow          = InitData.BruteForceAllSlow or false
 
 	LocalCasts[InitData.Id] = {
 		Id = InitData.Id,
@@ -191,10 +184,7 @@ Actor:BindToMessage("AddCast", function(InitData: CastSnapshot)
 		-- cosmetic parts — they are pure simulation with terminal event delivery.
 		NeedsSync = InitData.NeedsSync,
 
-		-- Actor-local RaycastParams reconstructed from FilterType + FilterList.
-		RaycastParams = RayParams,
-		FilterType    = InitData.FilterType,
-		FilterList    = InitData.FilterList,
+		RaycastParams = InitData.RaycastParams,
 
 		-- Provider positions (populated each frame by UpdateProviderPositions)
 		ProvidedLastPosition    = nil :: Vector3?,

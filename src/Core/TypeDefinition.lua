@@ -559,13 +559,7 @@ export type CastSnapshot = {
 	TumbleOnPierce              : boolean?,
 	TumbleRecoverySpeed         : number?,
 
-	-- Raycast filter transport fields.
-	-- RaycastParams cannot cross Actor boundaries — the Actor reconstructs
-	-- its own local RaycastParams from these two fields on AddCast.
-	-- ParallelPhysics.Step receives the Actor-local RaycastParams object
-	-- directly in the snapshot table (not serialized through here).
-	FilterType                  : Enum.RaycastFilterType,
-	FilterList                  : { Instance },
+	RaycastParams               : RaycastParams,
 
 	-- Misc
 	VisualizeCasts              : boolean,
