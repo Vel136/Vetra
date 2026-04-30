@@ -29,9 +29,7 @@ local Logger = LogService.new(Identity, false)
 
 -- NextCastId has been removed from module scope.
 -- IDs are now tracked per-solver (Solver._NextCastId) so that two concurrent
--- Solver instances cannot share the same ID namespace, which would cause
--- HitValidator cross-solver false-positives and silent rejections.
--- See Vetra.Fire in init.lua.
+-- Solver instances cannot share the same ID namespace.
 
 function CastRegistry.Register(Solver: any, Cast: any, RegistryLogger: any): boolean
 	if not t.table(Cast) then

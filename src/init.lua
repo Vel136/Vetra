@@ -61,14 +61,6 @@ local SpatialPartition      = require(Simulation.SpatialPartition)
 
 local BehaviorBuilder       = require(Builders.BehaviorBuilder)
 local VetraNet	  		    = require(script.VetraNet)
--- Validation is server-only; require once at module load to avoid repeated
--- require() calls inside WithValidator.
-local HitValidator: any = nil
-
-if RunService:IsServer() then
-	HitValidator = require(script.Validation.HitValidator)
-
-end
 
 -- ─── Logger ──────────────────────────────────────────────────────────────────
 
@@ -78,12 +70,6 @@ local IS_SERVER = RunService:IsServer()
 -- ─── Metatables ──────────────────────────────────────────────────────────────
 
 local VetraMetatable = table.freeze({ __index = Vetra})
-
--- Shared metatable for all Cast objects. Previously Fire() allocated a new
--- { __index = CAST_STATE_METHODS } table on every call — identical every time.
--- This frozen table is allocated once and stamped onto every cast by CastPool,
--- eliminating that per-Fire() allocation entirely.
--- NOTE: must be defined after CAST_STATE_METHODS below.
 
 -- ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -97,146 +83,8 @@ local function DefaultCast(origin: Vector3, direction: Vector3, params: RaycastP
 	return workspace:Raycast(origin, direction, params)
 end
 
--- ─── Default Behavior ────────────────────────────────────────────────────────
-
-local DEFAULT_BEHAVIOR = {
-	Acceleration                 = Constants.ZERO_VECTOR,
-	MaxDistance                  = 500,
-	MaxSpeed                     = math.huge,  -- no cap by default; set to terminate bullets that exceed a speed ceiling
-	RaycastParams                = RaycastParams.new(),
-	MinSpeed                     = 1,
-	Gravity                      = Constants.ZERO_VECTOR,      -- sentinel; Fire() always overwrites with workspace.Gravity
-
-	DragCoefficient              = 0,
-	DragModel                    = Enums.DragModel.Quadratic,
-	DragSegmentInterval          = 0.05,
-
-	GyroDriftRate                = nil,
-	GyroDriftAxis                = nil,
-	TumbleSpeedThreshold         = nil,
-	TumbleDragMultiplier         = nil,
-	TumbleLateralStrength        = nil,
-	TumbleOnPierce               = false,
-	TumbleRecoverySpeed          = nil,
-
-	SpeedThresholds              = {},
-	SupersonicProfile            = nil,
-	SubsonicProfile              = nil,
-	WindResponse                 = 1.0,
-
-	SpinVector        = Vector3.zero,
-	MagnusCoefficient = 0,
-	SpinDecayRate     = 0,
-
-	TrajectoryPositionProvider   = nil,
-
-	HomingPositionProvider       = nil,
-	CanHomeFunction              = nil,
-	HomingStrength               = 90,
-	HomingMaxDuration            = 3,
-	HomingAcquisitionRadius      = 0,
-
-	BulletMass                   = 0,
-
-	CanPierceFunction            = nil,
-	MaxPierceCount               = 3,
-	PierceSpeedThreshold         = 50,
-	PierceSpeedRetention    = 0.8,
-	PierceNormalBias             = 1.0,
-	PierceDepth             = 0,
-	PierceForce             = 0,
-	PierceThicknessLimit    = 500,
-
-	FragmentOnPierce             = false,
-	FragmentCount                = 3,
-	FragmentDeviation            = 15,
-
-	CanBounceFunction            = nil,
-	MaxBounces                   = 5,
-	BounceSpeedThreshold         = 20,
-	Restitution                  = 0.7,
-	MaterialRestitution          = {},
-	NormalPerturbation           = 0.0,
-	ResetPierceOnBounce          = false,
-
-	HighFidelitySegmentSize      = 0.5,
-	HighFidelityFrameBudget      = 4,
-	AdaptiveScaleFactor          = 1.5,
-	MinSegmentSize               = 0.1,
-	MaxBouncesPerFrame           = 10,
-
-	CornerTimeThreshold          = 0.002,
-	CornerPositionHistorySize    = 4,
-	CornerDisplacementThreshold  = 0.5,
-	CornerEMAAlpha               = 0.4,
-	CornerEMAThreshold           = 0.25,
-	CornerMinProgressPerBounce   = 0.3,
-
-	LODDistance                  = 0,
-
-	-- ── Coriolis ──────────────────────────────────────────────────────────
-	-- CoriolisLatitude: geographic latitude in degrees.
-	--   0  = equator (horizontal E/W deflection only)
-	--   45 = mid-latitude, a good general default
-	--   90 = north pole (deflection rotates ground track clockwise from above)
-	-- CoriolisScale: exaggeration multiplier on Earth's actual ω.
-	--   0    = disabled (zero cost, default)
-	--   1000 = clearly perceptible at ~300 studs
-	--   3000 = strong map-defining mechanic
-	-- Note: these are read by SetCoriolisConfig to precompute Ω. They are
-	-- stored on DEFAULT_BEHAVIOR for documentation purposes — the live value
-	-- is _CoriolisOmega on the solver instance.
-	CoriolisLatitude             = 45,
-	CoriolisScale                = 0,
-
-	CosmeticBulletTemplate       = nil,
-	CosmeticBulletContainer      = nil,
-	CosmeticBulletProvider       = nil,
-	AutoDeleteCosmeticBullet     = true,
-
-	-- ── 6DOF ─────────────────────────────────────────────────────────────
-	-- When SixDOFEnabled = true the projectile tracks body-frame orientation
-	-- and angular velocity. Aerodynamic lift, AoA-dependent drag, pitching
-	-- moment, and damping torques are evaluated each DragSegmentInterval.
-	--
-	-- All 6DOF fields default to disabled (false / 0 / nil) so existing
-	-- 3DOF consumers pay zero cost.
-	--
-	-- Tuning guide (rifle round, ~900 studs/s):
-	--   SixDOFEnabled          = true,
-	--   LiftCoefficientSlope   = 2.0,    -- moderate lift
-	--   PitchingMomentSlope    = -0.5,   -- statically stable (negative)
-	--   PitchDampingCoeff      = 0.01,   -- light damping
-	--   RollDampingCoeff       = 0.005,  -- slow spin decay
-	--   AoADragFactor          = 3.0,    -- drag triples at 90° AoA
-	--   ReferenceArea          = 0.01,   -- small cross-section
-	--   ReferenceLength        = 0.05,   -- bullet caliber
-	--   AirDensity             = 1.225,  -- sea level
-	--   MomentOfInertia        = 0.001,  -- transverse MOI
-	--   SpinMOI                = 0.0005, -- axial MOI (for gyroscopic precession)
-	--   MaxAngularSpeed        = 628,    -- ~6000 RPM ceiling
-	--   BulletMass             = 0.01,   -- required for force→acceleration
-	--   InitialOrientation     = nil,    -- defaults to velocity look-at
-	--   InitialAngularVelocity = nil,    -- defaults to SpinVector if set
-	SixDOFEnabled              = false,
-	LiftCoefficientSlope       = 0,
-	PitchingMomentSlope        = 0,
-	PitchDampingCoeff          = 0,
-	RollDampingCoeff           = 0,
-	AoADragFactor              = 0,
-	ReferenceArea              = 0,
-	ReferenceLength            = 0,
-	AirDensity                 = Constants.DEFAULT_AIR_DENSITY,
-	MomentOfInertia            = 0,
-	SpinMOI                    = 0,
-	MaxAngularSpeed            = Constants.DEFAULT_MAX_ANGULAR_SPEED,
-	InitialOrientation         = nil,
-	InitialAngularVelocity     = nil,
-
-	BatchTravel                  = false,
-	IsHitscan                    = false,
-	VisualizeCasts               = false,
-}
+-- Default Behavior
+local DEFAULT_BEHAVIOR = require(Builders.BehaviorBuilder.Defaults)
 
 -- ─── Behavior Application ────────────────────────────────────────────────────
 
@@ -370,73 +218,14 @@ local CAST_SHARED_METATABLE = table.freeze({ __index = CAST_STATE_METHODS })
 
 -- ─── Public Types ─────────────────────────────────────────────────────────────
 
-type Signal<T> = VeSignal.Signal<T>
+local VetraTypes = require(script.Types)
+
+export type Cast           = VetraTypes.Cast
+export type TerminateReason = VetraTypes.TerminateReason
+export type Signals        = VetraTypes.Signals
+export type Solver         = VetraTypes.Solver
+
 type BulletContextPublic = BulletContext.BulletContext
-
-export type Cast = {
-	Alive     : boolean,
-	Paused    : boolean,
-	StartTime : number,
-	Id        : number,
-	UserData  : { [any]: any },
-
-	GetPosition         : (self: Cast) -> Vector3,
-	GetVelocity         : (self: Cast) -> Vector3,
-	GetAcceleration     : (self: Cast) -> Vector3,
-	Pause               : (self: Cast) -> (),
-	Resume              : (self: Cast) -> (),
-	IsPaused            : (self: Cast) -> boolean,
-	Terminate           : (self: Cast) -> (),
-	SetPosition         : (self: Cast, pos: Vector3) -> (),
-	SetVelocity         : (self: Cast, vel: Vector3) -> (),
-	SetAcceleration     : (self: Cast, acc: Vector3) -> (),
-	AddPosition         : (self: Cast, delta: Vector3) -> (),
-	AddVelocity         : (self: Cast, delta: Vector3) -> (),
-	AddAcceleration     : (self: Cast, delta: Vector3) -> (),
-	ResetBounceState    : (self: Cast) -> (),
-	ResetPierceState    : (self: Cast) -> (),
-	GetOrientation      : (self: Cast) -> CFrame,
-	GetAngularVelocity  : (self: Cast) -> Vector3,
-	GetAngleOfAttack    : (self: Cast) -> number,
-	SetOrientation      : (self: Cast, cf: CFrame) -> (),
-	SetAngularVelocity  : (self: Cast, av: Vector3) -> (),
-}
-
-export type TerminateReason = Enums.TerminateReason
-
-export type Signals = {
-	OnFire                  : Signal<(context: BulletContextPublic, behavior: any) -> ()>,
-	OnHit                   : Signal<(context: BulletContextPublic, result: RaycastResult?, velocity: Vector3, impactForce: Vector3) -> ()>,
-	OnTravel                : Signal<(context: BulletContextPublic, position: Vector3, velocity: Vector3) -> ()>,
-	OnTravelBatch           : Signal<(batch: { { Context: BulletContextPublic, Position: Vector3, Velocity: Vector3 } }) -> ()>,
-	OnPierce                : Signal<(context: BulletContextPublic, result: RaycastResult, velocity: Vector3, pierceCount: number) -> ()>,
-	OnBounce                : Signal<(context: BulletContextPublic, result: RaycastResult, velocity: Vector3, bounceCount: number, bounceForce: Vector3) -> ()>,
-	OnTerminated            : Signal<(context: BulletContextPublic) -> ()>,
-	OnPreBounce             : Signal<(context: BulletContextPublic, result: RaycastResult, velocity: Vector3, mutate: (normal: Vector3?, incomingVelocity: Vector3?) -> ()) -> ()>,
-	OnMidBounce             : Signal<(context: BulletContextPublic, result: RaycastResult, postVelocity: Vector3, mutate: (postVelocity: Vector3?, restitution: number?, perturbation: number?) -> ()) -> ()>,
-	OnPrePierce             : Signal<(context: BulletContextPublic, result: RaycastResult, velocity: Vector3, mutate: (normal: Vector3?, velocity: Vector3?) -> ()) -> ()>,
-	OnMidPierce             : Signal<(context: BulletContextPublic, result: RaycastResult, velocity: Vector3, mutate: (velocity: Vector3?) -> ()) -> ()>,
-	OnSpeedThresholdCrossed : Signal<(context: BulletContextPublic, threshold: number, ascending: boolean, speed: number) -> ()>,
-	OnPreTermination        : Signal<(context: BulletContextPublic, reason: TerminateReason, mutate: (cancelled: boolean, newReason: TerminateReason?) -> ()) -> ()>,
-	OnSegmentOpen           : Signal<(context: BulletContextPublic, segment: any) -> ()>,
-	OnBranchSpawned         : Signal<(parent: BulletContextPublic, child: BulletContextPublic) -> ()>,
-	OnHomingDisengaged      : Signal<(context: BulletContextPublic) -> ()>,
-	OnTumbleBegin           : Signal<(context: BulletContextPublic, velocity: Vector3) -> ()>,
-	OnTumbleEnd             : Signal<(context: BulletContextPublic, velocity: Vector3) -> ()>,
-}
-
-export type Solver = {
-	Signals : Signals,
-
-	Fire              : (self: Solver, context: BulletContextPublic, behavior: any?) -> Cast,
-	GetSignals        : (self: Solver) -> Signals,
-	Destroy           : (self: Solver) -> (),
-	SetWind           : (self: Solver, wind: Vector3) -> (),
-	SetLODOrigin      : (self: Solver, origin: Vector3?) -> (),
-	SetInterestPoints : (self: Solver, points: { Vector3 }) -> (),
-	SetCoriolisConfig : (self: Solver, latitude: number, scale: number) -> (),
-	WithValidator     : (self: Solver, config: any?) -> Solver,
-}
 
 -- ─── Terminate ───────────────────────────────────────────────────────────────
 
@@ -465,10 +254,6 @@ local function Terminate(SolverRef: any, Cast: any, TerminationReason: string?)
 		SolverRef._CastToBulletContext[Cast]                = nil
 	end
 	SolverRef._BaseAccelerationCache[Cast] = nil
-
-	if IS_SERVER and SolverRef._HitValidator then
-		SolverRef._HitValidator:PurgeCast(Cast.Id)
-	end
 
 	CastRegistry.Remove(SolverRef, Cast)
 
@@ -775,10 +560,6 @@ function Vetra.Fire(self: Solver, FireBulletContext: BulletContextPublic, FireBe
 		end
 	end
 
-	if IS_SERVER and self._HitValidator then
-		self._HitValidator:RecordCastHistory(CastId, Cast.Runtime.Trajectories, Cast.StartTime)
-	end
-
 	FireHelpers.FireOnSegmentOpen(self, Cast, InitialTrajectory)
 
 	if Cast.Behavior.IsHitscan then
@@ -840,7 +621,7 @@ local Factory = {}
 Factory.__type          = Identity
 Factory.BehaviorBuilder = BehaviorBuilder
 Factory.BulletContext   = BulletContext
-Factory.VetraNet		= VetraNet
+Factory.VetraNet        = VetraNet
 Factory.Enums           = Enums
 function Factory.new(FactoryConfig: any?): Solver
 	local ResolvedConfig  = FactoryConfig or {}
@@ -855,7 +636,6 @@ function Factory.new(FactoryConfig: any?): Solver
 		_TravelBatch            = {},
 		_Wind                   = Constants.ZERO_VECTOR,
 		_LODOrigin              = nil :: Vector3?,
-		_HitValidator           = nil :: any,
 		_Terminate              = nil :: any,
 		_Destroyed              = false,
 		_ParamsPooler 			= RaycastParamsPooler.new(),
@@ -909,11 +689,6 @@ function Factory.new(FactoryConfig: any?): Solver
 	return SolverInstance
 end
 
-function Factory.WithValidator(SolverInstance: Solver, ValidatorConfig: any?): Solver
-	if not IS_SERVER then return SolverInstance end
-	SolverInstance._HitValidator = HitValidator.new(ValidatorConfig)
-	return SolverInstance
-end
 
 -- ─── Factory.newParallel ─────────────────────────────────────────────────────
 --[[
@@ -938,7 +713,7 @@ end
     Drop-in compatible:
         The returned solver exposes the identical API as Factory.new().
         Fire(), SetWind(), SetLODOrigin(), SetInterestPoints(), GetSignals(),
-        WithValidator pattern, Destroy() — all unchanged.
+        Destroy() — all unchanged.
 
     Benchmark guidance:
         Parallel overhead breaks even around 50–100 active bullets.
@@ -976,7 +751,6 @@ function Factory.newParallel(FactoryConfig: any?): Solver
 		_TravelBatch            = {},
 		_Wind                   = Constants.ZERO_VECTOR,
 		_LODOrigin              = nil :: Vector3?,
-		_HitValidator           = nil :: any,
 		_Terminate              = nil :: any,
 		_Destroyed              = false,
 		_ParamsPooler           = RaycastParamsPooler.new(),
@@ -1065,7 +839,6 @@ end
 export type VetraModule = {
 	new          : (config: any?) -> Solver,
 	newParallel  : (config: any?) -> Solver,
-	WithValidator: (solver: Solver, config: any?) -> Solver,
 	BehaviorBuilder : typeof(BehaviorBuilder),
 	BulletContext   : typeof(BulletContext),
 	VetraNet        : typeof(VetraNet),

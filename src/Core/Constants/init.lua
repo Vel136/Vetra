@@ -215,16 +215,6 @@ return table.freeze({
 		Skip          = "skip",
 	}),
 
-	-- ── Validation Results ─────────────────────────────────────────────────
-
-	-- Outcome identifiers returned by HitValidator.Validate().
-	-- Callers should always compare against these constants rather than raw
-	-- strings so a rename here produces a type error, not a silent mismatch.
-	VALIDATION_RESULT = table.freeze({
-		Validated  = "Validated",
-		Suspicious = "Suspicious",
-		Rejected   = "Rejected",
-	}),
 
 	-- ── Visualizer Hit Types ───────────────────────────────────────────────
 

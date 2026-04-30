@@ -15,8 +15,8 @@
         consumer without any sync step.
 
     Only enums that a user writing weapon code might need to reference belong
-    here. Pure internal identifiers (PARALLEL_EVENT, VALIDATION_RESULT,
-    VISUALIZER_HIT_TYPE) stay in Constants.
+    here. Pure internal identifiers (PARALLEL_EVENT, VISUALIZER_HIT_TYPE)
+    stay in Constants.
 ]]
 
 -- ─── DragModel ───────────────────────────────────────────────────────────────
