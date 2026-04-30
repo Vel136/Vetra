@@ -174,8 +174,13 @@ local BulletContext = {}
 --[=[
 	Creates a new BulletContext.
 
-	`Origin`, `Direction`, and `Speed` are required. `SolverData` is reserved
-	for internal solver use, do not supply it from weapon code.
+	`Origin`, `Direction`, and `Speed` are required.
+
+	Optional config fields:
+	- `UserData` — pre-populate the context's UserData table at construction.
+	- `RaycastParams` — per-bullet raycast filter (highest priority over Behavior params).
+	- `FireTravelEvents` — set `false` to suppress `OnTravel`/`OnTravelBatch` for this bullet (parallel solver only, defaults to `false` for FF casts).
+	- `SolverData` — reserved for internal solver use, do not supply from weapon code.
 
 	@param config BulletContextConfig
 	@return BulletContext
@@ -229,5 +234,24 @@ function BulletContext:GetSnapshot(): BulletSnapshot end
 	Calling `Terminate` on an already-dead bullet is a no-op.
 ]=]
 function BulletContext:Terminate() end
+
+--[=[
+	Returns the internal Cast object associated with this bullet.
+
+	Available from `OnFire` onwards — `nil` before `Fire()` has been called.
+	Use this to call Cast methods (`SetVelocity`, `Pause`, `Terminate`, etc.)
+	directly from signal handlers.
+
+	```lua
+	Signals.OnPierce:Connect(function(context, result, velocity, pierceCount)
+	    if pierceCount >= 3 then
+	        context:GetCast():Terminate()
+	    end
+	end)
+	```
+
+	@return Cast?
+]=]
+function BulletContext:GetCast(): Cast? end
 
 return BulletContext

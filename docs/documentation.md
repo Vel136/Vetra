@@ -139,7 +139,31 @@ Signals.OnHit:Connect(function(context, result, velocity)
 end)
 ```
 
-`context:GetCast()` returns the internal Cast object once the bullet has been registered by `Fire()`. Useful for advanced integrations that need to reference the raw cast state.
+**`BulletContext` fields available in every signal handler:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Origin` | `Vector3` | Muzzle position at the time of `Fire()` |
+| `Direction` | `Vector3` | Initial direction unit vector |
+| `Speed` | `number` | Initial speed in studs/s |
+| `Position` | `Vector3?` | Current position (updated each step) |
+| `Velocity` | `Vector3` | Current velocity vector |
+| `Alive` | `boolean` | False once the bullet has terminated |
+| `Length` | `number` | Total path length travelled so far |
+| `SimulationTime` | `number` | Time elapsed since `Fire()` |
+| `UserData` | `any` | Free-form table for weapon-specific state |
+| `RaycastParams` | `RaycastParams?` | Per-bullet raycast params (optional) |
+
+**`BulletContext` methods:**
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `:IsAlive()` | `boolean` | Whether the bullet is still simulating |
+| `:GetLifetime()` | `number` | Seconds since `Fire()` |
+| `:GetDistanceTraveled()` | `number` | Total path length in studs |
+| `:GetSnapshot()` | `BulletSnapshot` | Immutable point-in-time copy of bullet state |
+| `:GetCast()` | `Cast?` | Internal Cast object — available from `OnFire` onwards |
+| `:Terminate()` | `()` | Manually terminate the bullet |
 
 ---
 
