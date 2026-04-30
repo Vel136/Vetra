@@ -53,7 +53,7 @@ function FireHelpers.FireOnHit(Solver: any, Cast: any, HitResult: RaycastResult?
 		and (HitVelocity * BulletMass)
 		or Vector3.zero
 
-	Solver.Signals.OnHit:FireSafe(Context, HitResult, HitVelocity, ImpactForce)
+	Solver.Signals.OnHit:Fire(Context, HitResult, HitVelocity, ImpactForce)
 end
 
 function FireHelpers.FireOnTravel(Solver: any, Cast: any, Position: Vector3, Velocity: Vector3)
@@ -91,7 +91,7 @@ function FireHelpers.FireOnPierce(Solver: any, Cast: any, Result: RaycastResult,
 	if not Context then return end
 	local Or, Av, AoA = Get6DOFState(Cast.Runtime)
 	Context:_UpdateState(Result.Position, Velocity, Cast.Runtime.DistanceCovered, Cast.Runtime.TotalRuntime, Or, Av, AoA)
-	Solver.Signals.OnPierce:FireSafe(Context, Result, Velocity, Cast.Runtime.PierceCount)
+	Solver.Signals.OnPierce:Fire(Context, Result, Velocity, Cast.Runtime.PierceCount)
 end
 
 function FireHelpers.FireOnBounce(Solver: any, Cast: any, Result: RaycastResult, PostVelocity: Vector3, PreVelocity: Vector3)
@@ -111,48 +111,48 @@ function FireHelpers.FireOnBounce(Solver: any, Cast: any, Result: RaycastResult,
 		and ((PreVelocity - PostVelocity) * BulletMass)
 		or Vector3.zero
 
-	Solver.Signals.OnBounce:FireSafe(Context, Result, PostVelocity, Cast.Runtime.BounceCount, BounceForce)
+	Solver.Signals.OnBounce:Fire(Context, Result, PostVelocity, Cast.Runtime.BounceCount, BounceForce)
 end
 
 function FireHelpers.FireOnTerminated(Solver: any, Cast: any)
 	local Context = Solver._CastToBulletContext[Cast]
 	if not Context then return end
-	Solver.Signals.OnTerminated:FireSafe(Context)
+	Solver.Signals.OnTerminated:Fire(Context)
 end
 
 function FireHelpers.FireOnSegmentOpen(Solver: any, Cast: any, Segment: any)
 	local Context = Solver._CastToBulletContext[Cast]
 	if not Context then return end
-	Solver.Signals.OnSegmentOpen:FireSafe(Context, Segment)
+	Solver.Signals.OnSegmentOpen:Fire(Context, Segment)
 end
 
 function FireHelpers.FireOnSpeedThresholdCrossed(Solver: any, Cast: any, Threshold: number, IsAscending: boolean, Speed: number)
 	local Context = Solver._CastToBulletContext[Cast]
 	if not Context then return end
-	Solver.Signals.OnSpeedThresholdCrossed:FireSafe(Context, Threshold, IsAscending, Speed)
+	Solver.Signals.OnSpeedThresholdCrossed:Fire(Context, Threshold, IsAscending, Speed)
 end
 
 function FireHelpers.FireOnBranchSpawned(Solver: any, ParentContext: any, ChildContext: any)
 	if not ParentContext then return end
-	Solver.Signals.OnBranchSpawned:FireSafe(ParentContext, ChildContext)
+	Solver.Signals.OnBranchSpawned:Fire(ParentContext, ChildContext)
 end
 
 function FireHelpers.FireOnHomingDisengaged(Solver: any, Cast: any)
 	local Context = Solver._CastToBulletContext[Cast]
 	if not Context then return end
-	Solver.Signals.OnHomingDisengaged:FireSafe(Context)
+	Solver.Signals.OnHomingDisengaged:Fire(Context)
 end
 
 function FireHelpers.FireOnTumbleBegin(Solver: any, Cast: any, Velocity: Vector3)
 	local Context = Solver._CastToBulletContext[Cast]
 	if not Context then return end
-	Solver.Signals.OnTumbleBegin:FireSafe(Context, Velocity)
+	Solver.Signals.OnTumbleBegin:Fire(Context, Velocity)
 end
 
 function FireHelpers.FireOnTumbleEnd(Solver: any, Cast: any, Velocity: Vector3)
 	local Context = Solver._CastToBulletContext[Cast]
 	if not Context then return end
-	Solver.Signals.OnTumbleEnd:FireSafe(Context, Velocity)
+	Solver.Signals.OnTumbleEnd:Fire(Context, Velocity)
 end
 
 -- ─── Module Return ───────────────────────────────────────────────────────────

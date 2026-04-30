@@ -244,9 +244,12 @@ function Vetra:Fire(context: BulletContext, behavior: VetraBehavior?): VetraCast
 	bullet is force-terminated regardless. The counter resets to zero on any non-cancelled termination.
 
 	**`OnTravel` vs `OnTravelBatch`:**
-	`OnTravel` fires using the fast `Fire` path (not `FireSafe`), handlers **must not throw or
-	yield**. Use `OnTravelBatch` for batch processing when you need error isolation or want to process
-	all travelling bullets in one call.
+	These are mutually exclusive per cast, controlled by `BatchTravel` on the behavior. When
+	`BatchTravel = false` (default), `OnTravel` fires once per step per cast. When `BatchTravel = true`,
+	travel events accumulate and `OnTravelBatch` fires once per frame with all of them as a table.
+	Both use the same `Fire` path — neither provides error isolation. All signals use `:Fire()`, so
+	errors in handlers propagate to the caller. Do not use `ConnectAsync` on signals where you mutate
+	cast state — arguments are passed by reference, not copied.
 
 	```lua
 	local Signals = Solver:GetSignals()

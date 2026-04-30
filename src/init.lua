@@ -644,7 +644,11 @@ function Vetra.Fire(self: Solver, FireBulletContext: BulletContextPublic, FireBe
 	)
 	Cast._Solver = self
 
-	self.Signals.OnFire:Fire(FireBulletContext, FireBehavior)
+	if FireBulletContext.__solverData and t.table(FireBulletContext.__solverData) then
+		FireBulletContext.__solverData.Cast = Cast
+	end
+
+	self.Signals.OnFire:FireSync(FireBulletContext, FireBehavior)
 
 	-- ── Behavior ─────────────────────────────────────────────────────────────
 	-- Apply all plain override-or-default fields in one loop, then overwrite
@@ -769,7 +773,6 @@ function Vetra.Fire(self: Solver, FireBulletContext: BulletContextPublic, FireBe
 		FireBulletContext.__solverData.Terminate = function()
 			Terminate(self, Cast, TERMINATE_REASON.Manual)
 		end
-		FireBulletContext.__solverData.Cast = Cast
 	end
 
 	if IS_SERVER and self._HitValidator then

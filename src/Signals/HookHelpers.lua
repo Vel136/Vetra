@@ -67,7 +67,7 @@ function HookHelpers.FireOnPreBounce(
 		end
 	end
 
-	Solver.Signals.OnPreBounce:FireSafe(Context, HitResult, Velocity, MutateData)
+	Solver.Signals.OnPreBounce:Fire(Context, HitResult, Velocity, MutateData)
 	live = false
 	return Normal, IncomingVelocity
 end
@@ -113,7 +113,7 @@ function HookHelpers.FireOnMidBounce(
 		end
 	end
 
-	Solver.Signals.OnMidBounce:FireSafe(Context, HitResult, PostVelocity, MutateData)
+	Solver.Signals.OnMidBounce:Fire(Context, HitResult, PostVelocity, MutateData)
 	live = false
 	return PostBounceVelocity, Restitution, NormalPerturbation
 end
@@ -149,7 +149,7 @@ function HookHelpers.FireOnPrePierce(
 		end
 	end
 
-	Solver.Signals.OnPrePierce:FireSafe(Context, HitResult, Velocity, MutateData)
+	Solver.Signals.OnPrePierce:Fire(Context, HitResult, Velocity, MutateData)
 	live = false
 	return EntryVelocity, MaxPierceOverride
 end
@@ -185,7 +185,7 @@ function HookHelpers.FireOnMidPierce(
 		end
 	end
 
-	Solver.Signals.OnMidPierce:FireSafe(Context, HitResult, Velocity, MutateData)
+	Solver.Signals.OnMidPierce:Fire(Context, HitResult, Velocity, MutateData)
 	live = false
 	return SpeedRetention, ExitVelocity
 end
@@ -220,7 +220,7 @@ function HookHelpers.FireOnPreTermination(
 		end
 	end
 
-	Solver.Signals.OnPreTermination:FireSafe(Context, Reason, MutateData)
+	Solver.Signals.OnPreTermination:Fire(Context, Reason, MutateData)
 	live = false
 	return Cancelled, MutatedReason
 end

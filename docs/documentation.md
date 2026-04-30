@@ -34,7 +34,10 @@ local Signals = Solver:GetSignals()
 
 -- Connect to signals once at initialisation
 Signals.OnFire:Connect(function(context, behavior)
-    -- Fires immediately after Fire() registers the cast, before the first step
+    -- Fires immediately after Fire() registers the cast, before the first step.
+    -- OnFire uses FireSync — all handlers run synchronously on the calling thread
+    -- even if connected via ConnectAsync. This guarantees any state you write
+    -- here is visible before the first simulation step runs.
     print("Bullet fired:", context)
 end)
 
