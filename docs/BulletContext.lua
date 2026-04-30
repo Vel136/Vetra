@@ -169,6 +169,20 @@ local BulletContext = {}
 	```
 ]=]
 
+--[=[
+	@prop FireTravelEvents boolean?
+	@within BulletContext
+
+	Controls whether `OnTravel` and `OnTravelBatch` fire for this bullet.
+	Only relevant for the parallel solver — FF casts (no callbacks, no homing)
+	default to `false` and skip travel signal emission entirely for performance.
+	Set to `true` to opt in when you need per-frame position updates on a
+	parallel cast.
+
+	Has no effect on the serial solver (`Vetra.new()`), which always fires
+	travel signals.
+]=]
+
 -- ─── Constructor ─────────────────────────────────────────────────────────────
 
 --[=[
