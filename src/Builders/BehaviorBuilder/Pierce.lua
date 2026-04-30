@@ -3,7 +3,7 @@
 --!strict
 
 local t     = require(script.Parent.Parent.Parent.Core.TypeCheck)
-local Types = require(script.Parent.Types)
+local Types  = require(script.Parent.Types)
 
 type BuiltBehavior = Types.BuiltBehavior
 type PierceFilter  = Types.PierceFilter
@@ -12,7 +12,7 @@ local PierceBuilder = {}
 PierceBuilder.__index = PierceBuilder
 
 export type PierceBuilder = typeof(setmetatable({} :: {
-    _Root   : any,
+    _Root   : Types.BehaviorBuilder,
     _Config : BuiltBehavior,
 }, PierceBuilder))
 
@@ -72,7 +72,7 @@ function PierceBuilder.ThicknessLimit(self: PierceBuilder, Value: number): Pierc
     return self
 end
 
-function PierceBuilder.Done(self: PierceBuilder): any
+function PierceBuilder.Done(self: PierceBuilder): Types.BehaviorBuilder
     return self._Root
 end
 

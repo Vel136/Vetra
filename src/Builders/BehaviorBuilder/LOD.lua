@@ -3,7 +3,7 @@
 --!strict
 
 local t     = require(script.Parent.Parent.Parent.Core.TypeCheck)
-local Types = require(script.Parent.Types)
+local Types  = require(script.Parent.Types)
 
 type BuiltBehavior = Types.BuiltBehavior
 
@@ -11,7 +11,7 @@ local LODBuilder = {}
 LODBuilder.__index = LODBuilder
 
 export type LODBuilder = typeof(setmetatable({} :: {
-    _Root   : any,
+    _Root   : Types.BehaviorBuilder,
     _Config : BuiltBehavior,
 }, LODBuilder))
 
@@ -23,7 +23,7 @@ function LODBuilder.Distance(self: LODBuilder, Value: number): LODBuilder
     return self
 end
 
-function LODBuilder.Done(self: LODBuilder): any
+function LODBuilder.Done(self: LODBuilder): Types.BehaviorBuilder
     return self._Root
 end
 

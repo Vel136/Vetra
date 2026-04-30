@@ -2,7 +2,7 @@
 --!optimize 2
 --!strict
 
-local Types = require(script.Parent.Types)
+local Types  = require(script.Parent.Types)
 
 type BuiltBehavior = Types.BuiltBehavior
 type BulletProvider = Types.BulletProvider
@@ -11,7 +11,7 @@ local CosmeticBuilder = {}
 CosmeticBuilder.__index = CosmeticBuilder
 
 export type CosmeticBuilder = typeof(setmetatable({} :: {
-    _Root   : any,
+    _Root   : Types.BehaviorBuilder,
     _Config : BuiltBehavior,
 }, CosmeticBuilder))
 
@@ -48,7 +48,7 @@ function CosmeticBuilder.AutoDelete(self: CosmeticBuilder, Value: boolean): Cosm
     return self
 end
 
-function CosmeticBuilder.Done(self: CosmeticBuilder): any
+function CosmeticBuilder.Done(self: CosmeticBuilder): Types.BehaviorBuilder
     return self._Root
 end
 

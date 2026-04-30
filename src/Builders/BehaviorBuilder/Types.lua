@@ -136,7 +136,8 @@ export type BuiltBehavior = {
     -- Cosmetic
     CosmeticBulletTemplate       : BasePart?,
     CosmeticBulletContainer      : Instance?,
-    CosmeticBulletProvider       : BulletProvider?,
+	CosmeticBulletProvider       : BulletProvider?,
+	AutoDeleteCosmeticBullet	 : boolean,
     -- Batch Travel
     BatchTravel                  : boolean,
     -- Hitscan
@@ -145,6 +146,11 @@ export type BuiltBehavior = {
     VisualizeCasts               : boolean,
 }
 
+-- ─── DragModel ───────────────────────────────────────────────────────────────
+
+local Enums = require(script.Parent.Parent.Parent.Core.Enums)
+export type DragModel = Enums.DragModel
+
 -- ─── DirtySet ────────────────────────────────────────────────────────────────
 --[[
     Tracks which BuiltBehavior fields were explicitly set by the user vs still
@@ -152,6 +158,41 @@ export type BuiltBehavior = {
     changes, preventing a modifier from clobbering fields it never touched.
 ]]
 export type DirtySet = { [string]: boolean }
+
+-- ─── BehaviorBuilder ─────────────────────────────────────────────────────────
+-- Full structural type used by sub-builders for Done() return and _Root field.
+-- No sub-builder requires are needed here — namespace opener returns are typed
+-- as `any` to avoid circular deps, but all other methods are fully typed.
+-- init.lua re-exports this as typeof(setmetatable(...)) for consumers.
+export type BehaviorBuilder = {
+    _Config : BuiltBehavior,
+    _Dirty  : DirtySet,
+
+    new           : () -> BehaviorBuilder,
+    Physics       : (self: BehaviorBuilder) -> any,
+    Homing        : (self: BehaviorBuilder) -> any,
+    Pierce        : (self: BehaviorBuilder) -> any,
+    Bounce        : (self: BehaviorBuilder) -> any,
+    HighFidelity  : (self: BehaviorBuilder) -> any,
+    CornerTrap    : (self: BehaviorBuilder) -> any,
+    Cosmetic      : (self: BehaviorBuilder) -> any,
+    Debug         : (self: BehaviorBuilder) -> any,
+    Drag          : (self: BehaviorBuilder) -> any,
+    Wind          : (self: BehaviorBuilder) -> any,
+    Magnus        : (self: BehaviorBuilder) -> any,
+    GyroDrift     : (self: BehaviorBuilder) -> any,
+    Tumble        : (self: BehaviorBuilder) -> any,
+    Fragmentation : (self: BehaviorBuilder) -> any,
+    SpeedProfiles : (self: BehaviorBuilder) -> any,
+    Trajectory    : (self: BehaviorBuilder) -> any,
+    LOD           : (self: BehaviorBuilder) -> any,
+    SixDOF        : (self: BehaviorBuilder) -> any,
+    BatchTravel   : (self: BehaviorBuilder, value: boolean) -> BehaviorBuilder,
+    Hitscan       : (self: BehaviorBuilder, value: boolean) -> BehaviorBuilder,
+    Clone         : (self: BehaviorBuilder) -> BehaviorBuilder,
+    Impose        : (self: BehaviorBuilder, other: BehaviorBuilder) -> BehaviorBuilder,
+    Build         : (self: BehaviorBuilder) -> BuiltBehavior,
+}
 
 -- ─── Module Return ───────────────────────────────────────────────────────────
 

@@ -27,7 +27,7 @@
 
     Exposed publicly so users can write:
         :Drag():Model(Vetra.Enums.DragModel.G7):Done()
-    and BehaviorBuilder re-exports this table as BehaviorBuilder.DragModel.
+    Exposed on the solver as Vetra.Enums.DragModel.
 ]]
 local DragModel = table.freeze({
     Quadratic   = 1,   -- deceleration ∝ speed² (default; most accurate subsonic)
@@ -46,6 +46,8 @@ local DragModel = table.freeze({
     -- User-supplied Mach/Cd table
     Custom      = 13,  -- requires CustomMachTable = { {mach, cd}, ... } on behavior
 })
+
+export type DragModel = 1|2|3|4|5|6|7|8|9|10|11|12|13
 
 -- ─── TerminateReason ─────────────────────────────────────────────────────────
 --[[
@@ -66,6 +68,8 @@ local TerminateReason = table.freeze({
     Manual     = "manual",
     CornerTrap = "corner_trap",
 })
+
+export type TerminateReason = "hit"|"distance"|"speed"|"manual"|"corner_trap"
 
 -- ─── Module Return ───────────────────────────────────────────────────────────
 

@@ -3,7 +3,7 @@
 --!strict
 
 local t     = require(script.Parent.Parent.Parent.Core.TypeCheck)
-local Types = require(script.Parent.Types)
+local Types  = require(script.Parent.Types)
 
 type BuiltBehavior = Types.BuiltBehavior
 
@@ -11,7 +11,7 @@ local WindBuilder = {}
 WindBuilder.__index = WindBuilder
 
 export type WindBuilder = typeof(setmetatable({} :: {
-    _Root   : any,
+    _Root   : Types.BehaviorBuilder,
     _Config : BuiltBehavior,
 }, WindBuilder))
 
@@ -23,7 +23,7 @@ function WindBuilder.Response(self: WindBuilder, Value: number): WindBuilder
     return self
 end
 
-function WindBuilder.Done(self: WindBuilder): any
+function WindBuilder.Done(self: WindBuilder): Types.BehaviorBuilder
     return self._Root
 end
 

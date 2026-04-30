@@ -3,7 +3,7 @@
 --!strict
 
 local t     = require(script.Parent.Parent.Parent.Core.TypeCheck)
-local Types = require(script.Parent.Types)
+local Types  = require(script.Parent.Types)
 
 type BuiltBehavior  = Types.BuiltBehavior
 type HomingFilter   = Types.HomingFilter
@@ -13,7 +13,7 @@ local HomingBuilder = {}
 HomingBuilder.__index = HomingBuilder
 
 export type HomingBuilder = typeof(setmetatable({} :: {
-    _Root   : any,
+    _Root   : Types.BehaviorBuilder,
     _Config : BuiltBehavior,
 }, HomingBuilder))
 
@@ -52,7 +52,7 @@ function HomingBuilder.AcquisitionRadius(self: HomingBuilder, Value: number): Ho
     return self
 end
 
-function HomingBuilder.Done(self: HomingBuilder): any
+function HomingBuilder.Done(self: HomingBuilder): Types.BehaviorBuilder
     return self._Root
 end
 

@@ -3,7 +3,7 @@
 --!strict
 
 local t     = require(script.Parent.Parent.Parent.Core.TypeCheck)
-local Types = require(script.Parent.Types)
+local Types  = require(script.Parent.Types)
 
 type BuiltBehavior = Types.BuiltBehavior
 
@@ -11,7 +11,7 @@ local CornerTrapBuilder = {}
 CornerTrapBuilder.__index = CornerTrapBuilder
 
 export type CornerTrapBuilder = typeof(setmetatable({} :: {
-    _Root   : any,
+    _Root   : Types.BehaviorBuilder,
     _Config : BuiltBehavior,
 }, CornerTrapBuilder))
 
@@ -58,7 +58,7 @@ function CornerTrapBuilder.MinProgressPerBounce(self: CornerTrapBuilder, Value: 
     return self
 end
 
-function CornerTrapBuilder.Done(self: CornerTrapBuilder): any
+function CornerTrapBuilder.Done(self: CornerTrapBuilder): Types.BehaviorBuilder
     return self._Root
 end
 

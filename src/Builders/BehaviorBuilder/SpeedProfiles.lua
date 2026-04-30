@@ -2,9 +2,9 @@
 --!optimize 2
 --!strict
 
-local t     = require(script.Parent.Parent.Parent.Core.TypeCheck)
-local Types = require(script.Parent.Types)
-local Enums = require(script.Parent.Parent.Parent.Core.Enums)
+local t      = require(script.Parent.Parent.Parent.Core.TypeCheck)
+local Types  = require(script.Parent.Types)
+local Enums  = require(script.Parent.Parent.Parent.Core.Enums)
 
 type BuiltBehavior = Types.BuiltBehavior
 type DirtySet      = Types.DirtySet
@@ -46,8 +46,8 @@ end
 
 function SpeedProfileBuilder.DragModel(self: SpeedProfileBuilder, Value: DragModel): SpeedProfileBuilder
     assert(
-        type(Value) == "string" and IsValidDragModel(Value),
-        "SpeedProfileBuilder:DragModel — expected a BehaviorBuilder.DragModel enum value"
+        IsValidDragModel(Value),
+        "SpeedProfileBuilder:DragModel — expected a Vetra.Enums.DragModel enum value"
     )
     self._Profile.DragModel = Value
     return self
@@ -76,7 +76,7 @@ end
 
 -- Commits the profile to _Config[_Key], marks it dirty on the root builder,
 -- and returns the parent SpeedProfilesBuilder.
-function SpeedProfileBuilder.Done(self: SpeedProfileBuilder): any
+function SpeedProfileBuilder.Done(self: SpeedProfileBuilder): SpeedProfilesBuilder
     (self._Config :: any)[self._Key] = self._Profile
     self._RootDirty[self._Key]       = true
     return self._Parent
@@ -88,7 +88,7 @@ local SpeedProfilesBuilder = {}
 SpeedProfilesBuilder.__index = SpeedProfilesBuilder
 
 export type SpeedProfilesBuilder = typeof(setmetatable({} :: {
-    _Root      : any,
+    _Root      : Types.BehaviorBuilder,
     _Config    : BuiltBehavior,
     _Dirty     : DirtySet,
 }, SpeedProfilesBuilder))
@@ -120,7 +120,7 @@ function SpeedProfilesBuilder.Subsonic(self: SpeedProfilesBuilder): SpeedProfile
     }, SpeedProfileBuilder)
 end
 
-function SpeedProfilesBuilder.Done(self: SpeedProfilesBuilder): any
+function SpeedProfilesBuilder.Done(self: SpeedProfilesBuilder): Types.BehaviorBuilder
     return self._Root
 end
 

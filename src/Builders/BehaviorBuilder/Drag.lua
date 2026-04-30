@@ -3,7 +3,7 @@
 --!strict
 
 local t     = require(script.Parent.Parent.Parent.Core.TypeCheck)
-local Types = require(script.Parent.Types)
+local Types  = require(script.Parent.Types)
 local Enums = require(script.Parent.Parent.Parent.Core.Enums)
 
 type BuiltBehavior = Types.BuiltBehavior
@@ -22,7 +22,7 @@ local DragBuilder = {}
 DragBuilder.__index = DragBuilder
 
 export type DragBuilder = typeof(setmetatable({} :: {
-    _Root   : any,
+    _Root   : Types.BehaviorBuilder,
     _Config : BuiltBehavior,
     _Dirty  : DirtySet,
 }, DragBuilder))
@@ -37,7 +37,7 @@ end
 function DragBuilder.Model(self: DragBuilder, Value: DragModel): DragBuilder
     assert(
         IsValidDragModel(Value),
-        "DragBuilder:Model — expected a BehaviorBuilder.DragModel enum value (e.g. BehaviorBuilder.DragModel.G7)"
+        "DragBuilder:Model — expected a Vetra.Enums.DragModel enum value (e.g. Vetra.Enums.DragModel.G7)"
     )
     self._Config.DragModel = Value
     self._Dirty.DragModel  = true
@@ -58,7 +58,7 @@ function DragBuilder.CustomMachTable(self: DragBuilder, Value: { { number } }): 
     return self
 end
 
-function DragBuilder.Done(self: DragBuilder): any
+function DragBuilder.Done(self: DragBuilder): Types.BehaviorBuilder
     return self._Root
 end
 

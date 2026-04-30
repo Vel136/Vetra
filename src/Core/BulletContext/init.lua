@@ -9,7 +9,7 @@ local BulletContextType = require(script.Type)
 
 local Logger = LogService.new("BulletContext", true)
 
-export type BulletContext       = BulletContextType.BulletContext
+
 export type BulletSnapshot      = BulletContextType.BulletSnapshot
 export type BulletContextConfig = BulletContextType.BulletContextConfig
 
@@ -53,6 +53,10 @@ function BulletContext:GetSnapshot(): BulletSnapshot
 		AngularVelocity  = self.AngularVelocity,
 		AngleOfAttack    = self.AngleOfAttack,
 	}
+end
+
+function BulletContext:GetCast(): any
+	return self.__solverData and self.__solverData.Cast
 end
 
 function BulletContext:Terminate()
@@ -120,10 +124,10 @@ function module.new(config: BulletContextConfig): BulletContext
 	self.AngleOfAttack   = false :: any
 
 	self.__solverData         = config.SolverData or {}
-	self.UserData             = {}
+	self.UserData             = config.UserData or {}
 	self.CosmeticBulletObject = false :: any
 
-	return self
+	return self :: BulletContext
 end
 
 export type BulletContext = typeof(setmetatable({}, Metatable)) & {

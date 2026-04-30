@@ -3,7 +3,7 @@
 --!strict
 
 local t     = require(script.Parent.Parent.Parent.Core.TypeCheck)
-local Types = require(script.Parent.Types)
+local Types  = require(script.Parent.Types)
 
 type BuiltBehavior = Types.BuiltBehavior
 
@@ -11,7 +11,7 @@ local MagnusBuilder = {}
 MagnusBuilder.__index = MagnusBuilder
 
 export type MagnusBuilder = typeof(setmetatable({} :: {
-    _Root   : any,
+    _Root   : Types.BehaviorBuilder,
     _Config : BuiltBehavior,
 }, MagnusBuilder))
 
@@ -36,7 +36,7 @@ function MagnusBuilder.SpinDecayRate(self: MagnusBuilder, Value: number): Magnus
     return self
 end
 
-function MagnusBuilder.Done(self: MagnusBuilder): any
+function MagnusBuilder.Done(self: MagnusBuilder): Types.BehaviorBuilder
     return self._Root
 end
 

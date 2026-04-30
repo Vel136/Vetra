@@ -3,7 +3,7 @@
 --!strict
 
 local t     = require(script.Parent.Parent.Parent.Core.TypeCheck)
-local Types = require(script.Parent.Types)
+local Types  = require(script.Parent.Types)
 
 type BuiltBehavior = Types.BuiltBehavior
 
@@ -11,7 +11,7 @@ local GyroDriftBuilder = {}
 GyroDriftBuilder.__index = GyroDriftBuilder
 
 export type GyroDriftBuilder = typeof(setmetatable({} :: {
-    _Root   : any,
+    _Root   : Types.BehaviorBuilder,
     _Config : BuiltBehavior,
 }, GyroDriftBuilder))
 
@@ -29,7 +29,7 @@ function GyroDriftBuilder.Axis(self: GyroDriftBuilder, Value: Vector3): GyroDrif
     return self
 end
 
-function GyroDriftBuilder.Done(self: GyroDriftBuilder): any
+function GyroDriftBuilder.Done(self: GyroDriftBuilder): Types.BehaviorBuilder
     return self._Root
 end
 

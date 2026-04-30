@@ -6,7 +6,7 @@
     MIT License
     Copyright (c) 2026 VeDevelopment
 
-    Version: 6.4.1
+    Version: 6.5
 ]]
 
 --[[
@@ -159,11 +159,6 @@ end
 local BehaviorBuilder = {}
 BehaviorBuilder.__index = BehaviorBuilder
 
-export type BehaviorBuilder = typeof(setmetatable({} :: {
-    _Config : BuiltBehavior,
-    _Dirty  : DirtySet,
-}, BehaviorBuilder))
-
 -- ─── Constructor ─────────────────────────────────────────────────────────────
 
 function BehaviorBuilder.new(): BehaviorBuilder
@@ -288,24 +283,60 @@ local function open(self: BehaviorBuilder, Builder: any): any
     return setmetatable({ _Root = self, _Config = self._Config, _Dirty = self._Dirty }, Builder)
 end
 
-function BehaviorBuilder.Physics(self: BehaviorBuilder)       return open(self, PhysicsBuilder)       end
-function BehaviorBuilder.Homing(self: BehaviorBuilder)        return open(self, HomingBuilder)        end
-function BehaviorBuilder.Pierce(self: BehaviorBuilder)        return open(self, PierceBuilder)        end
-function BehaviorBuilder.Bounce(self: BehaviorBuilder)        return open(self, BounceBuilder)        end
-function BehaviorBuilder.HighFidelity(self: BehaviorBuilder)  return open(self, HighFidelityBuilder)  end
-function BehaviorBuilder.CornerTrap(self: BehaviorBuilder)    return open(self, CornerTrapBuilder)    end
-function BehaviorBuilder.Cosmetic(self: BehaviorBuilder)      return open(self, CosmeticBuilder)      end
-function BehaviorBuilder.Debug(self: BehaviorBuilder)         return open(self, DebugBuilder)         end
-function BehaviorBuilder.Drag(self: BehaviorBuilder)          return open(self, DragBuilder)          end
-function BehaviorBuilder.Wind(self: BehaviorBuilder)          return open(self, WindBuilder)          end
-function BehaviorBuilder.Magnus(self: BehaviorBuilder)        return open(self, MagnusBuilder)        end
-function BehaviorBuilder.GyroDrift(self: BehaviorBuilder)     return open(self, GyroDriftBuilder)     end
-function BehaviorBuilder.Tumble(self: BehaviorBuilder)        return open(self, TumbleBuilder)        end
-function BehaviorBuilder.Fragmentation(self: BehaviorBuilder) return open(self, FragmentationBuilder) end
-function BehaviorBuilder.SpeedProfiles(self: BehaviorBuilder) return open(self, SpeedProfilesBuilder) end
-function BehaviorBuilder.Trajectory(self: BehaviorBuilder)    return open(self, TrajectoryBuilder)    end
-function BehaviorBuilder.LOD(self: BehaviorBuilder)           return open(self, LODBuilder)           end
-function BehaviorBuilder.SixDOF(self: BehaviorBuilder)        return open(self, SixDOFBuilder)        end
+function BehaviorBuilder.Physics(self: BehaviorBuilder): PhysicsBuilder.PhysicsBuilder
+    return open(self, PhysicsBuilder)
+end
+function BehaviorBuilder.Homing(self: BehaviorBuilder): HomingBuilder.HomingBuilder
+    return open(self, HomingBuilder)
+end
+function BehaviorBuilder.Pierce(self: BehaviorBuilder): PierceBuilder.PierceBuilder
+    return open(self, PierceBuilder)
+end
+function BehaviorBuilder.Bounce(self: BehaviorBuilder): BounceBuilder.BounceBuilder
+    return open(self, BounceBuilder)
+end
+function BehaviorBuilder.HighFidelity(self: BehaviorBuilder): HighFidelityBuilder.HighFidelityBuilder
+    return open(self, HighFidelityBuilder)
+end
+function BehaviorBuilder.CornerTrap(self: BehaviorBuilder): CornerTrapBuilder.CornerTrapBuilder
+    return open(self, CornerTrapBuilder)
+end
+function BehaviorBuilder.Cosmetic(self: BehaviorBuilder): CosmeticBuilder.CosmeticBuilder
+    return open(self, CosmeticBuilder)
+end
+function BehaviorBuilder.Debug(self: BehaviorBuilder): DebugBuilder.DebugBuilder
+    return open(self, DebugBuilder)
+end
+function BehaviorBuilder.Drag(self: BehaviorBuilder): DragBuilder.DragBuilder
+    return open(self, DragBuilder)
+end
+function BehaviorBuilder.Wind(self: BehaviorBuilder): WindBuilder.WindBuilder
+    return open(self, WindBuilder)
+end
+function BehaviorBuilder.Magnus(self: BehaviorBuilder): MagnusBuilder.MagnusBuilder
+    return open(self, MagnusBuilder)
+end
+function BehaviorBuilder.GyroDrift(self: BehaviorBuilder): GyroDriftBuilder.GyroDriftBuilder
+    return open(self, GyroDriftBuilder)
+end
+function BehaviorBuilder.Tumble(self: BehaviorBuilder): TumbleBuilder.TumbleBuilder
+    return open(self, TumbleBuilder)
+end
+function BehaviorBuilder.Fragmentation(self: BehaviorBuilder): FragmentationBuilder.FragmentationBuilder
+    return open(self, FragmentationBuilder)
+end
+function BehaviorBuilder.SpeedProfiles(self: BehaviorBuilder): SpeedProfilesModule.SpeedProfilesBuilder
+    return open(self, SpeedProfilesBuilder)
+end
+function BehaviorBuilder.Trajectory(self: BehaviorBuilder): TrajectoryBuilder.TrajectoryBuilder
+    return open(self, TrajectoryBuilder)
+end
+function BehaviorBuilder.LOD(self: BehaviorBuilder): LODBuilder.LODBuilder
+    return open(self, LODBuilder)
+end
+function BehaviorBuilder.SixDOF(self: BehaviorBuilder): SixDOFBuilder.SixDOFBuilder
+    return open(self, SixDOFBuilder)
+end
 
 function BehaviorBuilder.BatchTravel(self: BehaviorBuilder, Value: boolean): BehaviorBuilder
     assert(type(Value) == "boolean", "BehaviorBuilder:BatchTravel — expected boolean")
@@ -557,16 +588,9 @@ end
 
 -- ─── Module Return ───────────────────────────────────────────────────────────
 
-return table.freeze(setmetatable(BehaviorBuilder, {
-    __index = function(_, Key)
-        Logger:Warn(string.format(
-            "BehaviorBuilder: attempt to index nil key '%s'", tostring(Key)
-        ))
-    end,
-    __newindex = function(_, Key, Value)
-        Logger:Error(string.format(
-            "BehaviorBuilder: attempt to write to protected key '%s' = '%s'",
-            tostring(Key), tostring(Value)
-        ))
-    end,
-}))
+export type BehaviorBuilder = typeof(setmetatable({} :: {
+    _Config : BuiltBehavior,
+    _Dirty  : DirtySet,
+}, BehaviorBuilder))
+
+return table.freeze(BehaviorBuilder)

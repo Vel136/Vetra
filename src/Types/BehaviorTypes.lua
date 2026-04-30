@@ -125,13 +125,9 @@ export type BuiltBehavior = {
 }
 
 -- ─── DragModel ───────────────────────────────────────────────────────────────
---[[
-    Integer from Vetra.Enums.DragModel — same table used by the physics engine.
-    Using integers avoids string comparison in the hot path and eliminates the
-    desync risk of two separate enum tables with the same names.
-    Access via BehaviorBuilder.DragModel or Vetra.Enums.DragModel.
-]]
-export type DragModel = number
+
+local Enums = require(script.Parent.Parent.Core.Enums)
+export type DragModel = Enums.DragModel
 
 -- ─── DirtySet ────────────────────────────────────────────────────────────────
 --[[

@@ -6,7 +6,7 @@
     MIT License
     Copyright (c) 2026 VeDevelopment
 
-    Version: 6.4.1
+    Version: 6.3
 ]]
 
 -- ─── Vetra ───────────────────────────────────────────────────────────────────
@@ -77,7 +77,7 @@ local IS_SERVER = RunService:IsServer()
 
 -- ─── Metatables ──────────────────────────────────────────────────────────────
 
-local VetraMetatable = table.freeze({ __index = Vetra })
+local VetraMetatable = table.freeze({ __index = Vetra})
 
 -- Shared metatable for all Cast objects. Previously Fire() allocated a new
 -- { __index = CAST_STATE_METHODS } table on every call — identical every time.
@@ -368,15 +368,85 @@ local CAST_STATE_METHODS = {
 -- Acquire() time instead of allocating a fresh table per Fire() call.
 local CAST_SHARED_METATABLE = table.freeze({ __index = CAST_STATE_METHODS })
 
+-- ─── Public Types ─────────────────────────────────────────────────────────────
+
+type Signal<T> = VeSignal.Signal<T>
+type BulletContextPublic = BulletContext.BulletContext
+
+export type Cast = {
+	Alive     : boolean,
+	Paused    : boolean,
+	StartTime : number,
+	Id        : number,
+	UserData  : { [any]: any },
+
+	GetPosition         : (self: Cast) -> Vector3,
+	GetVelocity         : (self: Cast) -> Vector3,
+	GetAcceleration     : (self: Cast) -> Vector3,
+	Pause               : (self: Cast) -> (),
+	Resume              : (self: Cast) -> (),
+	IsPaused            : (self: Cast) -> boolean,
+	Terminate           : (self: Cast) -> (),
+	SetPosition         : (self: Cast, pos: Vector3) -> (),
+	SetVelocity         : (self: Cast, vel: Vector3) -> (),
+	SetAcceleration     : (self: Cast, acc: Vector3) -> (),
+	AddPosition         : (self: Cast, delta: Vector3) -> (),
+	AddVelocity         : (self: Cast, delta: Vector3) -> (),
+	AddAcceleration     : (self: Cast, delta: Vector3) -> (),
+	ResetBounceState    : (self: Cast) -> (),
+	ResetPierceState    : (self: Cast) -> (),
+	GetOrientation      : (self: Cast) -> CFrame,
+	GetAngularVelocity  : (self: Cast) -> Vector3,
+	GetAngleOfAttack    : (self: Cast) -> number,
+	SetOrientation      : (self: Cast, cf: CFrame) -> (),
+	SetAngularVelocity  : (self: Cast, av: Vector3) -> (),
+}
+
+export type TerminateReason = Enums.TerminateReason
+
+export type Signals = {
+	OnFire                  : Signal<(context: BulletContextPublic, behavior: any) -> ()>,
+	OnHit                   : Signal<(context: BulletContextPublic, result: RaycastResult?, velocity: Vector3, impactForce: Vector3) -> ()>,
+	OnTravel                : Signal<(context: BulletContextPublic, position: Vector3, velocity: Vector3) -> ()>,
+	OnTravelBatch           : Signal<(batch: { { Context: BulletContextPublic, Position: Vector3, Velocity: Vector3 } }) -> ()>,
+	OnPierce                : Signal<(context: BulletContextPublic, result: RaycastResult, velocity: Vector3, pierceCount: number) -> ()>,
+	OnBounce                : Signal<(context: BulletContextPublic, result: RaycastResult, velocity: Vector3, bounceCount: number, bounceForce: Vector3) -> ()>,
+	OnTerminated            : Signal<(context: BulletContextPublic) -> ()>,
+	OnPreBounce             : Signal<(context: BulletContextPublic, result: RaycastResult, velocity: Vector3, mutate: (normal: Vector3?, incomingVelocity: Vector3?) -> ()) -> ()>,
+	OnMidBounce             : Signal<(context: BulletContextPublic, result: RaycastResult, postVelocity: Vector3, mutate: (postVelocity: Vector3?, restitution: number?, perturbation: number?) -> ()) -> ()>,
+	OnPrePierce             : Signal<(context: BulletContextPublic, result: RaycastResult, velocity: Vector3, mutate: (normal: Vector3?, velocity: Vector3?) -> ()) -> ()>,
+	OnMidPierce             : Signal<(context: BulletContextPublic, result: RaycastResult, velocity: Vector3, mutate: (velocity: Vector3?) -> ()) -> ()>,
+	OnSpeedThresholdCrossed : Signal<(context: BulletContextPublic, threshold: number, ascending: boolean, speed: number) -> ()>,
+	OnPreTermination        : Signal<(context: BulletContextPublic, reason: TerminateReason, mutate: (cancelled: boolean, newReason: TerminateReason?) -> ()) -> ()>,
+	OnSegmentOpen           : Signal<(context: BulletContextPublic, segment: any) -> ()>,
+	OnBranchSpawned         : Signal<(parent: BulletContextPublic, child: BulletContextPublic) -> ()>,
+	OnHomingDisengaged      : Signal<(context: BulletContextPublic) -> ()>,
+	OnTumbleBegin           : Signal<(context: BulletContextPublic, velocity: Vector3) -> ()>,
+	OnTumbleEnd             : Signal<(context: BulletContextPublic, velocity: Vector3) -> ()>,
+}
+
+export type Solver = {
+	Signals : Signals,
+
+	Fire              : (self: Solver, context: BulletContextPublic, behavior: any?) -> Cast,
+	GetSignals        : (self: Solver) -> Signals,
+	Destroy           : (self: Solver) -> (),
+	SetWind           : (self: Solver, wind: Vector3) -> (),
+	SetLODOrigin      : (self: Solver, origin: Vector3?) -> (),
+	SetInterestPoints : (self: Solver, points: { Vector3 }) -> (),
+	SetCoriolisConfig : (self: Solver, latitude: number, scale: number) -> (),
+	WithValidator     : (self: Solver, config: any?) -> Solver,
+}
+
 -- ─── Terminate ───────────────────────────────────────────────────────────────
 
-local function Terminate(Solver: any, Cast: any, TerminationReason: string?)
+local function Terminate(SolverRef: any, Cast: any, TerminationReason: string?)
 	if not Cast.Alive then return end
 	Cast.Alive = false
 	Cast._Solver = nil
 
 	Cast.Behavior.RaycastParams.FilterDescendantsInstances = table.clone(Cast.Behavior.OriginalFilter)
-	Solver._ParamsPooler:Release(Cast.Behavior.RaycastParams)
+	SolverRef._ParamsPooler:Release(Cast.Behavior.RaycastParams)
 
 	if Cast.Runtime.CosmeticBulletObject then
 		if Cast.Behavior.AutoDeleteCosmeticBullet then
@@ -385,27 +455,27 @@ local function Terminate(Solver: any, Cast: any, TerminationReason: string?)
 		Cast.Runtime.CosmeticBulletObject = nil
 	end
 
-	local LinkedBulletContext = Solver._CastToBulletContext[Cast]
+	local LinkedBulletContext = SolverRef._CastToBulletContext[Cast]
 	if LinkedBulletContext then
 		LinkedBulletContext.CosmeticBulletObject = nil
 		if LinkedBulletContext.Alive then
 			LinkedBulletContext:Terminate()
 		end
-		Solver._BulletContextToCast[LinkedBulletContext] = nil
-		Solver._CastToBulletContext[Cast]                = nil
+		SolverRef._BulletContextToCast[LinkedBulletContext] = nil
+		SolverRef._CastToBulletContext[Cast]                = nil
 	end
-	Solver._BaseAccelerationCache[Cast] = nil
+	SolverRef._BaseAccelerationCache[Cast] = nil
 
-	if IS_SERVER and Solver._HitValidator then
-		Solver._HitValidator:PurgeCast(Cast.Id)
+	if IS_SERVER and SolverRef._HitValidator then
+		SolverRef._HitValidator:PurgeCast(Cast.Id)
 	end
 
-	CastRegistry.Remove(Solver, Cast, Logger)
+	CastRegistry.Remove(SolverRef, Cast)
 
 	-- Return the Cast table tree to the pool for reuse on the next Fire().
 	-- ResetRuntime runs at Acquire() time, not here, so Release() is cheap —
 	-- it only pushes the reference onto the free list.
-	CastPool.Release(Solver._CastPool, Cast)
+	CastPool.Release(SolverRef._CastPool, Cast)
 end
 
 function Vetra.SetWind(self: any, WindVector: Vector3)
@@ -436,7 +506,7 @@ function Vetra.SetInterestPoints(self: any, Points: { Vector3 })
 	end
 end
 
-function Vetra.GetSignals(self: any)
+function Vetra.GetSignals(self: Solver): Signals
 	return self.Signals
 end
 
@@ -478,7 +548,7 @@ function Vetra.SetCoriolisConfig(self: any, latitude: number, scale: number)
 	self._CoriolisOmega = CoriolisPhysics.ComputeOmega(latitude, scale)
 end
 
-function Vetra.Fire(self: any, FireBulletContext: any, FireBehavior: any): any
+function Vetra.Fire(self: Solver, FireBulletContext: BulletContextPublic, FireBehavior: any): Cast
 	if not t.Vector3(FireBulletContext.Origin) or not t.Vector3(FireBulletContext.Direction) or not t.number(FireBulletContext.Speed) then
 		Logger:Warn("Fire: Context requires Origin (Vector3), Direction (Vector3), Speed (number)")
 		return nil
@@ -519,19 +589,6 @@ function Vetra.Fire(self: any, FireBulletContext: any, FireBehavior: any): any
 		DragCoefficient = FireBehavior.DragCoefficient
 	else
 		DragCoefficient = DEFAULT_BEHAVIOR.DragCoefficient
-	end
-	if DragCoefficient > 0 then
-		local InitialVelocity  = FireBulletContext.Direction.Unit * FireBulletContext.Speed
-		
-		local DragModel 	   = FireBehavior.DragModel or DEFAULT_BEHAVIOR.DragModel
-		
-		local DragDeceleration = DragPhysics.ComputeDragDeceleration(
-			InitialVelocity,
-			DragCoefficient,
-			DragModel,
-			FireBehavior.CustomMachTable
-		)
-		EffectiveAcceleration = EffectiveAcceleration + DragDeceleration
 	end
 
 	-- Priority: BulletContext.RaycastParams → Behavior.RaycastParams → default empty params
@@ -586,6 +643,8 @@ function Vetra.Fire(self: any, FireBulletContext: any, FireBehavior: any): any
 		CAST_SHARED_METATABLE
 	)
 	Cast._Solver = self
+
+	self.Signals.OnFire:Fire(FireBulletContext, FireBehavior)
 
 	-- ── Behavior ─────────────────────────────────────────────────────────────
 	-- Apply all plain override-or-default fields in one loop, then overwrite
@@ -701,7 +760,7 @@ function Vetra.Fire(self: any, FireBulletContext: any, FireBehavior: any): any
 
 	-- ── Registration ─────────────────────────────────────────────────────────
 
-	CastRegistry.Register(self, Cast, Logger)
+	CastRegistry.Register(self, Cast)
 	self._CastToBulletContext[Cast]              = FireBulletContext
 	self._BulletContextToCast[FireBulletContext] = Cast
 	self._BaseAccelerationCache[Cast]            = BaseAcceleration
@@ -710,6 +769,7 @@ function Vetra.Fire(self: any, FireBulletContext: any, FireBehavior: any): any
 		FireBulletContext.__solverData.Terminate = function()
 			Terminate(self, Cast, TERMINATE_REASON.Manual)
 		end
+		FireBulletContext.__solverData.Cast = Cast
 	end
 
 	if IS_SERVER and self._HitValidator then
@@ -779,7 +839,7 @@ Factory.BehaviorBuilder = BehaviorBuilder
 Factory.BulletContext   = BulletContext
 Factory.VetraNet		= VetraNet
 Factory.Enums           = Enums
-function Factory.new(FactoryConfig: any?): any
+function Factory.new(FactoryConfig: any?): Solver
 	local ResolvedConfig  = FactoryConfig or {}
 	local SpatialConfig   = SpatialPartition.ResolveConfig(ResolvedConfig.SpatialPartition)
 
@@ -812,6 +872,7 @@ function Factory.new(FactoryConfig: any?): any
 		_CastPool               = CastPool.new(),
 
 		Signals = {
+			OnFire                   = VeSignal.new(),
 			OnHit                    = VeSignal.new(),
 			OnTravel                 = VeSignal.new(),
 			OnTravelBatch            = VeSignal.new(),
@@ -836,7 +897,7 @@ function Factory.new(FactoryConfig: any?): any
 
 	SolverInstance._Terminate = Terminate
 
-	local FrameEvent = IS_SERVER and RunService.PreSimulation or RunService.PreSimulation
+	local FrameEvent = IS_SERVER and RunService.Heartbeat or RunService.RenderStepped
 	local Connection = FrameEvent:Connect(function(FrameDelta: number)
 		StepProjectile.StepProjectile(SolverInstance, FrameDelta)
 	end)
@@ -845,10 +906,10 @@ function Factory.new(FactoryConfig: any?): any
 	return SolverInstance
 end
 
-function Factory.WithValidator(Solver: any, ValidatorConfig: any?): any
-	if not IS_SERVER then return Solver end
-	Solver._HitValidator = HitValidator.new(ValidatorConfig)
-	return Solver
+function Factory.WithValidator(SolverInstance: Solver, ValidatorConfig: any?): Solver
+	if not IS_SERVER then return SolverInstance end
+	SolverInstance._HitValidator = HitValidator.new(ValidatorConfig)
+	return SolverInstance
 end
 
 -- ─── Factory.newParallel ─────────────────────────────────────────────────────
@@ -895,7 +956,7 @@ end
         end)
         Solver:Fire(BulletContext, Behavior)
 ]]
-function Factory.newParallel(FactoryConfig: any?): any
+function Factory.newParallel(FactoryConfig: any?): Solver
 	local ResolvedConfig = FactoryConfig or {}
 	local SpatialConfig  = SpatialPartition.ResolveConfig(ResolvedConfig.SpatialPartition)
 
@@ -932,6 +993,7 @@ function Factory.newParallel(FactoryConfig: any?): any
 		_CastPool               = CastPool.new(),
 
 		Signals = {
+			OnFire                   = VeSignal.new(),
 			OnHit                    = VeSignal.new(),
 			OnTravel                 = VeSignal.new(),
 			OnTravelBatch            = VeSignal.new(),
@@ -945,7 +1007,7 @@ function Factory.newParallel(FactoryConfig: any?): any
 			OnSpeedThresholdCrossed  = VeSignal.new(),
 			OnPreTermination         = VeSignal.new(),
 			OnSegmentOpen            = VeSignal.new(),
-			OnBranchSpawned          = VeSignal.new(),
+			OnBranchSpawned         = VeSignal.new(),
 			OnHomingDisengaged       = VeSignal.new(),
 			OnTumbleBegin            = VeSignal.new(),
 			OnTumbleEnd              = VeSignal.new(),
@@ -985,8 +1047,8 @@ function Factory.newParallel(FactoryConfig: any?): any
 		end
 	end
 
-	-- Connect PreSimulation to Coordinator.Step instead of StepProjectile.
-	local FrameEvent = IS_SERVER and RunService.PreSimulation or RunService.PreSimulation
+	-- Connect Heartbeat to Coordinator.Step instead of StepProjectile.
+	local FrameEvent = IS_SERVER and RunService.Heartbeat or RunService.RenderStepped
 	local Connection = FrameEvent:Connect(function(FrameDelta: number)
 		CoordInstance:Step(FrameDelta)
 	end)
@@ -997,16 +1059,14 @@ end
 
 -- ─── Module Return ───────────────────────────────────────────────────────────
 
-local ModuleMetatable = table.freeze({
-	__index = function(_, Key)
-		Logger:Warn(string.format("Vetra: nil key '%s'", tostring(Key)))
-	end,
-	__newindex = function(_, Key, Value)
-		Logger:Error(string.format(
-			"Vetra: write to protected key '%s' = '%s'",
-			tostring(Key),
-			tostring(Value)
-			))
-	end,
-})
-return setmetatable(Factory, ModuleMetatable)
+export type VetraModule = {
+	new          : (config: any?) -> Solver,
+	newParallel  : (config: any?) -> Solver,
+	WithValidator: (solver: Solver, config: any?) -> Solver,
+	BehaviorBuilder : typeof(BehaviorBuilder),
+	BulletContext   : typeof(BulletContext),
+	VetraNet        : typeof(VetraNet),
+	Enums           : typeof(Enums),
+}
+
+return table.freeze(Factory)

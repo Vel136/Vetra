@@ -3,7 +3,7 @@
 --!strict
 
 local t     = require(script.Parent.Parent.Parent.Core.TypeCheck)
-local Types = require(script.Parent.Types)
+local Types  = require(script.Parent.Types)
 
 type BuiltBehavior = Types.BuiltBehavior
 
@@ -11,7 +11,7 @@ local TumbleBuilder = {}
 TumbleBuilder.__index = TumbleBuilder
 
 export type TumbleBuilder = typeof(setmetatable({} :: {
-    _Root   : any,
+    _Root   : Types.BehaviorBuilder,
     _Config : BuiltBehavior,
 }, TumbleBuilder))
 
@@ -51,7 +51,7 @@ function TumbleBuilder.RecoverySpeed(self: TumbleBuilder, Value: number): Tumble
     return self
 end
 
-function TumbleBuilder.Done(self: TumbleBuilder): any
+function TumbleBuilder.Done(self: TumbleBuilder): Types.BehaviorBuilder
     return self._Root
 end
 

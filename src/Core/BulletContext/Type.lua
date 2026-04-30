@@ -70,6 +70,7 @@ export type HitData = {
 export type BulletContextConfig = {
 	Origin        : Vector3,
 	Direction     : Vector3,
+	FireTravelEvents	  : boolean?,
 	Speed         : number,
 	Id            : number?,
 	SolverData    : any?,

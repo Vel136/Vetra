@@ -2,7 +2,7 @@
 --!optimize 2
 --!strict
 
-local Types = require(script.Parent.Types)
+local Types  = require(script.Parent.Types)
 
 type BuiltBehavior     = Types.BuiltBehavior
 type TrajectoryProvider = Types.TrajectoryProvider
@@ -11,7 +11,7 @@ local TrajectoryBuilder = {}
 TrajectoryBuilder.__index = TrajectoryBuilder
 
 export type TrajectoryBuilder = typeof(setmetatable({} :: {
-    _Root   : any,
+    _Root   : Types.BehaviorBuilder,
     _Config : BuiltBehavior,
 }, TrajectoryBuilder))
 
@@ -24,7 +24,7 @@ function TrajectoryBuilder.Provider(self: TrajectoryBuilder, Value: TrajectoryPr
     return self
 end
 
-function TrajectoryBuilder.Done(self: TrajectoryBuilder): any
+function TrajectoryBuilder.Done(self: TrajectoryBuilder): Types.BehaviorBuilder
     return self._Root
 end
 

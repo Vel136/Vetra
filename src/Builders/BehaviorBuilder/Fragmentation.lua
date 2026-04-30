@@ -3,7 +3,7 @@
 --!strict
 
 local t     = require(script.Parent.Parent.Parent.Core.TypeCheck)
-local Types = require(script.Parent.Types)
+local Types  = require(script.Parent.Types)
 
 type BuiltBehavior = Types.BuiltBehavior
 
@@ -11,7 +11,7 @@ local FragmentationBuilder = {}
 FragmentationBuilder.__index = FragmentationBuilder
 
 export type FragmentationBuilder = typeof(setmetatable({} :: {
-    _Root   : any,
+    _Root   : Types.BehaviorBuilder,
     _Config : BuiltBehavior,
 }, FragmentationBuilder))
 
@@ -36,7 +36,7 @@ function FragmentationBuilder.Deviation(self: FragmentationBuilder, Value: numbe
     return self
 end
 
-function FragmentationBuilder.Done(self: FragmentationBuilder): any
+function FragmentationBuilder.Done(self: FragmentationBuilder): Types.BehaviorBuilder
     return self._Root
 end
 

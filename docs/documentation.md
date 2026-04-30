@@ -33,6 +33,11 @@ local Solver  = Vetra.new()
 local Signals = Solver:GetSignals()
 
 -- Connect to signals once at initialisation
+Signals.OnFire:Connect(function(context, behavior)
+    -- Fires immediately after Fire() registers the cast, before the first step
+    print("Bullet fired:", context)
+end)
+
 Signals.OnHit:Connect(function(context, result, velocity)
     if result then
         print("Hit", result.Instance.Name, "at", result.Position)
@@ -69,9 +74,10 @@ local Behavior = Vetra.BehaviorBuilder.new()
 
 -- Fire
 local context = BulletContext.new({
-    Origin    = muzzlePosition,
-    Direction = direction,
-    Speed     = 200,
+    Origin            = muzzlePosition,
+    Direction         = direction,
+    Speed             = 200,
+    FireTravelEvents  = true, -- optional: set false to suppress OnTravel/OnTravelBatch for this bullet
 })
 
 Solver:Fire(context, Behavior)
@@ -109,9 +115,18 @@ local Behavior = Vetra.BehaviorBuilder.Sniper()
 ## Carry State With Every Bullet
 
 Use `UserData` to attach weapon-specific data that travels with the bullet and is available in every
-signal handler:
+signal handler. You can seed it directly in the config or set fields after construction:
 
 ```lua
+-- Seed at construction
+local context = BulletContext.new({
+    Origin    = muzzlePosition,
+    Direction = direction,
+    Speed     = 200,
+    UserData  = { Damage = 75, ShooterId = Players.LocalPlayer.UserId },
+})
+
+-- Or set after
 context.UserData.Damage    = 75
 context.UserData.ShooterId = Players.LocalPlayer.UserId
 
@@ -120,6 +135,8 @@ Signals.OnHit:Connect(function(context, result, velocity)
     print("Fired by:", context.UserData.ShooterId)
 end)
 ```
+
+`context:GetCast()` returns the internal Cast object once the bullet has been registered by `Fire()`. Useful for advanced integrations that need to reference the raw cast state.
 
 ---
 
@@ -137,12 +154,10 @@ Solver:Fire(context, {
         return workspace:Spherecast(origin, 0.5, direction, params)
     end,
 })
+```
 
+```lua
 -- Blockcast, useful for shotgun pellets or wide projectiles
--- Box center is offset back so the front face is flush with origin.
--- If the center were at origin, the front face would start direction.Magnitude/2
--- ahead of the bullet — any wall closer than that would be inside the starting
--- shape and silently skipped by Roblox's overlap rule.
 Solver:Fire(context, {
     CastFunction = function(origin, direction, params)
         local BoxZ    = 0.01
@@ -153,6 +168,7 @@ Solver:Fire(context, {
         return workspace:Blockcast(cframe, size, direction, params)
     end,
 })
+```
 
 :::caution Roblox does not sweep geometry the starting shape already overlaps
 This applies to `Blockcast`, `Spherecast`, and `Raycast` alike. If the shape or ray origin starts
@@ -163,6 +179,7 @@ and will be silently skipped. The example above avoids this by offsetting the ce
 the front face is flush with `origin`.
 :::
 
+```lua
 -- Custom wrapper, ignore water terrain, apply a tag filter
 Solver:Fire(context, {
     CastFunction = function(origin, direction, params)
@@ -212,6 +229,37 @@ to a serial solver and logs an error, your call site receives a working solver e
 cannot cross Actor boundaries. Use `Vetra.new()` if you need a custom cast function.
 :::
 
+#### Fire-and-forget vs sync casts
+
+The parallel solver automatically classifies each bullet as either **sync** or **fire-and-forget (FF)**:
+
+- **Sync** — stepped by the Coordinator each `Heartbeat`. Required when the bullet has callbacks (`CanBounce`, `CanPierce`, `CanHome`, `HomingPositionProvider`, `TrajectoryPositionProvider`) or when `FireTravelEvents = true` on the `BulletContext`.
+- **FF** — stepped autonomously via `PreSimulation:ConnectParallel` with no main-thread involvement per frame. Only terminal events (Hit / DistanceEnd / SpeedEnd) are delivered to the Coordinator. Travel signals and cosmetic part updates are skipped.
+
+FF casts have near-zero per-frame allocation overhead — SharedTable slots are reused in-place after the first few frames. Use them for high-volume projectiles that don't need per-frame callbacks or travel events.
+
+```lua
+-- FF cast: no callbacks, travel events suppressed — fully autonomous in parallel
+local context = BulletContext.new({
+    Origin           = muzzlePosition,
+    Direction        = direction,
+    Speed            = 200,
+    FireTravelEvents = false, -- default; explicit here for clarity
+})
+Solver:Fire(context, Behavior)
+
+-- Sync cast: has a homing provider, so main-thread sync is required
+local homingContext = BulletContext.new({
+    Origin           = muzzlePosition,
+    Direction        = direction,
+    Speed            = 200,
+    FireTravelEvents = true, -- opt into OnTravel even without callbacks
+})
+Solver:Fire(homingContext, HomingBehavior)
+```
+
+The Coordinator also skips `StepShard` dispatch entirely for shards that contain only FF casts, and skips the homing/provider update pass when no sync casts are active.
+
 ---
 
 ## Stop Trusting the Client
@@ -235,30 +283,40 @@ local Solver = Vetra.WithValidator(Vetra.new(), {
 Set `DragCoefficient > 0` to enable drag. All fields are available via `BehaviorBuilder:Drag()` or passed directly on the behavior table:
 
 ```lua
+local Enums = Vetra.Enums
+
 Solver:Fire(context, {
     MaxDistance         = 800,
     MinSpeed            = 5,
     DragCoefficient     = 0.003,
-    DragModel           = "G7",   -- long boat-tail, modern sniper standard
-    DragSegmentInterval = 0.05,   -- seconds between recalculation steps
+    DragModel           = Enums.DragModel.G7,  -- long boat-tail, modern sniper standard
+    DragSegmentInterval = 0.05,                -- seconds between recalculation steps
 })
 ```
 
-**Available drag models:**
+**Available drag models** (accessed via `Vetra.Enums.DragModel`):
 
-| Model | Description |
-|-------|-------------|
-| `"Linear"` | Deceleration ∝ speed |
-| `"Quadratic"` | Deceleration ∝ speed², default, most accurate subsonic |
-| `"Exponential"` | Deceleration ∝ eˢᵖᵉᵉᵈ, exotic high-drag shapes |
-| `"G1"` | Flat-base spitzer; general purpose standard |
-| `"G5"` | Boat-tail spitzer; mid-range rifles |
-| `"G6"` | Semi-spitzer flat-base; shotgun slugs |
-| `"G7"` | Long boat-tail; modern long-range / sniper standard |
-| `"G8"` | Flat-base semi-spitzer; hollow points / pistols |
-| `"GL"` | Lead round ball; cannons / muskets / buckshot |
-| `"G2"`, `"G3"`, `"G4"` | Aberdeen / atypical projectile shapes |
-| `"Custom"` | Requires `CustomMachTable = { {mach, cd}, ... }` on the behavior |
+| Key | Description |
+|-----|-------------|
+| `Enums.DragModel.Linear` | Deceleration ∝ speed |
+| `Enums.DragModel.Quadratic` | Deceleration ∝ speed², default, most accurate subsonic |
+| `Enums.DragModel.Exponential` | Deceleration ∝ eˢᵖᵉᵉᵈ, exotic high-drag shapes |
+| `Enums.DragModel.G1` | Flat-base spitzer; general purpose standard |
+| `Enums.DragModel.G5` | Boat-tail spitzer; mid-range rifles |
+| `Enums.DragModel.G6` | Semi-spitzer flat-base; shotgun slugs |
+| `Enums.DragModel.G7` | Long boat-tail; modern long-range / sniper standard |
+| `Enums.DragModel.G8` | Flat-base semi-spitzer; hollow points / pistols |
+| `Enums.DragModel.GL` | Lead round ball; cannons / muskets / buckshot |
+| `Enums.DragModel.G2`, `G3`, `G4` | Aberdeen / atypical projectile shapes |
+| `Enums.DragModel.Custom` | Requires `CustomMachTable = { {mach, cd}, ... }` on the behavior |
+
+:::tip Why enums instead of raw strings or numbers?
+Passing `Vetra.Enums.DragModel.G7` instead of the integer `10` or the string `"G7"` means a typo is
+a nil-index warning at the call site rather than a silent wrong value or a validation error at
+`:Build()` time. If an enum value is ever renamed, every reference site produces an error rather than
+silently passing the wrong value. The same applies to `Vetra.Enums.TerminateReason` in
+`OnPreTermination` handlers.
+:::
 
 ---
 
@@ -268,9 +326,11 @@ Override drag, restitution, and normal perturbation per speed regime. The solver
 bullet is supersonic (above 343 studs/s) and blends in the matching profile:
 
 ```lua
+local Enums = Vetra.Enums
+
 Solver:Fire(context, {
     DragCoefficient   = 0.002,
-    DragModel         = "G7",
+    DragModel         = Enums.DragModel.G7,
     SupersonicProfile = {
         DragCoefficient = 0.0015,
     },
@@ -533,8 +593,10 @@ logs a warning and has no effect, do not yield inside hook signal handlers.
 after **3 consecutive cancels for the same reason**, the bullet is force-terminated regardless:
 
 ```lua
+local Enums = Vetra.Enums
+
 Signals.OnPreTermination:Connect(function(context, reason, mutate)
-    if reason == "hit" and context.UserData.HasShield then
+    if reason == Enums.TerminateReason.Hit and context.UserData.HasShield then
         mutate(true, nil)  -- (cancelled: boolean, newReason: string?)
     end
 end)

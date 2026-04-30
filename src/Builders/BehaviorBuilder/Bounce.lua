@@ -3,7 +3,7 @@
 --!strict
 
 local t     = require(script.Parent.Parent.Parent.Core.TypeCheck)
-local Types = require(script.Parent.Types)
+local Types  = require(script.Parent.Types)
 
 type BuiltBehavior = Types.BuiltBehavior
 type BounceFilter  = Types.BounceFilter
@@ -12,7 +12,7 @@ local BounceBuilder = {}
 BounceBuilder.__index = BounceBuilder
 
 export type BounceBuilder = typeof(setmetatable({} :: {
-    _Root   : any,
+    _Root   : Types.BehaviorBuilder,
     _Config : BuiltBehavior,
 }, BounceBuilder))
 
@@ -68,7 +68,7 @@ function BounceBuilder.ResetPierceOnBounce(self: BounceBuilder, Value: boolean):
     return self
 end
 
-function BounceBuilder.Done(self: BounceBuilder): any
+function BounceBuilder.Done(self: BounceBuilder): Types.BehaviorBuilder
     return self._Root
 end
 

@@ -3,7 +3,7 @@
 --!strict
 
 local t     = require(script.Parent.Parent.Parent.Core.TypeCheck)
-local Types = require(script.Parent.Types)
+local Types  = require(script.Parent.Types)
 
 type BuiltBehavior = Types.BuiltBehavior
 
@@ -11,7 +11,7 @@ local PhysicsBuilder = {}
 PhysicsBuilder.__index = PhysicsBuilder
 
 export type PhysicsBuilder = typeof(setmetatable({} :: {
-    _Root   : any,
+    _Root   : Types.BehaviorBuilder,
     _Config : BuiltBehavior,
 }, PhysicsBuilder))
 
@@ -68,7 +68,7 @@ function PhysicsBuilder.BulletMass(self: PhysicsBuilder, Value: number): Physics
     return self
 end
 
-function PhysicsBuilder.Done(self: PhysicsBuilder): any
+function PhysicsBuilder.Done(self: PhysicsBuilder): Types.BehaviorBuilder
     return self._Root
 end
 

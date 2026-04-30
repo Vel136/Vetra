@@ -3,7 +3,7 @@
 --!strict
 
 local t     = require(script.Parent.Parent.Parent.Core.TypeCheck)
-local Types = require(script.Parent.Types)
+local Types  = require(script.Parent.Types)
 
 type BuiltBehavior = Types.BuiltBehavior
 
@@ -11,7 +11,7 @@ local HighFidelityBuilder = {}
 HighFidelityBuilder.__index = HighFidelityBuilder
 
 export type HighFidelityBuilder = typeof(setmetatable({} :: {
-    _Root   : any,
+    _Root   : Types.BehaviorBuilder,
     _Config : BuiltBehavior,
 }, HighFidelityBuilder))
 
@@ -50,7 +50,7 @@ function HighFidelityBuilder.MaxBouncesPerFrame(self: HighFidelityBuilder, Value
     return self
 end
 
-function HighFidelityBuilder.Done(self: HighFidelityBuilder): any
+function HighFidelityBuilder.Done(self: HighFidelityBuilder): Types.BehaviorBuilder
     return self._Root
 end
 
