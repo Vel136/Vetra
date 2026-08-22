@@ -1,0 +1,19 @@
+# Vendored third-party benchmark comparands. Excluded deliberately: these are
+# other authors' libraries (SwiftCast ships its own LICENSE) and redistributing
+# them under this repo is a licensing decision, not a packaging one.
+# Consequence: the comparative benchmarks in tests/Profiling that reference them
+# will not run on a fresh clone until they are supplied locally.
+tests/Profiling/FastCast2/
+tests/Profiling/SwiftCast/
+
+# Moonwave build output — the deployed site lives on the gh-pages branch.
+build/
+.docusaurus/
+node_modules/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/

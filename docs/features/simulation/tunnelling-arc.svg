@@ -1,0 +1,33 @@
+<svg viewBox="0 0 640 320" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+  <!-- The real arc: A(80,250) -> apex ~ (320,80) -> B(560,250). SVG y is down,
+       so smaller y = higher up. -->
+  <path d="M 80 250 Q 320 -55 560 250" fill="none" stroke="#4f8cff" stroke-width="3"/>
+
+  <!-- The straight chord A->B: the single ray one frame casts. -->
+  <line x1="80" y1="250" x2="560" y2="250" stroke="#e0524f" stroke-width="2.5" stroke-dasharray="8 6"/>
+
+  <!-- The wall: sits ON the arc near its apex; the chord runs far below it. -->
+  <rect x="311" y="66" width="18" height="46" rx="2" fill="#9aa0aa" stroke="#565b66" stroke-width="1.5"/>
+
+  <!-- Endpoints. -->
+  <circle cx="80"  cy="250" r="6" fill="#1f2430"/>
+  <circle cx="560" cy="250" r="6" fill="#1f2430"/>
+  <text x="80"  y="274" text-anchor="middle" font-size="15" fill="#1f2430">A</text>
+  <text x="560" y="274" text-anchor="middle" font-size="15" fill="#1f2430">B</text>
+
+  <!-- Arc label. -->
+  <text x="330" y="34" font-size="14" fill="#2f6fe0">real arc: the path the bullet actually flew</text>
+
+  <!-- Wall label + leader. -->
+  <line x1="329" y1="80" x2="360" y2="70" stroke="#565b66" stroke-width="1"/>
+  <text x="365" y="66" font-size="14" fill="#3a3f4a">wall on the arc</text>
+  <text x="365" y="84" font-size="12.5" fill="#6b7280">the real path would hit it</text>
+
+  <!-- Chord label. -->
+  <text x="128" y="242" font-size="14" fill="#c23b38">straight chord: the one ray we cast</text>
+
+  <!-- The miss: chord passes below the wall and never tests it. -->
+  <line x1="320" y1="112" x2="320" y2="248" stroke="#c9ccd2" stroke-width="1" stroke-dasharray="3 4"/>
+  <text x="330" y="188" font-size="12.5" fill="#9aa0aa">gap the chord skips</text>
+  <text x="330" y="205" font-size="12.5" fill="#c23b38">so the chord misses it</text>
+</svg>

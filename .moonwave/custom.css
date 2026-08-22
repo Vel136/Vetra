@@ -1,0 +1,241 @@
+/* =====================================================================
+   Vetra documentation theme — clean white surface, precision blue accent.
+   Injected globally by Moonwave (.moonwave/custom.css). Infima-based.
+   ===================================================================== */
+
+/* Fonts — Geist for headings, Roboto for body/UI, Roboto Mono for code.
+   Loaded from Google Fonts; a system stack falls back offline. */
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Roboto:wght@300;400;500;700;900&family=Roboto+Mono:wght@400;500;600;700&display=swap");
+
+:root {
+	/* Blue accent ramp (Infima primary) */
+	--ifm-color-primary:         #1b6ef3;
+	--ifm-color-primary-dark:    #0f60e6;
+	--ifm-color-primary-darker:  #0e5ad9;
+	--ifm-color-primary-darkest: #0c4bb3;
+	--ifm-color-primary-light:   #3a82f5;
+	--ifm-color-primary-lighter: #4d8ef6;
+	--ifm-color-primary-lightest: #7dabf9;
+
+	/* Surfaces */
+	--ifm-background-color: #ffffff;
+	--ifm-background-surface-color: #ffffff;
+	--vetra-panel: #f5f8ff;
+	--vetra-border: #e3ebf6;
+	--vetra-ink: #0f1b2d;
+	--vetra-ink-soft: #43536b;
+
+	--ifm-heading-color: var(--vetra-ink);
+	--ifm-font-color-base: #26303f;
+	--ifm-navbar-background-color: rgba(255, 255, 255, 0.86);
+	--ifm-navbar-shadow: 0 1px 0 var(--vetra-border);
+	--ifm-toc-border-color: var(--vetra-border);
+	--ifm-hr-border-color: var(--vetra-border);
+
+	--ifm-code-font-size: 90%;
+	--ifm-font-family-base: "Roboto", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+	--ifm-font-family-monospace: "Roboto Mono", ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Liberation Mono", Menlo, monospace;
+	--ifm-heading-font-family: "Geist", "Roboto", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+	--ifm-font-weight-semibold: 500;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	--docusaurus-highlighted-code-line-bg: rgba(27, 110, 243, 0.12);
+
+	--ifm-code-background: #eef3fb;
+	--ifm-blockquote-color: var(--vetra-ink-soft);
+	--ifm-menu-color-background-active: #eaf1ff;
+	--ifm-menu-color-active: var(--ifm-color-primary-darkest);
+	--ifm-link-color: var(--ifm-color-primary-dark);
+}
+
+/* Dark mode kept usable (respectPrefersColorScheme = true) */
+[data-theme="dark"] {
+	--ifm-color-primary:         #5c9bff;
+	--ifm-color-primary-dark:    #3d86ff;
+	--ifm-color-primary-darker:  #2d7bff;
+	--ifm-color-primary-darkest: #0f61f0;
+	--ifm-color-primary-light:   #7bb0ff;
+	--ifm-color-primary-lighter: #8bbaff;
+	--ifm-color-primary-lightest: #b3d2ff;
+
+	--ifm-background-color: #0b1220;
+	--ifm-background-surface-color: #0e1626;
+	--vetra-panel: #101a2c;
+	--vetra-border: #1e2c44;
+	--vetra-ink: #eaf1ff;
+	--vetra-ink-soft: #9db0cc;
+	--ifm-heading-color: var(--vetra-ink);
+	--ifm-font-color-base: #d5e0f0;
+	--ifm-navbar-background-color: rgba(11, 18, 32, 0.85);
+	--ifm-code-background: #16223a;
+	--ifm-menu-color-background-active: #14213a;
+	--docusaurus-highlighted-code-line-bg: rgba(92, 155, 255, 0.16);
+}
+
+/* ── Navbar: subtle glass ─────────────────────────────────────────── */
+.navbar {
+	backdrop-filter: saturate(160%) blur(10px);
+	-webkit-backdrop-filter: saturate(160%) blur(10px);
+}
+.navbar__title {
+	font-family: var(--ifm-heading-font-family);
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+.navbar__title::before {
+	content: "";
+	display: inline-block;
+	width: 0.62em;
+	height: 0.62em;
+	margin-right: 0.5em;
+	border-radius: 2px;
+	transform: rotate(45deg);
+	vertical-align: baseline;
+	background: linear-gradient(135deg, var(--ifm-color-primary-light), var(--ifm-color-primary-darkest));
+}
+
+/* ── Headings (Geist) ─────────────────────────────────────────────── */
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6,
+h1, h2, h3, h4, h5, h6 {
+	font-family: var(--ifm-heading-font-family);
+}
+.markdown h1:first-child {
+	font-size: 2.4rem;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	color: var(--vetra-ink);
+}
+.markdown h2 {
+	font-weight: 600;
+	letter-spacing: -0.015em;
+	padding-bottom: 0.3em;
+	border-bottom: 1px solid var(--vetra-border);
+}
+.markdown h3,
+.markdown h4 {
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+/* ── Hero (home) — no banner image, so make the text hero the star ── */
+.hero--primary {
+	background:
+		radial-gradient(1200px 380px at 20% -10%, rgba(27, 110, 243, 0.16), transparent 60%),
+		linear-gradient(180deg, var(--vetra-panel), var(--ifm-background-color));
+	color: var(--vetra-ink);
+	border-bottom: 1px solid var(--vetra-border);
+}
+[data-theme="dark"] .hero--primary {
+	background:
+		radial-gradient(1200px 380px at 20% -10%, rgba(92, 155, 255, 0.20), transparent 60%),
+		linear-gradient(180deg, #0d1728, var(--ifm-background-color));
+}
+.hero--primary .hero__title { font-weight: 700; letter-spacing: -0.02em; }
+.hero--primary .hero__subtitle { color: var(--vetra-ink-soft); }
+
+/* ── Feature cards on the home page ───────────────────────────────── */
+.features .col {
+	padding: 0.5rem 1rem;
+}
+.features .text--center + div,
+.features .col > div {
+	height: 100%;
+}
+.features h3 {
+	font-weight: 500;
+	color: var(--ifm-color-primary-darkest);
+}
+[data-theme="dark"] .features h3 { color: var(--ifm-color-primary-light); }
+
+/* ── Buttons ──────────────────────────────────────────────────────── */
+.button--secondary {
+	background: var(--ifm-color-primary);
+	border-color: var(--ifm-color-primary);
+	color: #fff;
+	font-weight: 500;
+	box-shadow: 0 6px 20px rgba(27, 110, 243, 0.28);
+}
+.button--secondary:hover {
+	background: var(--ifm-color-primary-dark);
+	border-color: var(--ifm-color-primary-dark);
+	color: #fff;
+}
+
+/* ── Sidebar menu ─────────────────────────────────────────────────── */
+.menu {
+	font-size: 0.92rem;
+}
+.menu__link--active:not(.menu__link--sublist) {
+	font-weight: 500;
+}
+.menu__link {
+	border-radius: 8px;
+}
+
+/* ── Cards / admonitions / code ───────────────────────────────────── */
+.card {
+	border: 1px solid var(--vetra-border);
+	border-radius: 14px;
+}
+.theme-admonition {
+	border-radius: 12px;
+	border-left-width: 4px;
+}
+div[class^="codeBlockContainer"] {
+	border-radius: 12px;
+	box-shadow: 0 8px 30px rgba(15, 27, 45, 0.08);
+}
+
+/* ── Tables ───────────────────────────────────────────────────────── */
+.markdown table {
+	display: table;
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+	border: 1px solid var(--vetra-border);
+	border-radius: 12px;
+	overflow: hidden;
+}
+.markdown table thead {
+	background: var(--vetra-panel);
+}
+.markdown table th {
+	font-weight: 700;
+	color: var(--vetra-ink);
+}
+.markdown table tr:nth-child(2n) td {
+	background: var(--vetra-panel);
+}
+
+/* ── Inline code ──────────────────────────────────────────────────── */
+code {
+	font-family: var(--ifm-font-family-monospace);
+	border: 1px solid var(--vetra-border);
+	border-radius: 6px;
+	padding: 0.12em 0.4em;
+	font-feature-settings: "liga" 0, "calt" 0;  /* no code ligatures — clearer for docs */
+}
+
+/* Code blocks: same mono, slightly relaxed line-height for readability */
+pre code,
+div[class^="codeBlockContainer"] code {
+	font-family: var(--ifm-font-family-monospace);
+	line-height: 1.55;
+	border: 0;
+	padding: 0;
+}
+
+/* ── Body reading rhythm ──────────────────────────────────────────── */
+.markdown {
+	line-height: 1.7;
+	font-size: 1rem;
+}
+
+/* ── Scroll polish ────────────────────────────────────────────────── */
+html { scroll-behavior: smooth; }

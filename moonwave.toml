@@ -1,0 +1,92 @@
+title = "Vetra"
+gitRepoUrl = "https://github.com/VeDevelopment/Vetra"
+gitSourceBranch = "main"
+changelog = false
+
+# ─────────────────────────────────────────────────────────────
+# Landing page = the root README, rendered plainly.
+# No bannerImage and no [[home.features]] → no hero art, no emoji cards.
+# ─────────────────────────────────────────────────────────────
+[home]
+enabled = true
+includeReadme = true
+
+# ─────────────────────────────────────────────────────────────
+# API sidebar ordering
+# ─────────────────────────────────────────────────────────────
+[[classOrder]]
+section = "Core"
+classes = ["Vetra", "VetraCast", "BulletContext", "Enums", "TypeDefinitions"]
+
+[[classOrder]]
+section = "Builders"
+classes = [
+	"BehaviorBuilder",
+	"PhysicsBuilder", "BounceBuilder", "PierceBuilder", "DragBuilder",
+	"MagnusBuilder", "GyroDriftBuilder", "TumbleBuilder", "FragmentationBuilder",
+	"SpeedProfilesBuilder", "SpeedProfileBuilder", "HomingBuilder",
+	"HighFidelityBuilder", "CornerTrapBuilder", "SixDOFBuilder",
+	"TrajectoryBuilder", "WindBuilder", "LODBuilder",
+	"CosmeticBuilder", "DebugBuilder",
+]
+
+# ─────────────────────────────────────────────────────────────
+# Navbar
+# ─────────────────────────────────────────────────────────────
+[[navbar.items]]
+label = "Docs"
+to = "docs/intro"
+position = "left"
+
+[[navbar.items]]
+label = "API"
+to = "api/"
+position = "left"
+
+[[navbar.items]]
+label = "Discord"
+href = "https://discord.gg/XMYMRKcd3g"
+position = "right"
+
+# ─────────────────────────────────────────────────────────────
+# Footer
+# ─────────────────────────────────────────────────────────────
+[footer]
+style = "light"
+copyright = "Copyright © 2026 VeDevelopment. Released under the MIT License."
+
+[[footer.links]]
+title = "Docs"
+[[footer.links.items]]
+label = "Get Started"
+to = "docs/intro"
+[[footer.links.items]]
+label = "Installation"
+to = "docs/installation"
+[[footer.links.items]]
+label = "API Reference"
+to = "api/"
+
+[[footer.links]]
+title = "Community"
+[[footer.links.items]]
+label = "Discord"
+href = "https://discord.gg/XMYMRKcd3g"
+[[footer.links.items]]
+label = "Instagram"
+href = "https://www.instagram.com/vedevelopment/"
+[[footer.links.items]]
+label = "X / Twitter"
+href = "https://x.com/vedevelopment_"
+
+# ─────────────────────────────────────────────────────────────
+# Docusaurus passthrough — light-first, blue accent.
+# ─────────────────────────────────────────────────────────────
+[docusaurus]
+tagline = "A projectile engine for Roblox."
+url = "https://vedevelopment.github.io"
+baseUrl = "/Vetra/"
+
+[docusaurus.themeConfig.colorMode]
+defaultMode = "light"
+respectPrefersColorScheme = true

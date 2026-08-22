@@ -1,0 +1,44 @@
+--!strict
+--!optimize 2
+--!native
+
+return table.freeze({
+	REMOTE_NET          = "VetraNet_Net",
+	NETWORK_FOLDER_NAME = "VetraNet",
+
+	CHANNEL_FIRE  = 1,
+	CHANNEL_HIT   = 2,
+	CHANNEL_STATE = 3,
+
+	DEFAULT_MAX_ORIGIN_TOLERANCE       = 15,
+	DEFAULT_DIRECTION_UNIT_EPSILON     = 0.001,
+	DEFAULT_MIN_SPEED                  = 0,
+	DEFAULT_MAX_SPEED                  = 5000,
+	DEFAULT_TOKENS_PER_SECOND         = 10,
+	DEFAULT_BURST_LIMIT               = 15,
+	DEFAULT_MAX_CONCURRENT_PER_PLAYER = 20,
+	DEFAULT_DRIFT_THRESHOLD           = 2,
+	DEFAULT_CORRECTION_RATE           = 8,
+	DEFAULT_REPLICATE_STATE           = true,
+
+	OUTBOUND_BUFFER_INITIAL  = 512,
+	STATE_ENTRY_BYTES        = 12,
+	STATE_BATCH_HEADER_BYTES = 12,
+	MAX_STATE_BATCH_SIZE     = 128,
+
+	BYTES_VECTOR3   = 12,
+	BYTES_F32       =  4,
+	BYTES_F64       =  8,
+	BYTES_TIMESTAMP =  8,
+	BYTES_U8        =  1,
+	BYTES_U16       =  2,
+	BYTES_U32       =  4,
+	BYTES_BOOL      =  1,
+
+	FIRE_PAYLOAD_BYTES    = 16,
+	UNKNOWN_MODIFIER_HASH = 0,
+	HIT_PAYLOAD_BYTES     = 14,
+	UNKNOWN_BEHAVIOR_HASH = 0,
+
+	RTT_HALF_DIVISOR = 2,
+})
