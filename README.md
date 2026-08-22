@@ -5,7 +5,7 @@ stack of combat features to build on: bounce, penetration, drag, Magnus, tumble,
 fragmentation, 6DOF aerodynamics, homing, and optimization systems for scaling to
 many bullets.
 
-Written in Luau, `--!strict` throughout. No external dependencies.
+No external dependencies.
 
 **V7.0.0**
 
