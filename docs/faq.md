@@ -23,7 +23,7 @@ Yes, MIT licensed. Commercial or otherwise, use it however you want.
 
 **What version is this?**
 
-This documentation covers **Vetra V7**.
+This documentation covers **Vetra V7.0.0**.
 
 **Does it run on the client, the server, or both?**
 

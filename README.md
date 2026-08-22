@@ -7,6 +7,8 @@ many bullets.
 
 Written in Luau, `--!strict` throughout. No external dependencies.
 
+**V7.0.0**
+
 ## Install
 
 Vetra is one folder and one `require`. There is no build step.

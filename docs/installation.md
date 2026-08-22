@@ -17,7 +17,7 @@ nothing to configure before your first shot.
 | **Platform** | Roblox (Luau, `--!strict` throughout) |
 | **Location** | `ReplicatedStorage`, both client and server must be able to require it |
 | **Dependencies** | None external. Ships with one bundled internal module, [VeSignal](./credits#dependencies). |
-| **Version** | This documentation covers **Vetra V7**. |
+| **Version** | This documentation covers **Vetra V7.0.0**. |
 
 ---
 
