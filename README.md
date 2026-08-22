@@ -124,46 +124,10 @@ require submodules directly.
 If you have hit the common problem of fast bullets passing through thin walls,
 see the Tunnelling and Precision documentation.
 
-## Repository layout
-
-```
-src/     The library. This is what ships to ReplicatedStorage.
-docs/    Moonwave documentation sources.
-tests/   Feature tests, accuracy tests, and benchmarks.
-```
-
-### A note on the benchmarks
-
-`tests/Profiling/` contains comparative benchmarks that reference two
-third-party libraries, FastCast2 and SwiftCast. Those are **not** included in
-this repository, since redistributing them is a licensing decision rather than a
-packaging one. Supply them locally if you want to run the comparisons; the rest
-of the suite runs without them.
-
-Benchmark numbers are attribution, not budgets. Compare arms against each other
-rather than against an unprofiled frametime, and read the caveats in each
-script's header before drawing conclusions from a delta.
-
 ## Documentation
 
 Full guides and the API reference are published from the `docs/` folder via
 Moonwave.
-
-## Credits
-
-Vetra is designed, written, and maintained by **VeDevelopment**: the kinematics
-engine, the parallel Actor solver, the occupancy grids, the corner-trap
-detector, the G-series drag tables, and the benchmarker.
-
-- [Discord Server](https://discord.gg/XMYMRKcd3g)
-- [Instagram](https://www.instagram.com/vedevelopment/)
-- [X / Twitter](https://x.com/vedevelopment_)
-- [TikTok](https://www.tiktok.com/@vedevelopment)
-
-Vetra bundles one internal dependency, **VeSignal**, a type-safe signal
-implementation for Roblox Luau written by VeDevelopment. It uses connection
-pooling, scratch arrays, and thread recycling to reduce GC pressure, and powers
-every signal the solver emits.
 
 ## License
 
