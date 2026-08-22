@@ -794,12 +794,39 @@ function Coordinator:Step(FrameDelta: number)
 
 		WorldST[1] = world[1]; WorldST[2] = world[2]; WorldST[3] = world[3]
 		WorldST[4] = world[4]; WorldST[5] = world[5]; WorldST[6] = world[6]
+		-- Slot 7 is the transform version stamp. Worker-side readers rebuild their
+		-- broadphase index when it changes; drop it here and they pin a stale index
+		-- for the lifetime of the grid while parts keep moving underneath them.
+		WorldST[7] = world[7]
 
-		for _, id in DynOcc._active do
-			XformST[id] = xforms[id]
-			local b = id * 6
-			BoundST[b - 5] = bounds[b - 5]; BoundST[b - 4] = bounds[b - 4]; BoundST[b - 3] = bounds[b - 3]
-			BoundST[b - 2] = bounds[b - 2]; BoundST[b - 1] = bounds[b - 1]; BoundST[b]     = bounds[b]
+		-- Push only the transforms that actually changed. This is main-thread work
+		-- that scales with REGISTERED PART COUNT and is completely independent of
+		-- worker count, so re-sending an entire registry every frame is the one
+		-- occupancy cost more shards cannot amortise -- measured at 1.56ms/frame
+		-- for 700 parts, 2.86ms for 2500. UpdateTransforms already knows which ids
+		-- it repacked; a still or mostly-still set now costs almost nothing.
+		--
+		-- _fullResync forces the whole registry through after a Register or
+		-- Unregister, where the dirty list alone would not describe the change.
+		local dirtyIds   = DynOcc._dirtyIds
+		local dirtyCount = DynOcc._dirtyCount
+
+		if DynOcc._fullResync or dirtyIds == nil then
+			DynOcc._fullResync = false
+			for _, id in DynOcc._active do
+				XformST[id] = xforms[id]
+				local b = id * 6
+				BoundST[b - 5] = bounds[b - 5]; BoundST[b - 4] = bounds[b - 4]; BoundST[b - 3] = bounds[b - 3]
+				BoundST[b - 2] = bounds[b - 2]; BoundST[b - 1] = bounds[b - 1]; BoundST[b]     = bounds[b]
+			end
+		else
+			for k = 1, dirtyCount do
+				local id = dirtyIds[k]
+				XformST[id] = xforms[id]
+				local b = id * 6
+				BoundST[b - 5] = bounds[b - 5]; BoundST[b - 4] = bounds[b - 4]; BoundST[b - 3] = bounds[b - 3]
+				BoundST[b - 2] = bounds[b - 2]; BoundST[b - 1] = bounds[b - 1]; BoundST[b]     = bounds[b]
+			end
 		end
 
 		for id, blob in shapes do
