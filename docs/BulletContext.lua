@@ -169,26 +169,6 @@ local BulletContext = {}
 	```
 ]=]
 
---[=[
-	@prop FireTravelEvents boolean?
-	@within BulletContext
-
-	Controls whether `OnTravel` and `OnTravelBatch` fire for this bullet.
-	Defaults to `true`.
-
-	Only relevant for the parallel solver. A cast with this enabled is placed on
-	the sync path, its position is marshaled back to the main thread every frame
-	so travel signals can fire. Set to `false` to opt out, the cast becomes
-	fire-and-forget on the worker and skips travel emission entirely.
-
-	Because this is on by default, turning it `false` is the first thing to reach
-	for when optimizing a parallel workload that does not need per-frame position
-	updates, it removes the per-cast main-thread cost outright.
-
-	Has no effect on the serial solver (`Vetra.new()`), which always fires
-	travel signals.
-]=]
-
 -- --- Constructor -------------------------------------------------------------
 
 --[=[
@@ -199,7 +179,6 @@ local BulletContext = {}
 	Optional config fields:
 	- `UserData`, pre-populate the context's UserData table at construction.
 	- `RaycastParams`, per-bullet raycast filter (highest priority over Behavior params).
-	- `FireTravelEvents`, set `false` to suppress `OnTravel`/`OnTravelBatch` for this bullet and drop it onto the fire-and-forget path (parallel solver only, defaults to `true`).
 	- `SolverData`, reserved for internal solver use, do not supply from weapon code.
 
 	@param config BulletContextConfig

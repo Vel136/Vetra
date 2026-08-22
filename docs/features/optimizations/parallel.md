@@ -71,33 +71,52 @@ The parallel solver classifies every bullet as one of two kinds, automatically:
 - **Sync**, stepped in the worker but driven by the Coordinator, which dispatches the step each frame
   and reads a result back. Required when the bullet has a callback the main thread must run,
   `CanBounceFunction`, `CanPierceFunction`, `CanHomeFunction`, `HomingPositionProvider`,
-  `TrajectoryPositionProvider`, or when `FireTravelEvents = true` on its `BulletContext`.
+  `TrajectoryPositionProvider`, or when `VisualizeCasts` is on.
 - **Fire-and-forget (FF)**, steps autonomously inside the workers with no per-frame main-thread
-  involvement at all. Only terminal events (Hit / DistanceEnd / SpeedEnd) come back to the
-  Coordinator; travel signals and cosmetic updates are skipped.
+  involvement for the physics itself. Terminal events (Hit / DistanceEnd / SpeedEnd) come back to the
+  Coordinator, and the Coordinator also extrapolates a position for these casts each frame when
+  something needs one, see below.
 
 FF casts have near-zero per-frame overhead, worker-side buffers are reused in place after the first
-few frames. They're the fast path for high-volume projectiles that don't need per-frame callbacks or
-travel events.
+few frames. They're the fast path for high-volume projectiles that don't need per-frame callbacks.
 
-`FireTravelEvents` defaults to `true`, so a bullet is a sync cast unless you opt out. Dropping a
-high-volume projectile onto the FF path is an explicit `FireTravelEvents = false`.
+The classification is entirely about **callbacks**, not travel events. A bullet is FF unless it
+carries one of the functions or providers listed above, so plain projectiles are on the fast path by
+default and there is nothing to opt into.
 
 ```lua
--- Sync cast: fires OnTravel, so the Coordinator drives its step each frame
-local syncContext = Vetra.BulletContext.new({
-    Origin = origin, Direction = dir, Speed = 200,
-    FireTravelEvents = true,  -- default
-})
-Solver:Fire(syncContext, Behavior)
-
--- FF cast: opts out of travel events -> fully autonomous in parallel
+-- FF cast: no callbacks, so it steps autonomously in the workers
 local ffContext = Vetra.BulletContext.new({
     Origin = origin, Direction = dir, Speed = 200,
-    FireTravelEvents = false,
 })
 Solver:Fire(ffContext, Behavior)
+
+-- Sync cast: the CanBounceFunction must run on the main thread, so the
+-- Coordinator drives this cast's step each frame
+local SyncBehavior = Vetra.BehaviorBuilder.new()
+    :Bounce()
+        :Max(3)
+        :CanBounceFunction(function(context, result) return result.Instance.CanCollide end)
+    :Done()
+    :Build()
+Solver:Fire(Vetra.BulletContext.new({
+    Origin = origin, Direction = dir, Speed = 200,
+}), SyncBehavior)
 ```
+
+### Travel events on FF casts
+
+FF does not mean travel signals are lost. Each frame the Coordinator walks the non-sync casts and
+extrapolates a position and velocity from the active trajectory when any of these is true:
+
+- `OnTravel` or `OnTravelBatch` has a listener **and** the behavior's `FireTravelEvents` is `true`
+  (the default),
+- the cast has a cosmetic bullet object to place, or
+- `OnSpeedThresholdCrossed` has a listener and the behavior defines speed thresholds.
+
+So `FireTravelEvents = false` suppresses travel emission for that behavior, but it only removes the
+per-frame extrapolation when the cast also has no cosmetic bullet and no speed thresholds. With a
+cosmetic attached, that work happens regardless.
 
 The Coordinator skips dispatch entirely for shards containing only FF casts, and skips the
 homing/provider update pass when no sync casts are active, so a scene of pure FF bullets pays almost
