@@ -1,10 +1,8 @@
-# Vendored third-party benchmark comparands. Excluded deliberately: these are
-# other authors' libraries (SwiftCast ships its own LICENSE) and redistributing
-# them under this repo is a licensing decision, not a packaging one.
-# Consequence: the comparative benchmarks in tests/Profiling that reference them
-# will not run on a fresh clone until they are supplied locally.
-tests/Profiling/FastCast2/
-tests/Profiling/SwiftCast/
+# Tests, benchmarks and profilers are kept local. They are Studio-bound (they
+# require a running Play session and a synced place), their timings are
+# machine-specific, and tests/Profiling vendors third-party libraries whose
+# redistribution is a licensing decision of its own.
+tests/
 
 # Moonwave build output — the deployed site lives on the gh-pages branch.
 build/
