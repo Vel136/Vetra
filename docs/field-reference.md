@@ -263,7 +263,7 @@ Voxel-grid raycast skipping. See [Occupancy](./features/optimizations/occupancy/
 | Setter | Field | Default | Affects |
 |--------|-------|--------:|---------|
 | `:StaticOccupancy(grid)` | `StaticOccupancy` | `nil` | Baked grid of unmoving geometry; clear segments skip the raycast. |
-| `:DynamicOccupancy(set)` | `DynamicOccupancy` | `nil` | Set of moving rigid parts tested the same way. |
+| `:DynamicOccupancy(set)` | `DynamicOccupancy` | `nil` | Set of moving rigid parts tested the same way. Wins on the serial solver; measures slower than leaving it off on `Vetra.newParallel()`. |
 
 ---
 
@@ -289,7 +289,7 @@ Set directly on `BehaviorBuilder` (no sub-builder).
 |--------|-------|--------:|---------|
 | `:Hitscan(b)` | `IsHitscan` | `false` | Resolve the whole path synchronously in `Fire()`, no per-frame physics. See [Hitscan](./features/additions/hitscan). |
 | `:BatchTravel(b)` | `BatchTravel` | `false` | Accumulate travel events and emit them once per frame via `OnTravelBatch`. |
-| `:FireTravelEvents(b)` | `FireTravelEvents` | `true` | Fire `OnTravel` for a parallel cast, which forces it onto the sync path. Set `false` to opt out and drop the cast onto the fire-and-forget path, the main optimization lever at volume. See [Parallel](./features/optimizations/parallel#sync-vs-fire-and-forget). |
+| `:FireTravelEvents(b)` | `FireTravelEvents` | `true` | Gate `OnTravel`/`OnTravelBatch` emission, on both solvers. Set `false` to suppress them, a significant optimization lever at volume. Does not change whether a parallel cast is sync or fire-and-forget. See [Parallel](./features/optimizations/parallel#travel-events-on-ff-casts). |
 | `:UserData(v)` | `UserData` | `nil` | Free-form data carried with the bullet, available in every signal handler. |
 | `:Debug():Visualize(b)` | `VisualizeCasts` | `false` | Draw cast segments, hit normals, bounce vectors, and corner-trap markers in-world. |
 

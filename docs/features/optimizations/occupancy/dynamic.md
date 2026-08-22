@@ -134,3 +134,34 @@ shape and transform data, so segment tests run inside the parallel workers witho
 boundaries with live objects. This is wired automatically when you attach a dynamic set to a behavior
 fired through `Vetra.newParallel()`.
 :::
+
+---
+
+## Performance
+
+**Dynamic occupancy wins on the serial solver.** It works on `Vetra.newParallel()` too, but there it
+measures slower than leaving it off, and adding shards does not help. If you are on the parallel
+solver, benchmark before attaching it.
+
+On serial, the tradeoff is a fixed per-frame cost (`UpdateTransforms`) against a per-bullet saving,
+so it pays off once you have enough bullets in flight to amortise it. Measured against 700
+registered parts:
+
+| Bullets in flight | Occupancy off | Occupancy on | |
+|---|---|---|---|
+| 500 | 1.24 ms | 1.24 ms | break-even |
+| 2000 | 4.95 ms | 3.25 ms | **-34%** |
+| 5000 | 12.37 ms | 7.29 ms | **-41%** |
+| 20000 | 49.48 ms | 27.47 ms | **-44%** |
+
+Below roughly 500 bullets per frame the refresh costs more than the skipped raycasts return. Two
+things move that break-even point: the **number of registered parts** (which sets the fixed cost) and
+the **skip ratio** (the share of segments the grid can prove empty, which sets the saving). Bullets
+that spend most of their flight far from any registered part get little benefit and still pay the
+lookup.
+
+:::tip Measure your own scene
+Numbers above come from one scene shape and are meant as a guide to the *shape* of the tradeoff, not
+a promise. `SegmentClear` and `SegmentFirstHit` are directly callable, so you can time them against a
+plain `workspace:Raycast` on your own geometry.
+:::
